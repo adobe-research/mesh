@@ -11,8 +11,8 @@
 package compile.gen.java.inline;
 
 import compile.gen.java.StatementFormatter;
-import compile.module.intrinsic.BuiltinModule;
 import compile.term.*;
+import runtime.intrinsic._count;
 import runtime.rep.lambda.Lambda;
 import runtime.rep.list.ListValue;
 
@@ -25,9 +25,6 @@ import java.util.List;
  */
 public class ForInliner implements Inliner
 {
-    private static LetBinding COUNT =
-        (LetBinding)BuiltinModule.INSTANCE.getValueBinding("count");
-
     public String tryInlining(
         final ApplyTerm apply, final StatementFormatter fmt,
         final boolean stmtsOkay)
@@ -38,7 +35,7 @@ public class ForInliner implements Inliner
         final List<Term> args = ((TupleTerm)apply.getArg()).getItems();
 
         final Term indexArg = args.get(0);
-        final Term countArg = InlinerUtils.derefToIntrinsicApply(indexArg, COUNT);
+        final Term countArg = InlinerUtils.derefToIntrinsicApply(indexArg, _count.INSTANCE, fmt);
 
         final Term bodyArg = args.get(1);
         final LambdaTerm bodyLambda = InlinerUtils.derefToLambda(bodyArg);

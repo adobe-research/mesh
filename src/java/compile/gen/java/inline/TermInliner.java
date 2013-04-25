@@ -18,6 +18,7 @@ import compile.term.Term;
 import compile.term.TupleTerm;
 import compile.type.Types;
 import runtime.ConfigUtils;
+import runtime.intrinsic.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -52,64 +53,64 @@ public class TermInliner
     static
     {
         // control flow
-        INTRINSICS.put(runtime.intrinsic.For.class.getName(), new ForInliner());
-        INTRINSICS.put(runtime.intrinsic.Guard.class.getName(), new GuardInliner());
-        INTRINSICS.put(runtime.intrinsic.If.class.getName(), new IfInliner());
-        INTRINSICS.put(runtime.intrinsic.When.class.getName(), new WhenInliner());
-        INTRINSICS.put(runtime.intrinsic.While.class.getName(), new WhileInliner());
+        INTRINSICS.put(_for.class.getName(), new ForInliner());
+        INTRINSICS.put(_guard.class.getName(), new GuardInliner());
+        INTRINSICS.put(_if.class.getName(), new IfInliner());
+        INTRINSICS.put(_when.class.getName(), new WhenInliner());
+        INTRINSICS.put(_while.class.getName(), new WhileInliner());
 
         // logic
-        INTRINSICS.put(runtime.intrinsic.Not.class.getName(), new NotInliner());
-        INTRINSICS.put(runtime.intrinsic.And.class.getName(), new AndInliner());
-        INTRINSICS.put(runtime.intrinsic.Or.class.getName(), new OrInliner());
+        INTRINSICS.put(_not.class.getName(), new NotInliner());
+        INTRINSICS.put(_and.class.getName(), new AndInliner());
+        INTRINSICS.put(_or.class.getName(), new OrInliner());
 
         // poly
-        INTRINSICS.put(runtime.intrinsic.EQ.class.getName(), new EQInliner());
-        INTRINSICS.put(runtime.intrinsic.NE.class.getName(), new NEInliner());
-        INTRINSICS.put(runtime.intrinsic.Plus.class.getName(), new PlusInliner());
+        INTRINSICS.put(_eq.class.getName(), new EQInliner());
+        INTRINSICS.put(_ne.class.getName(), new NEInliner());
+        INTRINSICS.put(_plus.class.getName(), new PlusInliner());
 
         // int arith
-        INTRINSICS.put(runtime.intrinsic.Minus.class.getName(), new MinusInliner());
-        INTRINSICS.put(runtime.intrinsic.Times.class.getName(), new TimesInliner());
-        INTRINSICS.put(runtime.intrinsic.Div.class.getName(), new DivInliner());
-        INTRINSICS.put(runtime.intrinsic.Max.class.getName(), new MaxInliner());
-        INTRINSICS.put(runtime.intrinsic.Min.class.getName(), new MinInliner());
-        INTRINSICS.put(runtime.intrinsic.Mod.class.getName(), new ModInliner());
-        INTRINSICS.put(runtime.intrinsic.Neg.class.getName(), new NegInliner());
-        INTRINSICS.put(runtime.intrinsic.Pow.class.getName(), new PowInliner());
-        INTRINSICS.put(runtime.intrinsic.Sign.class.getName(), new SignInliner());
+        INTRINSICS.put(_minus.class.getName(), new MinusInliner());
+        INTRINSICS.put(_times.class.getName(), new TimesInliner());
+        INTRINSICS.put(_div.class.getName(), new DivInliner());
+        INTRINSICS.put(_max.class.getName(), new MaxInliner());
+        INTRINSICS.put(_min.class.getName(), new MinInliner());
+        INTRINSICS.put(_mod.class.getName(), new ModInliner());
+        INTRINSICS.put(_neg.class.getName(), new NegInliner());
+        INTRINSICS.put(_pow.class.getName(), new PowInliner());
+        INTRINSICS.put(_sign.class.getName(), new SignInliner());
 
         // int relops
-        INTRINSICS.put(runtime.intrinsic.GT.class.getName(), new GTInliner());
-        INTRINSICS.put(runtime.intrinsic.GE.class.getName(), new GEInliner());
-        INTRINSICS.put(runtime.intrinsic.LE.class.getName(), new LEInliner());
-        INTRINSICS.put(runtime.intrinsic.LT.class.getName(), new LTInliner());
+        INTRINSICS.put(_gt.class.getName(), new GTInliner());
+        INTRINSICS.put(_ge.class.getName(), new GEInliner());
+        INTRINSICS.put(_le.class.getName(), new LEInliner());
+        INTRINSICS.put(_lt.class.getName(), new LTInliner());
 
         // double arith
-        INTRINSICS.put(runtime.intrinsic.FMinus.class.getName(), new FMinusInliner());
-        INTRINSICS.put(runtime.intrinsic.FTimes.class.getName(), new FTimesInliner());
-        INTRINSICS.put(runtime.intrinsic.FDiv.class.getName(), new FDivInliner());
-        INTRINSICS.put(runtime.intrinsic.FMod.class.getName(), new FModInliner());
-        INTRINSICS.put(runtime.intrinsic.FNeg.class.getName(), new FNegInliner());
-        INTRINSICS.put(runtime.intrinsic.FPow.class.getName(), new FPowInliner());
-        INTRINSICS.put(runtime.intrinsic.Ln.class.getName(), new LnInliner());
-        INTRINSICS.put(runtime.intrinsic.Sqrt.class.getName(), new SqrtInliner());
+        INTRINSICS.put(_fminus.class.getName(), new FMinusInliner());
+        INTRINSICS.put(_ftimes.class.getName(), new FTimesInliner());
+        INTRINSICS.put(_fdiv.class.getName(), new FDivInliner());
+        INTRINSICS.put(_fmod.class.getName(), new FModInliner());
+        INTRINSICS.put(_fneg.class.getName(), new FNegInliner());
+        INTRINSICS.put(_fpow.class.getName(), new FPowInliner());
+        INTRINSICS.put(_ln.class.getName(), new LnInliner());
+        INTRINSICS.put(_sqrt.class.getName(), new SqrtInliner());
 
         // trig
-        INTRINSICS.put(runtime.intrinsic.ATan2.class.getName(), new ATan2Inliner());
-        INTRINSICS.put(runtime.intrinsic.Cos.class.getName(), new CosInliner());
-        INTRINSICS.put(runtime.intrinsic.Sin.class.getName(), new SinInliner());
-        INTRINSICS.put(runtime.intrinsic.Tan.class.getName(), new TanInliner());
+        INTRINSICS.put(_atan2.class.getName(), new ATan2Inliner());
+        INTRINSICS.put(_cos.class.getName(), new CosInliner());
+        INTRINSICS.put(_sin.class.getName(), new SinInliner());
+        INTRINSICS.put(_tan.class.getName(), new TanInliner());
 
         // double relops
-        INTRINSICS.put(runtime.intrinsic.FGT.class.getName(), new FGTInliner());
-        INTRINSICS.put(runtime.intrinsic.FGE.class.getName(), new FGEInliner());
-        INTRINSICS.put(runtime.intrinsic.FLE.class.getName(), new FLEInliner());
-        INTRINSICS.put(runtime.intrinsic.FLT.class.getName(), new FLTInliner());
+        INTRINSICS.put(_fgt.class.getName(), new FGTInliner());
+        INTRINSICS.put(_fge.class.getName(), new FGEInliner());
+        INTRINSICS.put(_fle.class.getName(), new FLEInliner());
+        INTRINSICS.put(_flt.class.getName(), new FLTInliner());
 
         // converters
-        INTRINSICS.put(runtime.intrinsic.I2F.class.getName(), new I2FInliner());
-        INTRINSICS.put(runtime.intrinsic.F2I.class.getName(), new F2IInliner());
+        INTRINSICS.put(_i2f.class.getName(), new I2FInliner());
+        INTRINSICS.put(_f2i.class.getName(), new F2IInliner());
     }
 
     /**

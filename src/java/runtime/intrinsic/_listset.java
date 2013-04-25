@@ -1,0 +1,43 @@
+/**
+ * ADOBE SYSTEMS INCORPORATED
+ * Copyright 2009-2013 Adobe Systems Incorporated
+ * All Rights Reserved.
+ *
+ * NOTICE: Adobe permits you to use, modify, and distribute
+ * this file in accordance with the terms of the MIT license,
+ * a copy of which can be found in the LICENSE.txt file or at
+ * http://opensource.org/licenses/MIT.
+ */
+package runtime.intrinsic;
+
+import runtime.rep.lambda.IntrinsicLambda;
+import runtime.rep.list.ListValue;
+import runtime.rep.Tuple;
+
+/**
+ * Return new list with original list's contents,
+ * but with value at index replaced.
+ *
+ * @author Basil Hosmer
+ */
+public final class _listset extends IntrinsicLambda
+{
+    public static final _listset INSTANCE = new _listset(); 
+    public static final String NAME = "listset";
+
+    public String getName()
+    {
+        return NAME;
+    }
+
+    public Object apply(final Object arg)
+    {
+        final Tuple args = (Tuple)arg;
+        return invoke((ListValue)args.get(0), (Integer)args.get(1), args.get(2));
+    }
+
+    public static ListValue invoke(final ListValue list, final int i, final Object v)
+    {
+        return list.update(i, v);
+    }
+}

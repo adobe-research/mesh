@@ -11,7 +11,6 @@
 package compile.module;
 
 import com.google.common.collect.Maps;
-import compile.module.intrinsic.BuiltinModule;
 
 import java.util.HashMap;
 
@@ -31,7 +30,6 @@ public final class ModuleDictionary
      */
     public ModuleDictionary()
     {
-        map.put(BuiltinModule.INSTANCE.getName(), BuiltinModule.INSTANCE);
     }
 
     /**

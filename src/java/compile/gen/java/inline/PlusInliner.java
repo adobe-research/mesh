@@ -15,8 +15,8 @@ import compile.term.ApplyTerm;
 import compile.term.Term;
 import compile.term.TupleTerm;
 import compile.type.Type;
-import runtime.intrinsic.LPlus;
-import runtime.intrinsic.MPlus;
+import runtime.intrinsic._lplus;
+import runtime.intrinsic._mplus;
 import runtime.rep.list.ListValue;
 import runtime.rep.map.MapValue;
 
@@ -53,11 +53,11 @@ public class PlusInliner implements Inliner
         }
         else if (c == ListValue.class)
         {
-            expr = LPlus.class.getName() + ".invoke(" + l + ", " + r + ")";
+            expr = _lplus.class.getName() + ".invoke(" + l + ", " + r + ")";
         }
         else if (c == MapValue.class)
         {
-            expr = MPlus.class.getName() + ".invoke(" + l + ", " + r + ")";
+            expr = _mplus.class.getName() + ".invoke(" + l + ", " + r + ")";
         }
         else
         {

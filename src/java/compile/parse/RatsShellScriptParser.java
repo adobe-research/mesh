@@ -12,7 +12,7 @@ package compile.parse;
 
 import compile.Loc;
 import compile.term.*;
-import runtime.intrinsic.Print;
+import runtime.intrinsic._print;
 
 import java.io.Reader;
 import java.util.List;
@@ -57,7 +57,7 @@ public final class RatsShellScriptParser extends RatsScriptParser
             {
                 final Term term = ((UnboundTerm)last).getValue();
                 final Loc termLoc = term.getLoc();
-                final RefTerm print = new RefTerm(termLoc, Print.NAME);
+                final RefTerm print = new RefTerm(termLoc, _print.INSTANCE.getName());
                 script.set(lastPos, new UnboundTerm(new ApplyTerm(termLoc, print, term)));
             }
         }

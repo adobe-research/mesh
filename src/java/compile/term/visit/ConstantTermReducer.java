@@ -14,7 +14,7 @@ import compile.Session;
 import compile.analyze.ConstantReducer;
 import compile.term.*;
 import compile.term.reduce.*;
-import runtime.intrinsic.Intrinsics;
+import runtime.intrinsic.*;
 
 import java.util.HashMap;
 
@@ -38,32 +38,32 @@ public class ConstantTermReducer extends TermTransformerBase
     static
     {
         // int arith
-        APPLY_REDUCERS.put(Intrinsics._plus.getName(), new IntPlusReducer());
-        APPLY_REDUCERS.put(Intrinsics._div.getName(), new DivReducer());
-        APPLY_REDUCERS.put(Intrinsics._max.getName(), new MaxReducer());
-        APPLY_REDUCERS.put(Intrinsics._min.getName(), new MinReducer());
-        APPLY_REDUCERS.put(Intrinsics._minus.getName(), new MinusReducer());
-        APPLY_REDUCERS.put(Intrinsics._mod.getName(), new ModReducer());
-        APPLY_REDUCERS.put(Intrinsics._sign.getName(), new SignReducer());
-        APPLY_REDUCERS.put(Intrinsics._times.getName(), new TimesReducer());
+        APPLY_REDUCERS.put(_plus.INSTANCE.getName(), new IntPlusReducer());
+        APPLY_REDUCERS.put(_div.INSTANCE.getName(), new DivReducer());
+        APPLY_REDUCERS.put(_max.INSTANCE.getName(), new MaxReducer());
+        APPLY_REDUCERS.put(_min.INSTANCE.getName(), new MinReducer());
+        APPLY_REDUCERS.put(_minus.INSTANCE.getName(), new MinusReducer());
+        APPLY_REDUCERS.put(_mod.INSTANCE.getName(), new ModReducer());
+        APPLY_REDUCERS.put(_sign.INSTANCE.getName(), new SignReducer());
+        APPLY_REDUCERS.put(_times.INSTANCE.getName(), new TimesReducer());
 
         // double arith
-        APPLY_REDUCERS.put(Intrinsics._fdiv.getName(), new FDivReducer());
-        APPLY_REDUCERS.put(Intrinsics._fminus.getName(), new FMinusReducer());
-        APPLY_REDUCERS.put(Intrinsics._ftimes.getName(), new FTimesReducer());
-        APPLY_REDUCERS.put(Intrinsics._sqrt.getName(), new SqrtReducer());
+        APPLY_REDUCERS.put(_fdiv.INSTANCE.getName(), new FDivReducer());
+        APPLY_REDUCERS.put(_fminus.INSTANCE.getName(), new FMinusReducer());
+        APPLY_REDUCERS.put(_ftimes.INSTANCE.getName(), new FTimesReducer());
+        APPLY_REDUCERS.put(_sqrt.INSTANCE.getName(), new SqrtReducer());
 
         // converters
-        APPLY_REDUCERS.put(Intrinsics._f2i.getName(), new F2IReducer());
-        APPLY_REDUCERS.put(Intrinsics._i2f.getName(), new I2FReducer());
+        APPLY_REDUCERS.put(_f2i.INSTANCE.getName(), new F2IReducer());
+        APPLY_REDUCERS.put(_i2f.INSTANCE.getName(), new I2FReducer());
 
         // logic
-        APPLY_REDUCERS.put(Intrinsics._and.getName(), new AndReducer());
-        APPLY_REDUCERS.put(Intrinsics._if.getName(), new IfReducer());
-        APPLY_REDUCERS.put(Intrinsics._or.getName(), new OrReducer());
+        APPLY_REDUCERS.put(_and.INSTANCE.getName(), new AndReducer());
+        APPLY_REDUCERS.put(_if.INSTANCE.getName(), new IfReducer());
+        APPLY_REDUCERS.put(_or.INSTANCE.getName(), new OrReducer());
 
         // misc
-        APPLY_REDUCERS.put(Intrinsics._size.getName(), new SizeReducer());
+        APPLY_REDUCERS.put(_size.INSTANCE.getName(), new SizeReducer());
     }
 
     // instance
