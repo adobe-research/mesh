@@ -11,11 +11,13 @@
 package compile.gen.java.inline;
 
 import compile.Loc;
+import compile.gen.java.InvokeInfo;
 import compile.gen.java.StatementFormatter;
 import compile.term.*;
 import compile.type.Type;
 import compile.type.Types;
 import compile.StringUtils;
+import runtime.rep.lambda.IntrinsicLambda;
 
 import java.util.ArrayList;
 
@@ -207,14 +209,15 @@ public class InlinerUtils
      * if the passed term is an application of the given intrinsic, return the
      * application's argument, otherwise null
      */
-    static Term derefToIntrinsicApply(final Term term, final LetBinding intrinsic)
+    static Term derefToIntrinsicApply(final Term term, 
+        final IntrinsicLambda intrinsic, final StatementFormatter fmt)
     {
         if (term instanceof ApplyTerm)
         {
             final ApplyTerm apply = (ApplyTerm)term;
             final Term base = apply.getBase();
 
-            return derefToIntrinsic(base, intrinsic) != null ? apply.getArg() : null;
+            return derefToIntrinsic(base, intrinsic, fmt) != null ? apply.getArg() : null;
         }
 
         return null;
@@ -223,7 +226,8 @@ public class InlinerUtils
     /**
      * final refs to intrinsic lets at the end of simple reference chains
      */
-    static LetBinding derefToIntrinsic(final Term term, final LetBinding intrinsic)
+    static LetBinding derefToIntrinsic(final Term term, 
+       final IntrinsicLambda intrinsic, final StatementFormatter fmt)
     {
         if (term instanceof RefTerm)
         {
@@ -232,9 +236,13 @@ public class InlinerUtils
             {
                 final LetBinding let = (LetBinding)binding;
                 if (let.isIntrinsic())
-                    return let == intrinsic ? let : null;
+                {
+                    InvokeInfo info = fmt.getInvokeInfo(term);
+                    final String intrName = intrinsic.getClass().getName();
+                    return info.className.equals(intrName) ? let : null;
+                }
 
-                return derefToIntrinsic(let.getValue(), intrinsic);
+                return derefToIntrinsic(let.getValue(), intrinsic, fmt);
             }
         }
 
