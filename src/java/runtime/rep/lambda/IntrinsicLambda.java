@@ -10,7 +10,6 @@
  */
 package runtime.rep.lambda;
 
-import compile.module.intrinsic.BuiltinModule;
 import compile.term.ValueBinding;
 import compile.type.Type;
 import compile.type.visit.TypeDumper;
@@ -29,24 +28,10 @@ public abstract class IntrinsicLambda implements Lambda
     public abstract String getName();
 
     /**
-     * Function's type.
-     */
-    public abstract Type getType();
-
-    /**
      * String returned when function is printed.
-     * TODO remove dependence on special {@link BuiltinModule}, see below
      */
     public String toString()
     {
-        // note: use our type via binding, post-prep
-        ValueBinding binding = BuiltinModule.INSTANCE.findValueBinding(getName());
-        final Type type = binding.getType();
-
-        final String tpsig = TypeDumper.dumpTypeParams(type);
-
-        final String sig = TypeDumper.dumpWithoutParams(type);
-
-        return tpsig + "{ " + sig + " => <intrinsic> }";
+        return "{ <intrinsic> }";
     }
 }

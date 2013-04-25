@@ -96,52 +96,52 @@ public class Ops
     //
     static
     {
-        BINOP_INFO.put(ASSIGN_SYM, new BinopInfo(5, Assoc.Right, Put.NAME));
-        BINOP_INFO.put(ASSIGNS_SYM, new BinopInfo(5, Assoc.Right, Puts.NAME));
+        BINOP_INFO.put(ASSIGN_SYM, new BinopInfo(5, Assoc.Right, _put.INSTANCE.getName()));
+        BINOP_INFO.put(ASSIGNS_SYM, new BinopInfo(5, Assoc.Right, _puts.INSTANCE.getName()));
 
-        BINOP_INFO.put(UPDATE_SYM, new BinopInfo(5, Assoc.Right, Update.NAME));
-        BINOP_INFO.put(UPDATES_SYM, new BinopInfo(5, Assoc.Right, Updates.NAME));
+        BINOP_INFO.put(UPDATE_SYM, new BinopInfo(5, Assoc.Right, _update.INSTANCE.getName()));
+        BINOP_INFO.put(UPDATES_SYM, new BinopInfo(5, Assoc.Right, _updates.INSTANCE.getName()));
 
-        BINOP_INFO.put(OR_SYM, new BinopInfo(20, Assoc.Left, Or.NAME));
-        BINOP_INFO.put(AND_SYM, new BinopInfo(25, Assoc.Left, And.NAME));
+        BINOP_INFO.put(OR_SYM, new BinopInfo(20, Assoc.Left, _or.INSTANCE.getName()));
+        BINOP_INFO.put(AND_SYM, new BinopInfo(25, Assoc.Left, _and.INSTANCE.getName()));
 
-        BINOP_INFO.put(EQ_SYM, new BinopInfo(40, Assoc.Left, EQ.NAME));
-        BINOP_INFO.put(NE_SYM, new BinopInfo(40, Assoc.Left, NE.NAME));
+        BINOP_INFO.put(EQ_SYM, new BinopInfo(40, Assoc.Left, _eq.INSTANCE.getName()));
+        BINOP_INFO.put(NE_SYM, new BinopInfo(40, Assoc.Left, _ne.INSTANCE.getName()));
 
-        BINOP_INFO.put(GT_SYM, new BinopInfo(50, Assoc.Left, GT.NAME));
-        BINOP_INFO.put(GE_SYM, new BinopInfo(50, Assoc.Left, GE.NAME));
-        BINOP_INFO.put(LE_SYM, new BinopInfo(50, Assoc.Left, LE.NAME));
-        BINOP_INFO.put(LT_SYM, new BinopInfo(50, Assoc.Left, LT.NAME));
-
-        // TODO remove
-        BINOP_INFO.put(FGT_SYM, new BinopInfo(50, Assoc.Left, FGT.NAME));
-        BINOP_INFO.put(FGE_SYM, new BinopInfo(50, Assoc.Left, FGE.NAME));
-        BINOP_INFO.put(FLE_SYM, new BinopInfo(50, Assoc.Left, FLE.NAME));
-        BINOP_INFO.put(FLT_SYM, new BinopInfo(50, Assoc.Left, FLT.NAME));
-
-        BINOP_INFO.put(PLUS_SYM, new BinopInfo(60, Assoc.Left, Plus.NAME));
-        BINOP_INFO.put(MINUS_SYM, new BinopInfo(60, Assoc.Left, Minus.NAME));
+        BINOP_INFO.put(GT_SYM, new BinopInfo(50, Assoc.Left, _gt.INSTANCE.getName()));
+        BINOP_INFO.put(GE_SYM, new BinopInfo(50, Assoc.Left, _ge.INSTANCE.getName()));
+        BINOP_INFO.put(LE_SYM, new BinopInfo(50, Assoc.Left, _le.INSTANCE.getName()));
+        BINOP_INFO.put(LT_SYM, new BinopInfo(50, Assoc.Left, _lt.INSTANCE.getName()));
 
         // TODO remove
-        BINOP_INFO.put(FPLUS_SYM, new BinopInfo(60, Assoc.Left, Plus.NAME));
-        BINOP_INFO.put(FMINUS_SYM, new BinopInfo(60, Assoc.Left, FMinus.NAME));
+        BINOP_INFO.put(FGT_SYM, new BinopInfo(50, Assoc.Left, _fgt.INSTANCE.getName()));
+        BINOP_INFO.put(FGE_SYM, new BinopInfo(50, Assoc.Left, _fge.INSTANCE.getName()));
+        BINOP_INFO.put(FLE_SYM, new BinopInfo(50, Assoc.Left, _fle.INSTANCE.getName()));
+        BINOP_INFO.put(FLT_SYM, new BinopInfo(50, Assoc.Left, _flt.INSTANCE.getName()));
 
-        BINOP_INFO.put(TIMES_SYM, new BinopInfo(70, Assoc.Left, Times.NAME));
-        BINOP_INFO.put(DIV_SYM, new BinopInfo(70, Assoc.Left, Div.NAME));
-        BINOP_INFO.put(MOD_SYM, new BinopInfo(70, Assoc.Left, Mod.NAME));
-
-        // TODO remove
-        BINOP_INFO.put(FTIMES_SYM, new BinopInfo(70, Assoc.Left, FTimes.NAME));
-        BINOP_INFO.put(FDIV_SYM, new BinopInfo(70, Assoc.Left, FDiv.NAME));
-        BINOP_INFO.put(FMOD_SYM, new BinopInfo(70, Assoc.Left, FMod.NAME));
-
-        BINOP_INFO.put(EXP_SYM, new BinopInfo(80, Assoc.Left, Pow.NAME));
+        BINOP_INFO.put(PLUS_SYM, new BinopInfo(60, Assoc.Left, _plus.INSTANCE.getName()));
+        BINOP_INFO.put(MINUS_SYM, new BinopInfo(60, Assoc.Left, _minus.INSTANCE.getName()));
 
         // TODO remove
-        BINOP_INFO.put(FEXP_SYM, new BinopInfo(80, Assoc.Left, FPow.NAME));
+        BINOP_INFO.put(FPLUS_SYM, new BinopInfo(60, Assoc.Left, _plus.INSTANCE.getName()));
+        BINOP_INFO.put(FMINUS_SYM, new BinopInfo(60, Assoc.Left, _fminus.INSTANCE.getName()));
 
-        BINOP_INFO.put(PIPE_SYM, new BinopInfo(90, Assoc.Left, runtime.intrinsic.Map.NAME));
-        BINOP_INFO.put(PPIPE_SYM, new BinopInfo(90, Assoc.Left, PMap.NAME));
+        BINOP_INFO.put(TIMES_SYM, new BinopInfo(70, Assoc.Left, _times.INSTANCE.getName()));
+        BINOP_INFO.put(DIV_SYM, new BinopInfo(70, Assoc.Left, _div.INSTANCE.getName()));
+        BINOP_INFO.put(MOD_SYM, new BinopInfo(70, Assoc.Left, _mod.INSTANCE.getName()));
+
+        // TODO remove
+        BINOP_INFO.put(FTIMES_SYM, new BinopInfo(70, Assoc.Left, _ftimes.INSTANCE.getName()));
+        BINOP_INFO.put(FDIV_SYM, new BinopInfo(70, Assoc.Left, _fdiv.INSTANCE.getName()));
+        BINOP_INFO.put(FMOD_SYM, new BinopInfo(70, Assoc.Left, _fmod.INSTANCE.getName()));
+
+        BINOP_INFO.put(EXP_SYM, new BinopInfo(80, Assoc.Left, _pow.INSTANCE.getName()));
+
+        // TODO remove
+        BINOP_INFO.put(FEXP_SYM, new BinopInfo(80, Assoc.Left, _fpow.INSTANCE.getName()));
+
+        BINOP_INFO.put(PIPE_SYM, new BinopInfo(90, Assoc.Left, _map.INSTANCE.getName()));
+        BINOP_INFO.put(PPIPE_SYM, new BinopInfo(90, Assoc.Left, _pmap.INSTANCE.getName()));
 
         // compose is tighter than map, so list | f $ g == list | (f $ g)
         BINOP_INFO.put(COMPOSE_SYM, new BinopInfo(100, Assoc.Left, Constants.COMPOSE_FN));
@@ -175,14 +175,14 @@ public class Ops
 
     static
     {
-        UNOP_INFO.put(TIMES_SYM, Get.NAME);
-        UNOP_INFO.put(DOUBLE_TIMES_SYM, Gets.NAME);
+        UNOP_INFO.put(TIMES_SYM, _get.INSTANCE.getName());
+        UNOP_INFO.put(DOUBLE_TIMES_SYM, _gets.INSTANCE.getName());
 
-        UNOP_INFO.put(UMINUS_SYM, Neg.NAME);
-        UNOP_INFO.put(NOT_SYM, Not.NAME);
+        UNOP_INFO.put(UMINUS_SYM, _neg.INSTANCE.getName());
+        UNOP_INFO.put(NOT_SYM, _not.INSTANCE.getName());
 
         // TODO remove
-        UNOP_INFO.put(FUMINUS_SYM, FNeg.NAME);
+        UNOP_INFO.put(FUMINUS_SYM, _fneg.INSTANCE.getName());
     }
 
     // unary type operator info

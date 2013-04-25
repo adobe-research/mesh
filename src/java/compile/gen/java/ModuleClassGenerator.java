@@ -13,7 +13,6 @@ package compile.gen.java;
 import compile.analyze.SymbolConstantCollector;
 import compile.module.ImportedModule;
 import compile.module.Module;
-import compile.module.intrinsic.BuiltinModule;
 import compile.term.*;
 import compile.type.Types;
 import runtime.rep.ModuleRep;
@@ -227,13 +226,12 @@ public final class ModuleClassGenerator extends ClassGenerator
             addModuleRunStatement(methodDef, importedModule.getModule(), runModules);
         }
 
-        if (!(module instanceof BuiltinModule))
-            if (!runModules.contains(module))
-            {
-                methodDef.addStatement(
-                        new JavaStatement(qualifiedModuleClassName(module) + ".INSTANCE.run()"));
-                runModules.add(module);
-            }
+        if (!runModules.contains(module))
+        {
+            methodDef.addStatement(
+                    new JavaStatement(qualifiedModuleClassName(module) + ".INSTANCE.run()"));
+            runModules.add(module);
+        }
     }
 
     /**

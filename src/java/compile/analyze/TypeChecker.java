@@ -14,7 +14,6 @@ import com.google.common.collect.*;
 import compile.*;
 import compile.module.Module;
 import compile.module.Scope;
-import compile.module.intrinsic.BuiltinModule;
 import compile.parse.ApplyFlavor;
 import compile.term.*;
 import compile.type.*;
@@ -551,39 +550,6 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
         //{
             // TODO value restriction
         //}
-        else if (typed instanceof LetBinding)
-        {
-            final LetBinding let = (LetBinding)typed;
-            if (let.isIntrinsic()) 
-            {
-                checkIntrinsicDecl(let);
-            }
-        }
-    }
-
-    /** 
-     * Verify that the intrinsic declaration is full-specified and matches the 
-     * type of the builtin value.
-     */
-    private static void checkIntrinsicDecl(final LetBinding let)
-    {
-        final ValueBinding vb = BuiltinModule.INSTANCE.findValueBinding(let.getName());
-        if (vb == null || !vb.isLet() || !((LetBinding)vb).isIntrinsic()) 
-        {
-            Session.error(let.getLoc(),
-                    "intrinsic {0} does not exist as a builtin", let.getName());
-        }
-        else
-        {
-            final LetBinding builtin = (LetBinding)vb;
-            if (!builtin.getType().equiv(let.getType()))
-            {
-                Session.error(let.getLoc(),
-                        "declared intrinsic {0} type {1} does not match " + 
-                        "builtin type: {2}", 
-                        let.getName(), let.getType().dump(), builtin.getType().dump());
-            }
-        }
     }
 
     /**
