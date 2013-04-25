@@ -13,7 +13,7 @@
     <property name="gen.dir" value="${basedir}/gen"/>
     <property name="classes.dir" value="${basedir}/classes"/>
     <property name="lib.dir" value="${basedir}/lib"/>
-    <property name="docs.dir" value="${basedir}/docs"/>
+    <property name="docs.dir" value="${basedir}/docs/generated"/>
 
     <property name="wsclasses.dir" value="${basedir}/ws/classes"/>
     <property name="wssrc.dir" value="${basedir}/ws/src"/>
