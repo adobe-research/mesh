@@ -20,7 +20,7 @@ a.iws
 classes/**
 
 # doxygen files
-docs/**
+docs/generated/**
 
 # generated parser
 gen/**
