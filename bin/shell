@@ -1,0 +1,47 @@
+#!/bin/sh
+(set -o igncr) 2>/dev/null && set -o igncr; # ignore cr if present
+
+ROOTDIR=`dirname "$0"`/..
+PATHSEP=":"
+JAVA_PROPS=${JAVA_PROPS}
+
+if [ "${OSTYPE}" == "cygwin" ]; then
+    # java.exe expects a windows-style path
+    ROOTDIR=`cygpath -m ${ROOTDIR}` 
+    PATHSEP=";"
+
+    # jline doesn't correctly identify and interact with cygwin shell.
+    # If readline console is requested (i.e., -readline false is not 
+    # present in the argument list), then tell jline which terminal to 
+    # use via a Java property, and set the stty properties manually
+    # and reset them upon exit.
+    if [ "`echo "$@" | grep -- \"\-readline false\"`" = "" ]; then
+        JAVA_PROPS="${JAVA_PROPS} -Djline.terminal=jline.UnixTerminal"
+        stty -icanon min 1 -echo
+        trap "stty icanon echo" EXIT
+    fi
+fi
+
+
+if [ ! -f ${ROOTDIR}/mesh.jar ]; then
+    echo "Unable to find mesh.jar"
+    exit 1
+fi
+
+LIBJARS="guava-11.0.1 rats-runtime javassist jline core"
+CP="-cp ${ROOTDIR}/mesh.jar"
+
+for jar in ${LIBJARS}; do 
+    CP="${CP}${PATHSEP}${ROOTDIR}/lib/${jar}.jar"
+done
+
+JVM_ARGS="-Xmx1024m -ea -server ${CP} ${JAVA_PROPS}"
+
+if [ "${MODULEPATH}" = "" ]; then
+    MODULEPATH="${ROOTDIR}/src/script/lib"
+    MODULEPATH="${MODULEPATH};${ROOTDIR}/src/script"
+    MODULEPATH="${MODULEPATH};."
+fi
+
+# TODO bake lang + std access into compiler as default
+java ${JVM_ARGS} shell.Main -path ${MODULEPATH} -import lang -load std $@

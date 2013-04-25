@@ -1,0 +1,32 @@
+syntax: glob
+
+# backup files
+*.orig
+
+# emacs backups
+**/*~
+
+# patching rejects
+*.rej
+
+# .DS_Store
+**/.DS_Store
+.DS_Store
+
+# IJ local state
+a.iws
+
+# compiled classes
+classes/**
+
+# doxygen files
+docs/**
+
+# generated parser
+gen/**
+
+# built jars
+mesh.jar
+
+# vim swap files
+.*.swp

@@ -1,0 +1,634 @@
+//
+// ADOBE SYSTEMS INCORPORATED
+// Copyright 2009-2013 Adobe Systems Incorporated
+// All Rights Reserved.
+//
+// NOTICE: Adobe permits you to use, modify, and distribute
+// this file in accordance with the terms of the MIT license,
+// a copy of which can be found in the LICENSE.txt file or at
+// http://opensource.org/licenses/MIT.
+//
+
+//
+// Mesh grammar in Rats! (http://cs.nyu.edu/rgrimm/xtc/rats.html)
+// Ant build script generates rats.MeshParser into gen/java/rats.
+// Action code calls static methods in compile.parse.ASTBuilder
+//
+// @author Basil Hosmer
+//
+module rats.MeshParser;
+
+header
+{
+    import compile.Loc;
+    import compile.parse.ApplyFlavor;
+    import static compile.parse.ASTBuilder.*;
+    import compile.parse.SigInfo;
+    import compile.parse.FunctionDeclaration;
+    import compile.term.ParamBinding;
+    import compile.term.Statement;
+    import compile.term.Term;
+    import compile.type.Type;
+    import compile.type.TypeParam;
+    import compile.type.kind.Kind;
+    import compile.type.kind.Kinds;
+    import java.util.List;
+
+@SuppressWarnings({"LocalCanBeFinal", "UnnecessaryLocalVariable", "UnnecessaryBoxing"})
+}
+
+body
+{
+    /**
+     * return Loc for the given Rats index
+     */
+    public Loc loc(final int index)
+    {
+        final xtc.tree.Location xtcLoc = location(index);
+        return new Loc(xtcLoc.file, xtcLoc.line, xtcLoc.column);
+    }
+}
+
+// ----------------------------------------------------------
+//
+// Statements
+//
+
+//
+// A script is a list of statements.
+//
+transient public List<Statement> Script
+    = WhiteSpace StatementList EndOfFile ;
+
+//
+// Statement list rule, covers empty and trailing-semi cases.
+//
+transient List<Statement> StatementList
+    = h:Statement t:(Semi Statement)* Semi?
+        { yyValue = flatten(h, t.list()); }
+    /
+        { yyValue = empty(); }
+    ;
+
+//
+// Note: the Statement nonterminal produces a List<Statement> here
+// because we currently handle decomposing assignments by immediately
+// desugaring them into multiple statements.
+//
+transient List<Statement> Statement
+
+    // Type definitions can appear anywhere, are (roughly) scoped like lets.
+    = <TypeDef>
+        TypeKeyword name:Id Equals texpr:TypeExpr
+            { yyValue = typeDefStmt(loc(yyStart), name, texpr); }
+
+    // import sym1,sym2,sym3 from <module> into <namespace>
+    / <ImportDirective>
+        ImportKeyword syms:(ImportSymbolList FromKeyword)? 
+        module:NamespaceSpec as:(AsKeyword NamespaceSpec)?
+            { yyValue = importStmt(loc(yyStart), syms, module, as); }
+
+    // Parameterized type defs: type T(<params>) = RHS
+    / <ParamTypeDef>
+        TypeKeyword name:Id
+            LeftParen tparams:TypeParamList RightParen
+            Equals texpr:TypeExpr
+            { yyValue = typeAbsStmt(loc(yyStart), name, tparams, texpr); }
+
+    // Intrinsic type declaration: intrinsic type <name>;
+    / <IntrinsicType>
+        IntrinsicKeyword TypeKeyword name:Id
+            { yyValue = intrinsicTypeDef(loc(yyStart), name); }
+
+    // Intrinsic prototype: intrinsic [<typeparams>] f(params) [-> returntype];
+    / <IntrinsicDec>
+        IntrinsicKeyword decl:FuncDecl
+            { yyValue = intrinsicFuncStmt(loc(yyStart), decl.name, decl.typeParams, 
+                  decl.params, decl.returnType); }
+
+    // Function declaration syntax:
+    // [<typeparams>] f(params) [-> returntype] { body } is sugar for
+    // f = [<typeparams>] { params [-> returntype] => body }
+    / <FunDec>
+        decl:FuncDecl
+        LeftBrace body:StatementList RightBrace
+            { yyValue = funDecStmt(loc(yyStart), decl.name, decl.typeParams, 
+                  decl.params, decl.returnType, body); }
+
+    // A let is "<lhs> = <rhs>" or "<lhs> : <type> = <rhs>",
+    // with lhs either an id or a collection or structure literal
+    // with ids at leaf positions. Valid lhs structures are not
+    // given in the grammar - we let any expression through and
+    // validate during AST building.
+    / <Let>
+        l:Expr t:(Colon QuantifiedTypeExpr)? Equals r:Expr
+            { yyValue = letStmt(loc(yyStart), l, t, r); }
+
+    // Any expr can serve as a statement.
+    / <UnboundExpr>
+        e:Expr
+            { yyValue = unboundExprStmt(e); } ;
+
+//
+// Function declaration: [<typeparams>] name(params) [-> returntype]
+//
+FunctionDeclaration FuncDecl
+    =   <FunctionDecl>
+        tparams:(LessThan TypeParamList GreaterThan)?
+        name:Id
+        LeftParen params:ParamList? RightParen
+        rettype:(Arrow TypeExpr)?
+            { yyValue = funcDecl(loc(yyStart), name, tparams, params, rettype); }
+    ;
+
+// ----------------------------------------------------------
+//
+// Expressions
+//
+
+//
+// Term is root expr production.
+//
+Term Expr
+    = InfixExpr
+    ;
+
+//
+// Binary infix expression. Grammar models this as a flat series of
+// (op, rhs) pairs following a single lhs. Reduced using external
+// precedence and associativity tables.
+//
+Term InfixExpr
+    = h:PrefixExpr WhiteSpace t:InfixRHS+
+        { yyValue = binaryExpr(h, t.list()); }
+
+    / PrefixExpr ;
+
+//
+// Subrule for the (<op>, <rhs>) part of an infix expr.
+//
+transient compile.Pair<Object, Term> InfixRHS
+    // experimental: infix form (x 'expr y)
+    = "'" op:BaseExpr WhiteSpace arg:PrefixExpr
+        { yyValue = new compile.Pair<Object, Term>(op, arg); }
+    / op:BinaryOp WhiteSpace arg:PrefixExpr
+        { yyValue = new compile.Pair<Object, Term>(op, arg); } ;
+
+//
+// Prefix expressions are unary expressions and application expressions.
+// Unary expressions are right associative - ASTs are built directly by
+// the parse. Applications are left associative - ASTs are built in code
+// from lists accumulated here.
+//
+Term PrefixExpr
+    = <Unop>    op:UnaryOp WhiteSpace arg:PrefixExpr
+        { yyValue = unaryExpr(loc(yyStart), op, arg); }
+
+    / <App>     h:BaseExpr t:AppRHS+
+        { yyValue = applyChain(h, t.list()); }
+
+    / BaseExpr ;
+
+//
+// An application expression is either simple juxtaposition of base and
+// argument, or base and argument separated by a dot. Juxtaposition
+// expresses either function application or collection indexing,
+// the latter if the argument is an unparenthesized list literal.
+// Infix dot expresses a structure addressing operation, in which
+// case the argument must be constant. Note that an Id argument in
+// this case is desugared to a constant symbol (i.e., the backquote
+// is assumed).
+//
+transient compile.Pair<Term, ApplyFlavor> AppRHS
+
+    = <RecSymAddr>  Dot k:Id
+        { yyValue = new compile.Pair<Term, ApplyFlavor>(
+            symLiteral(loc(yyStart), k), ApplyFlavor.StructAddr); }
+
+    / <StructAddr>  Dot e:BaseExpr
+        { yyValue = new compile.Pair<Term, ApplyFlavor>(e, ApplyFlavor.StructAddr); }
+
+    / <CollIndex> LeftBracket e:Expr RightBracket
+        { yyValue = new compile.Pair<Term, ApplyFlavor>(e, ApplyFlavor.CollIndex); }
+
+    / e:BaseExpr
+        { yyValue = new compile.Pair<Term, ApplyFlavor>(e, ApplyFlavor.FuncApp); } ;
+
+//
+// Base (enclosed) expressions.
+//
+Term BaseExpr
+
+    //
+    // An inline parameter reference is ($+)n, i.e. a string of
+    // one or more dollar signs followed by a natural number. The
+    // quantity of dollar signs indicates scope depth (a single $
+    // is the current lambda), and the number indicates param index,
+    // 0 being the first.
+    //
+    = <InlineParam>    pre:InlineParamPrefix ix:NatConstant
+        { yyValue = inlineParam(loc(yyStart), pre, ix); }
+
+    //
+    // A list literal is a comma-separated expression list surrounded
+    // by square brackets.
+    //
+    / <ListLit>     LeftBracket el:ExprList? RightBracket
+         { yyValue = listLiteral(loc(yyStart), el); }
+
+    //
+    // A map literal is a comma-separated list of "<key>:<value>" pairs
+    // surrounded by square brackets, or "[:]" for an empty map.
+    //
+    / <EmptyMap>    LeftBracket Colon RightBracket
+        { yyValue = mapLiteral(loc(yyStart), null); }
+    / <MapLit>      LeftBracket m:PairList RightBracket
+        { yyValue = mapLiteral(loc(yyStart), m); }
+
+    //
+    // A tuple literal is "()" for the empty tuple, "(<expr>,)" for 1-tuple, or
+    // a comma-delimited expression list surrounded by parens.
+    //
+    / <EmptyTup>  LeftParen RightParen
+        { yyValue = tupLiteral(loc(yyStart), null, null); }
+    / <TupLit>    LeftParen h:Expr Comma t:ExprList? RightParen
+        { yyValue = tupLiteral(loc(yyStart), h, t); }
+
+    //
+    // A record literal is a comma-separated list of "<key>:<value>" pairs
+    // surrounded by parens, or "(:)" for an empty record.
+    //
+    / <EmptyRec>  LeftParen Colon RightParen
+        { yyValue = recLiteral(loc(yyStart), null); }
+    / <RecLit>    LeftParen m:PairList RightParen
+        { yyValue = recLiteral(loc(yyStart), m); }
+
+    //
+    // An operator symbol enclosed in parens denotes the implementing function.
+    // Note that binary operators hide unary operators with the same symbol
+    //
+    / <OpSym>       LeftParen op:RefOpSym RightParen
+        { yyValue = opRef(loc(yyStart), op); }
+
+    //
+    // A Symbol literal is a backquote followed by a lexical id.
+    //
+    / <SymLit>      void:"#" id:Id
+        { yyValue = symLiteral(loc(yyStart), id); }
+
+    //
+    // Boolean, string and numeric literals are the usual
+    //
+    / <StrLit>      s:StringConstant
+        { yyValue = strLiteral(loc(yyStart), s); }
+    / <BoolLit>     b:BoolConstant
+        { yyValue = boolLiteral(loc(yyStart), b); }
+    / <HexLit>      n:HexConstant
+        { yyValue = hexLiteral(loc(yyStart), n); }
+    / <FloatLit>    f:FloatConstant
+        { yyValue = floatLiteral(loc(yyStart), f); }
+    / <NatLit>      n:NatConstant
+        { yyValue = natLiteral(loc(yyStart), n); }
+
+    //
+    // Lambda expressions
+    //
+    / <Lambda>      Lambda
+
+    //
+    // id references
+    //
+    / <IdRef>       id:Id
+        { yyValue = idRef(loc(yyStart), id); }
+
+    //
+    // parenthesized expressions
+    //
+    / LeftParen Expr RightParen ;
+
+//
+// rule translates a sequence of dollar signs into its depth
+//
+transient String InlineParamPrefix
+    = Dollar p:InlineParamPrefix
+        { yyValue = "$" + p; }
+    / Dollar
+        { yyValue = "$"; }
+    ;
+
+//
+// Lambda expressions
+//
+Term Lambda
+    = tparams:(LessThan TypeParamList GreaterThan)?
+        LeftBrace
+        sig:(LambdaSig EqArrow)?
+        body:StatementList
+        RightBrace
+            { yyValue = lambda(loc(yyStart), tparams,
+                sig != null ? sig.params : null,
+                sig != null ? sig.rtype : null,
+                body); }
+    ;
+
+//
+// subrule for lambda value sig:
+// params can be parenthesized, and if so, can be followed
+// by return type annotation.
+// TODO full decomposing assignment sugar for params
+//
+SigInfo LambdaSig
+    = LeftParen params:ParamList? RightParen Arrow rtype:TypeExpr
+        { yyValue = new SigInfo(params, rtype); }
+    / LeftParen params:ParamList RightParen
+        { yyValue = new SigInfo(params, null); }
+    / params:ParamList
+        { yyValue = new SigInfo(params, null); }
+    ;
+
+//
+// Operators whose symbols may be enclosed in parens to denote a function reference.
+//
+// Note: (-), (-.) mean the binary versions.
+//
+// Note: bug in Rats makes us re-add unops separately, not sure why, but seems
+// to have something to do with the presence of "-.", which will go away with overloading.
+// TODO see if BinaryOp / UnaryOp go back to working okay when FP ops are removed
+//
+transient String RefOpSym
+    = BinaryOp
+//    / UnaryOp ;     // TODO restore
+    ;
+
+//
+// Binary operator symbols.
+// Backed by info in compile.parse.Ops
+// TODO remove floating point versions once we have TCs or similar
+//
+transient String BinaryOp
+    = "?" / "||" / "|:" / "|" / "&&"
+    / "==" / "!=" / "!" / "$" / "<<-" / "<-"
+    / ">=." / ">." / "<=." / "<." / "+." / "-." / "*." / "/." / "%." / "^."
+    / ">=" / ">" / "<=" / "<" / "+" / "-" / "*" / "/" / "%" / "^"
+    / ":=" / "::=" ;
+
+//
+// Unary operator symbols.
+// Backed by info in compile.parse.Ops
+//
+transient String UnaryOp
+    = "**" / "*" / "!" / "-." / "-";
+
+// Used for import statements
+// TODO: Use regexes instead of Id?
+transient List<String> ImportSymbolList
+    = h:Id t:(Comma Id)*
+        { yyValue = cons(h, t.list()); } 
+    / Star 
+        { yyValue = cons("*", null) ; } ;
+
+String NamespaceSpec
+    = name:Id Dot spec:NamespaceSpec
+        { yyValue = name + "." + spec; }
+    / name:Id
+        { yyValue = name; } ;
+
+//
+// Parameter list
+//
+transient List<ParamBinding> ParamList
+    = h:Param t:(Comma Param)*
+        { yyValue = cons(h, t.list()); } ;
+
+transient ParamBinding Param
+    = n:Id t:(Colon TypeExpr)?
+        { yyValue = param(loc(yyStart), n, t); } ;
+
+//
+// Expression list
+//
+transient List<Term> ExprList
+    = h:Expr t:(Comma Expr)*
+        { yyValue = cons(h, t.list()); } ;
+
+//
+// Key:value pair list, used for map and record literals.
+//
+transient List<compile.Pair<Term, Term>> PairList
+    = h:Pair t:(Comma Pair)*
+        { yyValue = cons(h, t.list()); } ;
+
+transient compile.Pair<Term, Term> Pair
+    = k:Expr Colon v:Expr
+        { yyValue = assoc(k, v); } ;
+
+// ----------------------------------------------------------
+
+//
+// Types
+//
+
+//
+// Quantified type expr: <params> :: <body>
+//
+Type QuantifiedTypeExpr
+    = LessThan ps:TypeParamList GreaterThan b:TypeExpr
+        { yyValue = quantifiedType(loc(yyStart), ps, b); }
+    / TypeExpr ;
+
+//
+// unquantified type expr
+//
+Type TypeExpr
+    = h:TypePrefixExpr WhiteSpace t:TypeInfixRHS+
+        { yyValue = binaryTypeExpr(h, t.list()); }
+
+    / TypePrefixExpr ;
+
+transient compile.Pair<Object, Type> TypeInfixRHS
+    = op:TypeBinaryOp WhiteSpace e:TypePrefixExpr
+        { yyValue = new compile.Pair<Object, Type>(op, e); } ;
+
+//
+// prefix type expr is unary expr or application
+//
+Type TypePrefixExpr
+    = <Unop> op:TypeUnaryOp t:TypePrefixExpr
+        { yyValue = unaryTypeExpr(loc(yyStart), op, t); }
+
+    / <App> h:TypeBaseExpr t:TypeBaseExpr+
+        { yyValue = typeApplyChain(loc(yyStart), h, t.list()); }
+
+    / TypeBaseExpr ;
+
+//
+// base type expr
+//
+Type TypeBaseExpr
+    = <IdRef>       id:Id
+        { yyValue = typeIdRef(loc(yyStart), id); }
+
+    / <Wildcard>    Question
+        { yyValue = wildcardType(loc(yyStart)); }
+
+    / <ListType>    LeftBracket e:TypeExpr RightBracket
+        { yyValue = listType(loc(yyStart), e); }
+
+    / <MapType>     LeftBracket k:TypeExpr Colon v:TypeExpr RightBracket
+        { yyValue = mapType(loc(yyStart), k, v); }
+
+    / <UnitType>    LeftParen RightParen
+        { yyValue = tupType(loc(yyStart), null, null); }
+
+    / <TupType>     LeftParen h:TypeExpr Comma t:TypeExprList? RightParen
+        { yyValue = tupType(loc(yyStart), h, t); }
+
+    / <EmptyRecType> LeftParen Colon RightParen
+        { yyValue = recType(loc(yyStart), null); }
+
+    / <RecType>     LeftParen m:TermTypePairList RightParen
+        { yyValue = recType(loc(yyStart), m); }
+
+    / <ExtentType>  n:NatConstant
+        { yyValue = extentType(loc(yyStart), n); }
+
+/*
+    conflict: {...} for enums vs. juxtaposition apply syntax for types.
+
+    / <EnumType>    LeftBrace li:ExprList? RightBrace
+        { yyValue = enumType(loc(yyStart), li); }
+*/
+    / LeftParen QuantifiedTypeExpr RightParen ;
+
+
+transient List<TypeParam> TypeParamList
+    = h:TypeParam t:(Comma TypeParam)*
+        { yyValue = cons(h, t.list()); } ;
+
+transient TypeParam TypeParam
+    = n:Id k:(Colon KindExpr)?
+        { yyValue = typeParam(loc(yyStart), n, k); } ;
+
+transient List<compile.Pair<Term, Type>> TermTypePairList
+    = h:TermTypePair t:(Comma TermTypePair)*
+        { yyValue = cons(h, t.list()); } ;
+
+transient compile.Pair<Term, Type> TermTypePair
+    = k:Expr Colon v:TypeExpr
+        { yyValue = assoc(k, v); } ;
+
+transient List<Type> TypeExprList
+    = h:TypeExpr t:(Comma TypeExpr)*
+        { yyValue = cons(h, t.list()); } ;
+
+//
+// Binary type operator symbols.
+// Backed by info in compile.parse.Ops
+//
+transient String TypeBinaryOp
+    = "|" / "->" ;
+
+//
+// Unary type operator symbols.
+// Backed by info in compile.parse.Ops
+//
+transient String TypeUnaryOp
+    = "?" / "*" ;
+
+// ----------------------------------------------------------
+
+//
+// Kinds
+//
+
+transient Kind KindExpr
+    = h:KindBaseExpr t:(Arrow KindBaseExpr)*
+        { yyValue = arrowKind(loc(yyStart), h, t.list()); }
+    / KindBaseExpr ;
+
+transient Kind KindBaseExpr
+    = <Star> StarKind
+
+    / <List> LeftBracket Star RightBracket
+        { yyValue = Kinds.STAR_LIST; }
+
+    / <Tup> LeftParen Star t:(Comma StarKind)* RightParen
+        { yyValue = tupleKind(loc(yyStart), Kinds.STAR, t.list()); }
+
+    / LeftParen KindExpr RightParen ;
+
+transient Kind StarKind
+    = Star
+        { yyValue = Kinds.STAR; } ;
+
+// ----------------------------------------------------------
+
+//
+// LEX-LIKE RULES START HERE
+//
+
+//
+// Note that we have higher-level nonterminals for binary and unary operators,
+// which overlap benignly with what follows. See BinaryOp, UnaryOp, etc. above.
+//
+transient void TypeKeyword = "type" MandatoryWhiteSpace ;
+transient void IntrinsicKeyword = "intrinsic" MandatoryWhiteSpace ;
+transient void ImportKeyword = "import" MandatoryWhiteSpace ;
+transient void FromKeyword = "from" MandatoryWhiteSpace ;
+transient void AsKeyword = "as" MandatoryWhiteSpace ;
+
+transient void Semi = ";" WhiteSpace ;
+transient void Colon = ":" WhiteSpace ;
+transient void DoubleColon = "::" WhiteSpace ;
+transient void LeftParen = "(" WhiteSpace ;
+transient void RightParen = ")" WhiteSpace ;
+transient void LeftBracket = "[" WhiteSpace ;
+transient void RightBracket = "]" WhiteSpace ;
+transient void LeftBrace = "{" WhiteSpace ;
+transient void RightBrace = "}" WhiteSpace ;
+transient void Equals = "=" WhiteSpace ;
+transient void Dot = "." WhiteSpace ;
+transient void Comma = "," WhiteSpace ;
+transient void LessThan = "<" WhiteSpace ;
+transient void GreaterThan = ">" WhiteSpace ;
+transient void Arrow = "->" WhiteSpace ;
+transient void EqArrow = "=>" WhiteSpace ;
+transient void Star = "*" WhiteSpace ;
+transient void VerticalBar = "|" WhiteSpace ;
+transient void Question = "?" WhiteSpace ;
+transient void Dollar = '$' WhiteSpace ;
+
+transient String Id = yyValue:IdCharacters WhiteSpace ;
+inline String IdCharacters = [a-zA-Z_] [a-zA-Z0-9_]* ;
+
+transient String BoolConstant = yyValue:BoolCharacters WhiteSpace ;
+inline String BoolCharacters = "true" / "false" ;
+
+transient String NatConstant = yyValue:NatCharacters WhiteSpace ;
+inline String NatCharacters = [0-9]+ 'L'?;
+
+transient String HexConstant = '0' [xX] yyValue:HexCharacters WhiteSpace ;
+inline String HexCharacters = [0-9a-fA-F]+ 'L'?;
+
+transient String FloatConstant = yyValue:FloatCharacters WhiteSpace ;
+inline String FloatCharacters = [0-9]+ '.' [0-9]* ([eE] [+\-]? [0-9]+)? 'F'?;
+
+transient String StringConstant = yyValue:StringCharacters WhiteSpace ;
+inline String StringCharacters = ["] (StringEscape / !["\\] _)* ["] ;
+inline String StringEscape = '\\' [btnfr"'\\] / '\\' 'u' HexQuad ;
+inline String HexQuad = [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] ;
+
+inline void MandatoryWhiteSpace = SpaceTokens+ ;
+
+inline void WhiteSpace = SpaceTokens* ;
+
+inline void SpaceTokens = SpaceChars / LineTerminator / TraditionalComment / EndOfLineComment ;
+
+inline void SpaceChars = ' ' / '\t' / '\f' ;
+
+inline void TraditionalComment = "/*" text:( '*' !'/' / !'*' _ )* "*/";
+
+inline void EndOfLineComment = "//" text:( ![\n\r] _ )* (LineTerminator / &EndOfFile);
+
+inline void LineTerminator = '\r' '\n' / '\r' / '\n' ;
+inline void EndOfFile = !_ ;

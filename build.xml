@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+<project name="mesh" default="main" basedir=".">
+
+    <!-- properties -->
+
+    <property file="${basedir}/build.properties"/>
+    <property environment="env" />
+
+    <property name="module.jar" value="mesh.jar"/>
+    <property name="module.rjar" value="meshr.jar"/>
+
+    <property name="src.dir" value="${basedir}/src"/>
+    <property name="gen.dir" value="${basedir}/gen"/>
+    <property name="classes.dir" value="${basedir}/classes"/>
+    <property name="lib.dir" value="${basedir}/lib"/>
+    <property name="docs.dir" value="${basedir}/docs"/>
+
+    <property name="wsclasses.dir" value="${basedir}/ws/classes"/>
+    <property name="wssrc.dir" value="${basedir}/ws/src"/>
+    <property name="ws.jar" value="${basedir}/ws/ws.jar"/>
+
+    <property name="dependent.jars" value="
+        collections-generic-4.01.jar,
+        commons-lang-2.4.jar,
+        core.jar,
+        guava-11.0.1.jar,
+        javassist.jar,
+        jline.jar,
+        rats-runtime.jar"/>
+
+    <property name="rats.grammar.file" value="${src.dir}/rats/MeshParser.rats"/>
+    <property name="rats.gen.dir" value="${gen.dir}/java/rats"/>
+
+    <condition property="doxygen.available">
+        <or>
+            <available file="doxygen" filepath="${env.PATH}" />
+            <available file="doxygen.exe" filepath="${env.PATH}" />
+        </or>
+    </condition>
+
+    <!-- paths -->
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}" includes="${dependent.jars}"/>
+    </path>
+
+    <path id="shell.classpath">
+        <pathelement location="mesh.jar" /> 
+        <fileset dir="${lib.dir}" includes="${dependent.jars}"/>
+    </path>    
+
+    <!-- targets -->
+
+    <!-- clean and build -->
+    <target name="main" depends="clobber,prepare,jar"/>
+
+    <!-- just build -->
+    <target name="dev" depends="jar"/>
+
+    <!-- clean -->
+    <target name="clean">
+        <delete dir="${classes.dir}"/>
+        <delete dir="${gen.dir}"/>
+    </target>
+    <!-- clobber -->
+    <target name="clobber" depends="clean" description="remove all artifact files">
+        <delete file="${module.jar}"/>
+    </target>
+
+    <!-- prepare for build - create output directories, etc. -->
+    <target name="prepare">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${gen.dir}"/>
+        <mkdir dir="${rats.gen.dir}"/>
+    </target>
+
+    <!-- build jar -->
+    <target name="jar" depends="compile">
+        <jar file="${module.jar}">
+            <fileset dir="${classes.dir}">
+                <include name="**/*"/>
+            </fileset>
+        </jar>
+    </target>
+
+    <!-- build runtime jar -->
+    <!-- TODO split runtime.intrinsic.* funcs from their sigs. until then, need full mesh.jar at RT -->
+    <target name="rjar" depends="compile">
+        <jar file="${module.rjar}">
+            <fileset dir="${classes.dir}">
+                <include name="runtime/**/*"/>
+            </fileset>
+        </jar>
+    </target>
+
+    <!-- compile java source tree(s) into classes tree. -->
+    <target name="compile" depends="rats">
+        <javac source="1.5"
+               debug="${src.debug}"
+               classpathref="classpath"
+               srcdir="${gen.dir}/java;${src.dir}/java"
+               includeantruntime="false"
+               destdir="${classes.dir}">
+            <compilerarg value="-Xlint"/>
+        </javac>
+    </target>
+
+    <!-- generate parser source from rats grammar -->
+    <target name="rats">
+        <java jar="lib/rats.jar" fork="true" failonerror="true">
+            <arg value="-lgpl"/>
+            <!-- arg value="-verbose"/ -->
+            <!-- arg value="-performance"/ -->
+            <!-- arg value="-diagnostics"/ -->
+            <arg value="-out"/>
+            <arg value="${rats.gen.dir}"/>
+            <arg value="${rats.grammar.file}"/>
+        </java>
+    </target>
+
+    <!-- jar up the generated classes in ws -->
+    <target name="wsjar">
+        <jar file="${ws.jar}">
+            <fileset dir="${wsclasses.dir}">
+                <include name="**/*"/>
+            </fileset>
+        </jar>
+    </target>
+
+    <!-- test -->
+    <target name="test" depends="main">
+        <java fork="true" failonerror="true" classname="shell.Main" 
+              classpathref="shell.classpath">
+            <jvmarg value="-Xmx1024m" />
+            <jvmarg value="-ea" />
+            <jvmarg value="-server" />
+            <arg value="-path" />
+            <arg value="./src/script;./src/script/lib" />
+            <arg value="-import" />
+            <arg value="lang" />
+            <arg value="@test/harness.ms" />
+        </java>
+    </target>
+
+    <!-- clean generated ws classes, jar -->
+    <target name="wsclean">
+        <delete dir="${wsclasses.dir}"/>
+        <delete dir="${wssrc.dir}"/>
+        <delete dir="${docs.dir}"/>
+        <delete file="${ws.jar}"/>
+    </target>
+
+    <target name="check-for-doxygen" unless="doxygen.available">
+        <echo>
+            Cannot find doxygen binary in your PATH.
+            Documentation will not be created.
+        </echo>
+    </target>
+
+    <target name="docs" depends="check-for-doxygen" if="doxygen.available">
+        <exec executable="doxygen">
+            <arg value="doxygen.config" />
+        </exec>
+    </target>
+
+</project>
