@@ -73,8 +73,8 @@ public final class IntrinsicsResolver
                 final Class<?> intrClass = Class.forName(clsName);
                 if (intrClass != null)
                 {
-                    Field field = intrClass.getField(Constants.INSTANCE);
-                    Object intrObj = field.get(null);
+                    final Field field = intrClass.getField(Constants.INSTANCE);
+                    final Object intrObj = field.get(null);
                     if (intrObj != null && intrObj instanceof IntrinsicLambda)
                     {
                         final IntrinsicLambda lambda = (IntrinsicLambda)intrObj;
@@ -104,10 +104,14 @@ public final class IntrinsicsResolver
         if (intr != null)
             return intr.getClass().getName() + "." + Constants.INSTANCE;
         else
+        {
+            Session.error("Cannot find implementation for intrinsic ''{0}'' with type ''{1}''", 
+                    let.getName(), let.getType().dump());
             return null;
+        }
     }
 
-    private boolean verifyIntrinsicType(LetBinding let, IntrinsicLambda lambda)
+    private boolean verifyIntrinsicType(final LetBinding let, final IntrinsicLambda lambda)
     {
         if (Session.isDebug()) 
             Session.debug("Verifying proper form of intrinsic: ''{0}''", let.getName());
@@ -124,7 +128,7 @@ public final class IntrinsicsResolver
         final Class<?>[] paramspec = parameters.toArray(new Class<?>[0]);
         try 
         {
-            Method method = lambda.getClass().getMethod(Constants.INVOKE, paramspec);
+            final Method method = lambda.getClass().getMethod(Constants.INVOKE, paramspec);
             if (method.getReturnType() == returnType) 
                 return true;
         }
@@ -147,7 +151,7 @@ public final class IntrinsicsResolver
             final Type arg = Types.appArg(function);
             if (arg instanceof TypeTuple)
             {
-                List<Type> tuple = ((TypeTuple)arg).getMembers();
+                final List<Type> tuple = ((TypeTuple)arg).getMembers();
                 if (tuple.size() == 2) 
                     return new Pair<Type,Type>(tuple.get(0), tuple.get(1));
             }
