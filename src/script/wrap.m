@@ -11,7 +11,7 @@ wrap(str:String, wid:Int) -> [String]
 {
     // locations of wrappable positions in str,
     // plus start and end offsets
-    spaces = [0] + strwhere(str, { startswith($0, " ") }) + [strlen(str)];
+    spaces = [0] + strwhere(str, { $0 == " " }) + [strlen(str)];
 
     // given current list of line breaks and current
     // position in space locations list, add a new
