@@ -21,7 +21,6 @@ import java.util.ArrayList;
 
 /**
  * where() for strings
- * NOTE passes substring to pred, not char
  *
  * @author Basil Hosmer
  */
@@ -51,7 +50,7 @@ public final class _strwhere extends IntrinsicLambda
         final ArrayList<Integer> indexes = Lists.newArrayList();
 
         for (int i = 0; i < len; i++)
-            if ((Boolean)pred.apply(s.substring(i)))
+            if ((Boolean)pred.apply(s.substring(i, i + 1)))
                 indexes.add(i);
 
         return PersistentList.init(indexes.iterator(), indexes.size());

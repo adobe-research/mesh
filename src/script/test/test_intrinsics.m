@@ -242,7 +242,7 @@ assert_equals({ "world" }, { strtake(-5, "hello world") });
 assert_equals({ "hello worldhello" }, { strtake(16, "hello world") });
 
 // strwhere : (String, String -> Bool) -> [Int] = <intrinsic>
-assert_equals({ [3,7,10,12] }, { strwhere("abcZdefZghZiZjk", { startswith($0, "Z") }) });
+assert_equals({ [3,7,10,12] }, { strwhere("abcZdefZghZiZjk", { $0 == "Z" }) });
 
 // substr : (String, Int, Int) -> String = <intrinsic>
 assert_equals({ "lo w" }, { substr("hello world", 3, 4) });
