@@ -120,14 +120,14 @@ intrinsic <Ts:[*]> snaps(x:Tup(Ts | Box)) -> Tup(Ts);
 
 
 /**
- * perform an action on a boxed variable, updating its state
+ * Perform an action on a boxed variable, updating its state
  * and returning the action's result.
  * @param b boxed state variable
- * @param f action function on a state value of type s.
+ * @param f action function on a state value of type S.
  * returning a pair of (new state, action result).
  * @return result of action on b's state
  */
-<s, r> act(b : *s, f : s -> (s, r))
+<S, T> act(b : *S, f : S -> (S, T)) -> T
 {
     do {
         (next, result) = f(own(b));
@@ -137,32 +137,42 @@ intrinsic <Ts:[*]> snaps(x:Tup(Ts | Box)) -> Tup(Ts);
 };
 
 /**
- * update to new value, returns prior value.
+ * Update box to new value, return its prior value.
  */
 postput(b, v) { act(b, { (v, $0) }) };
 
 /**
- * run update function and return prior value.
+ * Run update function f on current value of box b.
+ * Update b with the result, and also return it.
+ * Note: action function argument to act() is
+ * equivalent to <code>f $ twin</code>.
+ */
+preupdate(b, f) { act(b, { v = f($0); (v, v) }) };
+
+/**
+ * Run update function f on current value of box b.
+ * Update b with the result, and return b's original
+ * value.
  */
 postupdate(b, f) { act(b, { (f($0), $0) }) };
 
 /**
- * atomic pre-increment.
+ * Atomic pre-decrement.
  */
-preinc(b) { act(b, inc $ twin) };
+predec(b) { preupdate(b, dec) };
 
 /**
- * atomic post-increment.
+ * Atomic pre-increment.
+ */
+preinc(b) { preupdate(b, inc) };
+
+/**
+ * Atomic post-increment.
  */
 postinc(b) { postupdate(b, inc) };
 
 /**
- * atomic pre-decrement.
- */
-predec(b) { act(b, dec $ twin) };
-
-/**
- * atomic post-decrement.
+ * Atomic post-decrement.
  */
 postdec(b) { postupdate(b, dec) };
 
