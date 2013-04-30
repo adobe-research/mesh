@@ -335,6 +335,18 @@ intrinsic max(x:Int, y:Int) -> Int;
 intrinsic min(x:Int, y:Int) -> Int;
 
 /**
+ * Constrained integer
+ * @param lo minimum value
+ * @param n value to constrain
+ * @param hi maximum value
+ * @return integer equal to max(lo, min(hi, n))
+ */
+constrain(lo, n, hi)
+{
+    max(lo, min(hi, n))
+};
+
+/**
  * Integer sign.
  * @param x value
  * @return Returns 1 if x > 0, 0 if x == 0, otherwise -1.

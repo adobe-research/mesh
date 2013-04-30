@@ -6,17 +6,33 @@
 import * from list;
 import * from mutate;
 import * from math;
+import tracen from loop;
+import mapz from map;
 import l2i,l2f from integer;
 
 /**
- * helper - given list and #chunks, return chunked list.
+ * Return a chunk size (stride) that will divide the given list
+ * into the given number of chunks. Chunks will be evenly sized
+ * except possibly for the final chunk, which may be smaller
+ * than the rest (in cases where chunks > 1).
+ * @param lst list
+ * @param nchunks number of chunks to calculate stride for
+ * @return chunk size as described above
  */
-chunks(lst, i)
+stride(lst, nchunks)
 {
-    n = size(lst);
-    ravel(lst, n / i + sign(n % i))
+    s = size(lst);
+    n = constrain(1, nchunks, s);
+    s / n + sign(s % n)
 };
 
+/**
+ * given list and number of chunks, return chunked list.
+ */
+chunks(lst, nchunks)
+{
+    ravel(lst, stride(lst, nchunks))
+};
 
 /**
  * TODO variadic a la zip, needs type-level Zip
@@ -24,7 +40,10 @@ chunks(lst, i)
  * @param g function.
  * @return a function that takes an arg of same type as f and g and returns a pair of results.
  */
-fan(f, g) { { (f($0), g($0)) } };
+fan(f, g)
+{
+    { (f($0), g($0)) }
+};
 
 /**
  * @param f function.
@@ -33,7 +52,10 @@ fan(f, g) { { (f($0), g($0)) } };
  * 
  * TODO variadic a la zip, needs type-level Zip
  */
-fuse(f, g) { { (f($0), g($1)) } };
+fuse(f, g)
+{
+    { (f($0), g($1)) }
+};
 
 /**
  * @return current time in millis.
@@ -192,7 +214,7 @@ rangen(start, extent, step)
 {
     stride = abs(step);
     n = divz(abs(extent) + stride - 1, stride);
-    count(sign(extent) * n) | { start + $0 * stride }
+    count(sign(extent) * n) | { start + $0 * stride };
 };
 
 /**
@@ -223,35 +245,38 @@ intrinsic hsb2rgb(x:Double, y:Double, z:Double) -> Int;
  * pmapn(lst, f, 1) == pmap(lst, f) == f |: lst
  * pmapn(lst, f, size(lst)) == map(lst, f) == f | lst.
  */
-pmapn(lst, f, n)
+pmapn(lst, f, ntasks)
 {
-    flatten(chunks(lst, n) |: { $0 | f })
+    flatten(chunks(lst, ntasks) |: { $0 | f })
 };
 
 /**
  * evaluate for(list, f) in parallel chunks of the given size.
  */
-pforn(lst, f, n)
+pforn(lst, f, ntasks)
 {
-    pfor(chunks(lst, n), { for($0, f) })
+    pfor(chunks(lst, ntasks), { for($0, f) })
 };
 
 /**
- * evaluate filter(lst, pred) in parallel chunks of the given size.
- * so pfiltern(lst, pred, size(lst)) gives the same result as
- * filter(lst, pred)
+ * evaluate filter(lst, pred) using the given number of parallel tasks
  */
-pfiltern(lst, pred, n)
+pfiltern(lst, pred, ntasks)
 {
-    flatten(chunks(lst, n) |: { filter($0, pred) })
+    flatten(chunks(lst, ntasks) |: { filter($0, pred) })
 };
 
 /**
- * evaluate where(lst, pred) in parallel chunks of the given size.
+ * evaluate where(lst, pred) using the given number of parallel tasks
  */
-pwheren(lst, pred, n)
+pwheren(lst, pred, ntasks)
 {
-    flatten(chunks(lst, n) |: { where($0, pred) })
+    s = stride(lst, ntasks);
+    chunks = ravel(lst, s);
+    offsets = tracen(size(chunks), 0, { $0 + s });
+    inputs = zip(chunks, offsets);
+    results = inputs |: { chunk, offset => where(chunk, pred) | { $0 + offset } };
+    flatten(results)
 };
 
 /**
@@ -270,5 +295,8 @@ ppartn(vals, f, n)
 /**
  * cut a list into equal-length sublists (last might be ragged)
  */
-ravel(lst, n) { cut(lst, countn(size(lst), n)) };
+ravel(lst, n)
+{
+    cut(lst, countn(size(lst), n))
+};
 

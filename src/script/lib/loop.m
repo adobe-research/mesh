@@ -9,25 +9,45 @@ import * from list;
  * Iteration is started with specified initial argument, which is
  * passed through the guard before being applied.
  *
- * @param x Predicate lambda that accepts the value of y, determines when cycle ends.
- * @param y Initial value of y that will be passed to the z lambda, value of y is applied
- *        to the predicate prior to being passed into the z lambda parameter.
- * @param z Function that accepts passed in value T and returns the next value T that will
+ * @param p Predicate lambda that accepts the value of v, determines when cycle ends.
+ * @param v Initial value of v that will be passed to the f lambda, value of v is applied
+ *        to the predicate prior to being passed into the f lambda parameter.
+ * @param f Function that accepts passed in value T and returns the next value T that will
  *        be fed back into the function if guard predicate is still true.
- * @return Value of y when predicate is false.
+ * @return Value of v when predicate is false.
  */
-intrinsic <T> cycle(x:(T -> Bool), y:T, z:(T -> T)) -> T;
+intrinsic <T> cycle(p:(T -> Bool), v:T, f:T -> T) -> T;
 
 /**
- * Iterate on an endofunction fox x number of times
+ * Iterate on an endofunction fox n number of times
  *
- * @param x Limit of how many times z function will be called.
- * @param y Initial value of y that will be passed to the z lambda.
- * @param z Function that accepts passed in value T and returns the next value T that will
+ * @param n Limit of how many times f function will be called.
+ * @param v Initial value of v that will be passed to the f lambda.
+ * @param f Function that accepts passed in value T and returns the next value T that will
  *        be fed back into the function as long as upper limit has not been reached.
- * @return Value of y when predicate is false.
+ * @return Value of v after the given number of iterations.
  */
-intrinsic <T> cyclen(x:Int, y:T, z:(T -> T)) -> T;
+intrinsic <T> cyclen(n:Int, v:T, f:T -> T) -> T;
+
+/**
+ * Traced version of cycle(): instead of returning the final, failing value,
+ * returns the list of intermediate passing values, starting with initial
+ * value v.
+ */
+trace(p, v, f)
+{
+    drop(-1, cycle(last $ p, [v], { append($0, f(last($0))) }))
+};
+
+/**
+ * Traced version of cyclen(): instead of returning the value after n
+ * iterations, returns the list of intermediate values, returned from
+ * 0 to n - 1 iterations.
+ */
+tracen(n, v, f)
+{
+    drop(-1, cyclen(n, [v], { append($0, f(last($0))) }))
+};
 
 /**
  * Evolve (reduce) until stop condition is met, or inputs
@@ -119,7 +139,7 @@ converge(func, init)
  * @param init object.
  * @return list recording all values returned by func on way to convergence.
  */
-trace(func, init)
+tconverge(func, init)
 {
     diff(accum, x, y) { x != y && { y != init } };
     next(accum, x, y) { (append(accum, y), y, func(y)) };
@@ -212,6 +232,7 @@ intrinsic <A,B> scan(x:(A, B) -> A, y:A, z:[B]) -> [A];
 /**
  * iter is degenerate while.
  */
-iter(p) {
+iter(p)
+{
     while(p, {()})
 };
