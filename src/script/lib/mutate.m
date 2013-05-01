@@ -138,31 +138,45 @@ intrinsic <Ts:[*]> snaps(x:Tup(Ts | Box)) -> Tup(Ts);
 
 /**
  * update to new value, returns prior value.
+ * @param b box to modify
+ * @param v new value to place in the box
+ * @return original value in the box
  */
 postput(b, v) { act(b, { (v, $0) }) };
 
 /**
  * run update function and return prior value.
+ * @param b box to update
+ * @param f function to update the value in the box
+ * @return original value in the box
  */
 postupdate(b, f) { act(b, { (f($0), $0) }) };
 
 /**
  * atomic pre-increment.
+ * @param b box to increment
+ * @return new value in the box
  */
 preinc(b) { act(b, inc $ twin) };
 
 /**
  * atomic post-increment.
+ * @param b box to increment
+ * @return original value in the box
  */
 postinc(b) { postupdate(b, inc) };
 
 /**
  * atomic pre-decrement.
+ * @param b box to decrement
+ * @return new value in the box
  */
 predec(b) { act(b, dec $ twin) };
 
 /**
  * atomic post-decrement.
+ * @param b box to increment
+ * @return original value in the box
  */
 postdec(b) { postupdate(b, dec) };
 
@@ -176,6 +190,10 @@ postdec(b) { postupdate(b, dec) };
 
 /**
  * compare and swap. returns success
+ * @param b boxed value
+ * @param o old value
+ * @param n new value
+ * @return returns success
  */
 cas(b, o, n)
 {
@@ -186,6 +204,10 @@ cas(b, o, n)
 
 /**
  * compare and update. cau is to update as cas is to put
+ * @param b boxed value
+ * @param o old value
+ * @param f function to update the box
+ * @return returns success
  */
 cau(b, o, f)
 {
@@ -196,6 +218,10 @@ cau(b, o, f)
 
 /**
  * test and swap. returns success paired with old value
+ * @param b boxed value
+ * @param p test function
+ * @param n new value
+ * @return returns tuple of success and old value
  */
 tas(b, p, n)
 {
@@ -207,6 +233,10 @@ tas(b, p, n)
 
 /**
  * test and update. returns success paired with old value
+ * @param b boxed value
+ * @param p test function
+ * @param n function to update the box
+ * @return returns tuple of success and old value
  */
 tau(b, p, f)
 {
@@ -219,6 +249,10 @@ tau(b, p, f)
 /**
  * wait, then test and update using the same (box, pred)
  * for wait and test. returns success paired with old value
+ * @param b boxed value
+ * @param p predicate
+ * @param f function to update the box
+ * @return returns tuple of success and old value
  */
 wtau(b, p, f)
 {
@@ -228,6 +262,10 @@ wtau(b, p, f)
 
 /**
  * tuplized compare and swap
+ * @param bs tuple of boxes
+ * @param os tuple of old values to compare
+ * @param ns tuple of new values
+ * @return returns success
  */
 cast(bs, os, ns)
 {
@@ -238,6 +276,10 @@ cast(bs, os, ns)
 
 /**
  * tuplized compare and update
+ * @param bs tuple of boxes
+ * @param os tuple of old values to compare
+ * @param f function to update the tuple values
+ * @return returns success
  */
 caut(bs, os, f)
 {
@@ -248,6 +290,9 @@ caut(bs, os, f)
 
 /**
  * tuplized test and swap
+ * @param bs tuple of boxes
+ * @param p function to test the tuple to see if swap should proceeed
+ * @param ns tuple of new values
  */
 tast(bs, p, ns)
 {
@@ -259,7 +304,10 @@ tast(bs, p, ns)
 
 /**
  * tuplized test and update
- */
+ * @param bs tuple of boxes
+ * @param p function to test the tuple to see if update should proceeed
+ * @param f function to update the tuple values
+  */
 taut(bs, p, f)
 {
     do {
@@ -271,6 +319,9 @@ taut(bs, p, f)
 /**
  * multiwait, then test and update using the same (boxes, pred)
  * for wait and test. returns success paired with old values
+ * @param bs tuple of boxed values
+ * @param p predicate 
+ * @param f function to update the tuple values
  */
 wtaut(bs, p, f)
 {
@@ -279,15 +330,45 @@ wtaut(bs, p, f)
 };
 
 /**
- * push v onto boxed list as deque
+ * push v onto front of boxed list, enqueue
+ * @param blst list of boxed values
+ * @param v value
  */
 pushfront(blst, v) { blst <- { [v] + $0 } };
+
+/**
+ * push v onto back of boxed list, enqueue
+ * @param blst list of boxed values
+ * @param v value
+ */
 pushback(blst, v) { blst <- { append($0, v) } };
 
+/**
+ * pop value from front of boxed list, deque
+ * @param blst list of boxed values
+ * @return value that was popped off of the boxed list
+ */
 popfront(blst) { act(blst, { (rest($0), first($0)) }) };
+
+/**
+ * pop value from back of boxed list, deque
+ * @param blst list of boxed values
+ * @return value that was popped off of the boxed list
+ */
 popback(blst) { act(blst, { (drop(-1, $0), last($0)) }) };
 
+/**
+ * return the first value in a boxed list
+ * @param blst list of boxed values
+ * @return first value in the list
+ */
 peekfront(blst) { first(*blst) };
+
+/**
+ * return the last value in a boxed list
+ * @param blst list of boxed values
+ * @return last value in the list
+ */
 peekback(blst) { last(*blst) };
 
 //
@@ -304,6 +385,12 @@ push = pushback;
 pop = popback;
 peek = peekback;
 
+/**
+ * swap the last value in a boxed list with a new value
+ * @param s boxed list
+ * @param v new value
+ * @return previous value at the end of boxed list
+ */
 swap(s, v)
 {
     act(s, { lst => (append(drop(-1, lst), v), last(lst)) })
@@ -315,6 +402,8 @@ swap(s, v)
 
 /**
  * react is like watch, but with only new value passed to watcher.
+ * @param b box to watch
+ * @param f function that will be invoked with the new value in box
  */
 react(b, f) { watch(b, { old, new => f(new) }) };
 
@@ -322,6 +411,8 @@ react(b, f) { watch(b, { old, new => f(new) }) };
  * create and return a box whose value tracks the value
  * of the passed box, mapped through the passed function.
  * E.g. c = dep(b, id); c tracks the value of b.
+ * @param src box to track
+ * @param f function that will be invoked with the new value of src when it is altered
  */
 dep(src, f)
 {
@@ -336,6 +427,8 @@ dep(src, f)
  * E.g. x = box(0); y = box(1); z = deps([x, y], sum);
  * 
  * TODO over non-uniform boxes
+ * @param sources list of boxes to track
+ * @param f function that will be invoked with the new values of sources when they are altered
  */
 deps(sources, f)
 {
