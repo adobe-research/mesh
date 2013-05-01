@@ -217,7 +217,8 @@ fsq(f) { f *. f };
  * 
  * @param vec vector of digits
  * @param radix
- * 
+ * @return Int value representation of vector in specified radix
+ * @code vec2i([1, 0, 2, 4]) // returns 1024 @endcode
  */
 vec2i(vec, radix)
 {
