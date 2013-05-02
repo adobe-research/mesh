@@ -13,8 +13,8 @@ syntax: glob
 **/.DS_Store
 .DS_Store
 
-# IJ local state
-a.iws
+# IJ workspace state
+**/*.iws
 
 # compiled classes
 classes/**
