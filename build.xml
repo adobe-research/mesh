@@ -13,7 +13,7 @@
     <property name="gen.dir" value="${basedir}/gen"/>
     <property name="classes.dir" value="${basedir}/classes"/>
     <property name="lib.dir" value="${basedir}/lib"/>
-    <property name="docs.dir" value="${basedir}/docs/generated"/>
+    <property name="docs.dir" value="${basedir}/gen/doxygen"/>
 
     <property name="wsclasses.dir" value="${basedir}/ws/classes"/>
     <property name="wssrc.dir" value="${basedir}/ws/src"/>
@@ -158,6 +158,7 @@
     </target>
 
     <target name="docs" depends="check-for-doxygen" if="doxygen.available">
+        <mkdir dir="${docs.dir}"/>
         <exec executable="doxygen">
             <arg value="doxygen.config" />
         </exec>
