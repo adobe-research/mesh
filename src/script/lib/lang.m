@@ -476,6 +476,8 @@ intrinsic assert(x:Bool, y:String) -> ();
 
 /**
  * async(f, cb) runs f asynchronously and calls cb with the result.
+ * @param f first function to run
+ * @param cb second function to run using the result from f
  */
 async(f, cb) { spawn { cb(f()) } };
 
@@ -541,7 +543,8 @@ intrinsic <Ts:[*]> gets(x:Tup(Ts | Box)) -> Tup(Ts);
 
 /**
  * identity function.
- * 
+ * @param v value
+ * @return returns the value v
  */
 id(v) { v };
 
@@ -652,6 +655,15 @@ intrinsic <T> while(x:() -> Bool, y:() -> T) -> ();
 // tuple service
 //
 
+/**
+ * @param p tuple value
+ * @return returns the value in the tuple at position 0
+ */
 <A, B> fst(p:(A, B)) { p.0 };
+
+/**
+ * @param p tuple value
+ * @return returns the value in the tuple at position 1
+ */
 <A, B> snd(p:(A, B)) { p.1 };
 

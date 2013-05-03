@@ -9,6 +9,9 @@ import cycle from loop;
 
 /**
  * set intersection on lists
+ * @param list1 list of values
+ * @param list2 list of values
+ * @return list containing common values in both lists
  */
 intersection(list1, list2)
 {
@@ -17,12 +20,17 @@ intersection(list1, list2)
 };
 
 /**
- * true if lists a and b are permutations of each other
+ * @param a list of values
+ * @param b list of values
+ * @return true if lists a and b are permutations of each other
  */
 isperm(a, b) { counts(a) == counts(b) };
 
 /**
  * directional set difference on lists
+ * @param list1 list of values
+ * @param list2 list of values
+ * @return list containing values that are unique to each list
  */
 difference(list1, list2)
 {
@@ -34,6 +42,9 @@ difference(list1, list2)
  * merge sort - parallelization based on availprocs().
  * cmp(l, r) returns an int with the same sign as the difference between l and r.
  * e.g. use (-) for an ascending sort on ints.
+ * @param lst list of values to sort
+ * @param cmp function that accepts l and r values from the list and returns an int with the same sign as the difference between l and r.
+ * @return list with elements sorted based on cmp
  */
 sort(lst, cmp)
 {
@@ -70,6 +81,9 @@ sort(lst, cmp)
  * index sort.
  * instead of returning a sorted version of the list, return a sorted
  * list of indexes: sort(list, cmp) == mapll(isort(sort, cmp), list)
+ * @param lst list of values to sort
+ * @param cmp function that accepts l and r values from the list and returns an int with the same sign as the difference between l and r.
+ * @return list of sorted indexes into list, base on cmp
  */
 isort(lst, cmp) {
     sort(index(lst), { cmp(lst[$0], lst[$1]) })
@@ -77,6 +91,9 @@ isort(lst, cmp) {
 
 /**
  * index qsort.
+ * @param lst list of values to sort
+ * @param cmp function that accepts l and r values from the list and returns an int with the same sign as the difference between l and r.
+ * @return list of sorted indexes into lst, base on cmp
  */
 iqsort(lst, cmp) {
    qsort(index(lst), { cmp(lst[$0], lst[$1]) })
@@ -87,6 +104,9 @@ iqsort(lst, cmp) {
  * diff(l, r) returns an int with the same sign as the difference between l and r.
  * e.g. use (-) for an ascending sort on ints.
  * note: partitioning is not parallelized. provides no speedup, not sure why not.
+ * @param list list of values to sort
+ * @param cmp function that accepts l and r values from the list and returns an int with the same sign as the difference between l and r.
+ * @return list with elements sorted based on cmp
  */
 qsort(lst, cmp)
 {
@@ -109,6 +129,9 @@ qsort(lst, cmp)
 
 /**
  * set union on lists
+ * @param list1 list of values
+ * @param list2 list of values
+ * @return list of values consisting of the union of both lists
  */
 union(list1, list2)
 {

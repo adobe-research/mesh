@@ -215,8 +215,24 @@ firstwhere(pred, vals)
  * TODO 1. have a version that insists on sortedness, and make the algorithm
  * TODO binary (not linear) under that restriction.
  * TODO 2. item type T should be instance of TO class which specifies (<=)
+ * @param list list of ascending Int values
+ * @param val Int value to be inserted
+ * @return insertion point in list for the single value
  */
 inspt(list, val) { firstwhere({ val <= $0 }, list) };
+
+/**
+ * given a list of ascending values and a single value of the same type,
+ * return the insertion point for the single value. Useful for range-based
+ * partitioning and finding next-closest values in sparse sorted lists.
+ * 
+ * TODO 1. have a version that insists on sortedness, and make the algorithm
+ * TODO binary (not linear) under that restriction.
+ * TODO 2. item type T should be instance of TO class which specifies (<=)
+ * @param list list of ascending Float values
+ * @param val Float value to be inserted
+ * @return insertion point in list for the single value
+ */
 finspt(list, val) { firstwhere({ val <=. $0 }, list) };
 
 /**
@@ -230,7 +246,8 @@ finspt(list, val) { firstwhere({ val <=. $0 }, list) };
 intrinsic <A,B> scan(x:(A, B) -> A, y:A, z:[B]) -> [A];
 
 /**
- * iter is degenerate while.
+ * iter is degenerate while. Execute the predicate until it produces a true value.
+ * @param p predicate for empty while loop
  */
 iter(p)
 {

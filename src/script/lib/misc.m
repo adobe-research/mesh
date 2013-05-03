@@ -40,10 +40,7 @@ chunks(lst, nchunks)
  * @param g function.
  * @return a function that takes an arg of same type as f and g and returns a pair of results.
  */
-fan(f, g)
-{
-    { (f($0), g($0)) }
-};
+fan(f, g) { { (f($0), g($0)) } };
 
 /**
  * @param f function.
@@ -52,10 +49,7 @@ fan(f, g)
  * 
  * TODO variadic a la zip, needs type-level Zip
  */
-fuse(f, g)
-{
-    { (f($0), g($1)) }
-};
+fuse(f, g) { { (f($0), g($1)) } };
 
 /**
  * @return current time in millis.
@@ -145,6 +139,9 @@ consume(c, q, f)
 
 /**
  * run a block, return elapsed time and result.
+ * @param b block of code to benchmark
+ * @return record containing #time, milliseconds taken to execute the block of code,
+ *         #result, the result of the block of code.
  */
 bench(b)
 {
@@ -155,6 +152,9 @@ bench(b)
 
 /**
  * run a block n times, return average elapsed time (no result).
+ * @param b block of code to benchmark
+ * @param n number of times to execute the block of code
+ * @return return average elapsed time
  */
 benchn(n, f)
 {
@@ -214,7 +214,7 @@ rangen(start, extent, step)
 {
     stride = abs(step);
     n = divz(abs(extent) + stride - 1, stride);
-    count(sign(extent) * n) | { start + $0 * stride };
+    count(sign(extent) * n) | { start + $0 * stride }
 };
 
 /**
@@ -228,6 +228,9 @@ rangen(start, extent, step)
 countn(extent, stepsize) { rangen(0, extent, stepsize) };
 
 /**
+ * @param x start of the range
+ * @param y end of the range
+ * @param n step size
  * @return a list of numbers from x to y - 1 in steps of n:
  * (y - n) <= (final) < y.
  * 
@@ -244,30 +247,47 @@ intrinsic hsb2rgb(x:Double, y:Double, z:Double) -> Int;
  * evaluate (lst | f) in parallel chunks of the given size:
  * pmapn(lst, f, 1) == pmap(lst, f) == f |: lst
  * pmapn(lst, f, size(lst)) == map(lst, f) == f | lst.
+ * @param lst list of values
+ * @param f function to process each value in the list
+ * @param n number of chunks to chop the list into in order to process in parallel
+ * @return list of values return from processing each item in original list with f
  */
-pmapn(lst, f, ntasks)
+pmapn(lst, f, n)
 {
-    flatten(chunks(lst, ntasks) |: { $0 | f })
+    flatten(chunks(lst, n) |: { $0 | f })
 };
 
 /**
  * evaluate for(list, f) in parallel chunks of the given size.
+ * @param list list of items
+ * @param f function to process each item in the list
+ * @param n number of chunks to chop the list into in order to process in parallel
  */
-pforn(lst, f, ntasks)
+pforn(lst, f, n)
 {
-    pfor(chunks(lst, ntasks), { for($0, f) })
+    pfor(chunks(lst, n), { for($0, f) })
 };
 
 /**
- * evaluate filter(lst, pred) using the given number of parallel tasks
+ * evaluate filter(lst, pred) in parallel chunks of the given size.
+ * so pfiltern(lst, pred, size(lst)) gives the same result as
+ * filter(lst, pred)
+ * @param list list of items
+ * @param pre Predicate function to determine if list item should be returned.
+ * @param n number of chunks to chop the list into in order to process in parallel
+ * @return Sublist of x where predicate returned true.
  */
-pfiltern(lst, pred, ntasks)
+pfiltern(lst, pred, n)
 {
-    flatten(chunks(lst, ntasks) |: { filter($0, pred) })
+    flatten(chunks(lst, n) |: { filter($0, pred) })
 };
 
 /**
- * evaluate where(lst, pred) using the given number of parallel tasks
+ * evaluate where(lst, pred) in parallel chunks of the given size.
+ * @param list list of items
+ * @param pred function that accepts each item in the list x and returns a boolean value for whether or not to return the position of the item in the list
+ * @param n number of chunks to chop the list into in order to process in parallel
+ * @return List of indexes in the base list where the predicate function returned a true value.
  */
 pwheren(lst, pred, ntasks)
 {
@@ -281,11 +301,20 @@ pwheren(lst, pred, ntasks)
 
 /**
  * partition, running partition function in parallel for each list element.
+ * @param vals list of items to be partioned
+ * @param f function that partions the list based on return value of this function
+ * @return a map with keys that are the return values of f and value is a list of items
+ *         from vals that produced the key value when passed into f.
  */
 ppart(vals, f) { group(vals |: f, vals) };
 
 /**
  * partition, running partition function on list chunks of a given size.
+ * @param vals list of items to be partioned
+ * @param f function that partions the list based on return value of this function
+ * @param n number of chunks to chop the list into in order to process in parallel
+ * @return a map with keys that are the return values of f and value is a list of items
+ *         from vals that produced the key value when passed into f.
  */
 ppartn(vals, f, n)
 {
@@ -294,9 +323,9 @@ ppartn(vals, f, n)
 
 /**
  * cut a list into equal-length sublists (last might be ragged)
+ * @param list list of items
+ * @param n length of returned sublist
+ * @return list of equal-length sublists (last might be ragged)
  */
-ravel(lst, n)
-{
-    cut(lst, countn(size(lst), n))
-};
+ravel(lst, n) { cut(lst, countn(size(lst), n)) };
 
