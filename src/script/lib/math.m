@@ -127,6 +127,7 @@ fmin(x,y) { iif(x >=. y, y, x) };
  * @return maximum of x,y
  */
 fmax(x,y) { iif(x >=. y, x, y) };
+
 /**
  * @code
  * inrange(4, 2, 5) // (4 >= 2) && (4 < (2+5)) -> true 
@@ -269,3 +270,15 @@ avg(lst) { divz(sum(lst), size(lst)) };
  * @code favg([2.0,3.0,4.0]) //returns 3.0 @endcode
  */
 favg(lst) { fdivz(fsum(lst), i2f(size(lst))) };
+
+/**
+ * @param n integer
+ * @return true iff n is even
+ */
+even(n) { n == 0 || { n % 2 == 0 } };
+
+/**
+ * @param n integer
+ * @return true iff n is odd
+ */
+odd(n) { n != 0 && { n % 2 == 1 } };

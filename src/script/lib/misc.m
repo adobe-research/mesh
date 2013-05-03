@@ -6,22 +6,33 @@
 import * from list;
 import * from mutate;
 import * from math;
+import tracen from loop;
+import mapz from map;
 import l2i,l2f from integer;
 
 /**
- * Given list and #chunks, return chunked list. Only the last chunk of the list can
- * be ragged which may cause the number of chunks returned to be less than what is requested.
- * TODO: guard against i==0, or declare that i==0 will throw
- * @param lst list of values
- * @param i number of chunks to return
- * @return a list containing the chunks
+ * Return a chunk size (stride) that will divide the given list
+ * into the given number of chunks. Chunks will be evenly sized
+ * except possibly for the final chunk, which may be smaller
+ * than the rest (in cases where chunks > 1).
+ * @param lst list
+ * @param nchunks number of chunks to calculate stride for
+ * @return chunk size as described above
  */
-chunks(lst, i)
+stride(lst, nchunks)
 {
-    n = size(lst);
-    ravel(lst, n / i + sign(n % i))
+    s = size(lst);
+    n = constrain(1, nchunks, s);
+    s / n + sign(s % n)
 };
 
+/**
+ * given list and number of chunks, return chunked list.
+ */
+chunks(lst, nchunks)
+{
+    ravel(lst, stride(lst, nchunks))
+};
 
 /**
  * TODO variadic a la zip, needs type-level Zip
@@ -278,9 +289,14 @@ pfiltern(lst, pred, n)
  * @param n number of chunks to chop the list into in order to process in parallel
  * @return List of indexes in the base list where the predicate function returned a true value.
  */
-pwheren(lst, pred, n)
+pwheren(lst, pred, ntasks)
 {
-    flatten(chunks(lst, n) |: { where($0, pred) })
+    s = stride(lst, ntasks);
+    chunks = ravel(lst, s);
+    offsets = tracen(size(chunks), 0, { $0 + s });
+    inputs = zip(chunks, offsets);
+    results = inputs |: { chunk, offset => where(chunk, pred) | { $0 + offset } };
+    flatten(results)
 };
 
 /**

@@ -4,17 +4,19 @@ syntax: glob
 *.orig
 
 # emacs backups
-**/*~
+*~
+
+# vim swap files
+.*.swp
 
 # patching rejects
 *.rej
 
 # .DS_Store
-**/.DS_Store
 .DS_Store
 
-# IJ local state
-a.iws
+# IJ workspace state
+*.iws
 
 # compiled classes
 classes/**
@@ -22,11 +24,8 @@ classes/**
 # doxygen files
 docs/generated/**
 
-# generated parser
+# generated source
 gen/**
 
 # built jars
 mesh.jar
-
-# vim swap files
-.*.swp

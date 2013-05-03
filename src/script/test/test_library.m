@@ -334,7 +334,7 @@ assert_equals({ [1,2,3,4] }, { x = box([1,2,3]); pushback(x, 4); *x });
 assert_equals({ [4,1,2,3] }, { x = box([1,2,3]); pushfront(x, 4); *x });
 
 // pwheren = { lst, pred, n => list:flatten(pmap(chunks(lst, n), { $0_253_36 => list:where($0_253_36, pred) })) }
-assert_equals({ [0, 1, 1] }, { pwheren([4,4,7,4,7], {$0 < 5}, 3) });
+assert_equals({ [0, 1, 3] }, { pwheren([4,4,7,4,7], {$0 < 5}, 3) });
 
 // qsort = { lst, cmp => subsort = { lst, njobs => lang:guard(le(list:size(lst), 1), lst, { pivot = lst[math:rand(list:size(lst))]; pivcmp = { val => sign(cmp(val, pivot)) }; parts = plus([-1: [], 0: [], 1: []], list:part(lst, pivcmp)); subn = div(njobs, 2); args = [(parts[-1], subn), (parts[1], subn)]; subs = if(gt(njobs, 1), { pmap(args, subsort) }, { map(args, subsort) }); plus(plus(subs[0], parts[0]), subs[1]) }) }; subsort(lst, plus(availprocs(), 2)) }
 assert_equals({ [0, 1, 2, 3, 3, 4] }, { qsort([3,2,1,3,4,0], (-)) });
@@ -463,8 +463,8 @@ assert_equals({ (2, 3) }, {
                             });
 
 
-// trace = { func, init => diff = { accum, x, y => and(ne(x, y), { ne(y, init) }) }; next = { accum, x, y => (list:append(accum, y), y, func(y)) }; cycle(diff, ([init], init, func(init)), next).0 }
-assert_equals({ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] }, { trace({inc($0) % 10}, 0) });
+// tconverge = { func, init => diff = { accum, x, y => and(ne(x, y), { ne(y, init) }) }; next = { accum, x, y => (list:append(accum, y), y, func(y)) }; cycle(diff, ([init], init, func(init)), next).0 }
+assert_equals({ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] }, { tconverge({inc($0) % 10}, 0) });
 
 // twin = { v => (v, v) }
 assert_equals({ (1, 1) }, { twin(1) });

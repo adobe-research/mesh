@@ -120,14 +120,14 @@ intrinsic <Ts:[*]> snaps(x:Tup(Ts | Box)) -> Tup(Ts);
 
 
 /**
- * perform an action on a boxed variable, updating its state
+ * Perform an action on a boxed variable, updating its state
  * and returning the action's result.
  * @param b boxed state variable
- * @param f action function on a state value of type s.
+ * @param f action function on a state value of type S.
  * returning a pair of (new state, action result).
  * @return result of action on b's state
  */
-<s, r> act(b : *s, f : s -> (s, r))
+<S, T> act(b : *S, f : S -> (S, T)) -> T
 {
     do {
         (next, result) = f(own(b));
@@ -137,7 +137,7 @@ intrinsic <Ts:[*]> snaps(x:Tup(Ts | Box)) -> Tup(Ts);
 };
 
 /**
- * update to new value, returns prior value.
+ * Update box to new value, return its prior value.
  * @param b box to modify
  * @param v new value to place in the box
  * @return original value in the box
@@ -145,38 +145,48 @@ intrinsic <Ts:[*]> snaps(x:Tup(Ts | Box)) -> Tup(Ts);
 postput(b, v) { act(b, { (v, $0) }) };
 
 /**
- * run update function and return prior value.
+ * Run update function f on current value of box b.
+ * Update b with the result, and also return it.
+ * Note: action function argument to act() is
+ * equivalent to <code>f $ twin</code>.
+ */
+preupdate(b, f) { act(b, { v = f($0); (v, v) }) };
+
+/**
+ * Run update function f on current value of box b.
+ * Update b with the result, and return b's original
+ * value.
  * @param b box to update
- * @param f function to update the value in the box
- * @return original value in the box
+ * @param f update function
+ * @return box's prior value
  */
 postupdate(b, f) { act(b, { (f($0), $0) }) };
 
 /**
- * atomic pre-increment.
- * @param b box to increment
- * @return new value in the box
+ * Atomic pre-decrement.
+ * @param b box to decrement
+ * @return decremented value
  */
-preinc(b) { act(b, inc $ twin) };
+predec(b) { preupdate(b, dec) };
 
 /**
- * atomic post-increment.
+ * Atomic pre-increment.
  * @param b box to increment
- * @return original value in the box
+ * @return incremented value
+ */
+preinc(b) { preupdate(b, inc) };
+
+/**
+ * Atomic post-increment.
+ * @param b box to increment
+ * @return box's original value
  */
 postinc(b) { postupdate(b, inc) };
 
 /**
- * atomic pre-decrement.
- * @param b box to decrement
- * @return new value in the box
- */
-predec(b) { act(b, dec $ twin) };
-
-/**
- * atomic post-decrement.
+ * Atomic post-decrement.
  * @param b box to increment
- * @return original value in the box
+ * @return box's original value
  */
 postdec(b) { postupdate(b, dec) };
 
