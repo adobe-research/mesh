@@ -414,6 +414,17 @@ assert_equals({ 6 }, {
         *pfor_data;
         });
 
+assert_equals({
+        pfor_data = box(0);
+        pfor([1,2,3], { pfor_data <- {$$0 + $0} });
+        *pfor_data;
+        },
+        {
+        for_data = box(0);
+        for([1,2,3], { for_data <- {$$0 + $0} });
+        *for_data
+        });
+
 // reduce : (A, B => ((A, B) -> A, A, [B]) -> A) = <intrinsic>
 assert_equals({ 13 }, { reduce((+), 1, [2,4,6]) });
 
@@ -642,6 +653,8 @@ assert_equals({ true }, { fge(l2f(nanotime()), 1.0) });
 // pmap : (X, Y => ([X], X -> Y) -> [Y]) = <intrinsic>
 assert_equals({ [2,3,4] }, { pmap([1,2,3], inc) });
 assert_equals({ [2,3,4] }, { [1,2,3] |: inc });
+assert_equals({ map([1,2,3], inc) }, { pmap([1,2,3], inc) });
+
 
 // sleep : Int -> () = <intrinsic>
 assert_equals({ true }, { sleep(3); true });

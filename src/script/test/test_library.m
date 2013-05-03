@@ -276,6 +276,7 @@ assert_equals({ 1 }, { peekfront(box([1,2,3])) });
 
 // pfiltern = { lst, pred, n => list:flatten(pmap(chunks(lst, n), { $0_245_36 => list:filter($0_245_36, pred) })) }
 assert_equals({ [0, 2, 4, 6, 8, 10, 12, 14, 16, 18] }, { pfiltern(count(20), {($0 % 2) == 0}, 4) });
+assert_equals({ filter(count(20), {($0 % 2) == 0}) }, { pfiltern(count(20), {($0 % 2) == 0}, 4) });
 
 // pforn = { lst, f, n => lang:pfor(chunks(lst, n), { $0_235_31 => list:for($0_235_31, f); () }); () }
 assert_equals({ 45 }, {
@@ -284,8 +285,31 @@ assert_equals({ 45 }, {
         *for_data
         });
 
+assert_equals({
+        for_data = box(0);
+        for(count(10), { for_data <- {$$0 + $0} });
+        *for_data
+        }, {
+        for_data = box(0);
+        pforn(count(10), { for_data <- {$$0 + $0} }, 4);
+        *for_data
+        });
+
+assert_equals({
+        for_data = box(0);
+        pfor(count(10), { for_data <- {$$0 + $0} });
+        *for_data
+        }, {
+        for_data = box(0);
+        pforn(count(10), { for_data <- {$$0 + $0} }, 4);
+        *for_data
+        });
+
+
 // pmapn = { lst, f, n => list:flatten(pmap(chunks(lst, n), { $0_227_36 => map($0_227_36, f) })) }
 assert_equals({ [1,2,3,4,5] }, { pmapn(count(5), inc, 2) });
+assert_equals({ map(count(5), inc) }, { pmapn(count(5), inc, 2) });
+assert_equals({ pmap(count(5), inc) }, { pmapn(count(5), inc, 2) });
 
 // popback = { blst => act(blst, { $0_249_27 => (list:drop(-1, $0_249_27), list:last($0_249_27)) }) }
 assert_equals({ 4 }, { x = box([1,2,3,4]); popback(x) });
@@ -312,9 +336,12 @@ assert_equals({ 3 }, { x = box(2); postupdate(x, inc); *x; });
 
 // ppart = { vals, f => list:group(pmap(vals, f), vals) }
 assert_equals({ [true: [1, 2], false: [3, 4, 5]] }, { ppart([1,2,3,4,5], { gt(3, $0) }); });
+assert_equals({ part([1,2,3,4,5], { gt(3, $0) }) }, { ppart([1,2,3,4,5], { gt(3, $0) }); });
 
 // ppartn = { vals, f, n => list:group(list:flatten(pmap(chunks(vals, n), { $0_266_48 => map($0_266_48, f) })), vals) }
 assert_equals({ [true: [1, 2], false: [3, 4, 5]] }, { ppartn([1,2,3,4,5], { gt(3, $0) }, 2); });
+assert_equals({ part([1,2,3,4,5], { gt(3, $0) }) }, { ppartn([1,2,3,4,5], { gt(3, $0) }, 2); });
+assert_equals({ ppart([1,2,3,4,5], { gt(3, $0) }) }, { ppartn([1,2,3,4,5], { gt(3, $0) }, 2); });
 
 // predec = { b => act(b, compose(dec, twin)) }
 assert_equals({ (2, 1, 1) }, { x = box(2); (*x, predec(x), *x) });
@@ -335,6 +362,7 @@ assert_equals({ [4,1,2,3] }, { x = box([1,2,3]); pushfront(x, 4); *x });
 
 // pwheren = { lst, pred, n => list:flatten(pmap(chunks(lst, n), { $0_253_36 => list:where($0_253_36, pred) })) }
 assert_equals({ [0, 1, 3] }, { pwheren([4,4,7,4,7], {$0 < 5}, 3) });
+assert_equals({ where([4,4,7,4,7], {$0 < 5}) }, { pwheren([4,4,7,4,7], {$0 < 5}, 3) });
 
 // qsort = { lst, cmp => subsort = { lst, njobs => lang:guard(le(list:size(lst), 1), lst, { pivot = lst[math:rand(list:size(lst))]; pivcmp = { val => sign(cmp(val, pivot)) }; parts = plus([-1: [], 0: [], 1: []], list:part(lst, pivcmp)); subn = div(njobs, 2); args = [(parts[-1], subn), (parts[1], subn)]; subs = if(gt(njobs, 1), { pmap(args, subsort) }, { map(args, subsort) }); plus(plus(subs[0], parts[0]), subs[1]) }) }; subsort(lst, plus(availprocs(), 2)) }
 assert_equals({ [0, 1, 2, 3, 3, 4] }, { qsort([3,2,1,3,4,0], (-)) });
