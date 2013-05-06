@@ -40,10 +40,11 @@ public final class _scan extends IntrinsicLambda
     public static ListValue invoke(final Lambda f, final Object init,
         final ListValue list)
     {
-        final PersistentList result = PersistentList.alloc(list.size());
+        final PersistentList result = PersistentList.alloc(list.size() + 1);
 
         int i = 0;
         Object fret = init;
+        result.updateUnsafe(i++, fret);
 
         for (final Object item : list)
         {

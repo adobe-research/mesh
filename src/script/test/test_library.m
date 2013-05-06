@@ -65,17 +65,21 @@ assert_equals({ (4, 7) }, { x = box(3); y = box(6); caut((x,y), (3,6), {a,b=> (i
 assert_equals({ false }, { x = box(3); y = box(6); caut((x,y), (1,1), {a,b=> (inc(a), inc(b))}) });
 assert_equals({ (3, 6) }, { x = box(3); y = box(6); caut((x,y), (1,1), {a,b=> (inc(a), inc(b))}); (*x, *y) });
 
-// chunks = { lst, i => n = list:size(lst); ravel(lst, plus(div(n, i), sign(mod(n, i)))) }
-assert_equals({ [[1], [2], [3], [4], [5]] }, { chunks([1,2,3,4,5], 5) });
-assert_equals({ [[1, 2], [3, 4], [5]] }, { chunks([1,2,3,4,5], 4) });
-assert_equals({ [[1, 2, 3], [4, 5]] }, { chunks([1,2,3,4,5], 2) });
-assert_equals({ [] }, { chunks([], 2) });
-// TODO: this produces a compilation error, divide by 0
-// https://github.com/adobe-research/mesh/issues/3
-// assert_equals({ [] }, { chunks([1,2,3], 0) });
+// chunks = <T> { (list: [T], nchunks: Int) -> [[T]] => cut(list, cutpoints(list, nchunks)) }assert_equals({ [[]] }, { cutpoints(count(5), 0) });
+assert_equals({ [] }, { chunks(count(5), 0) });
+assert_equals({ [[0, 1, 2, 3, 4]] }, { chunks(count(5), 1) });
+assert_equals({ [[0, 1], [2, 3, 4]] }, { chunks(count(5), 2) });
+assert_equals({ [[0], [1, 2], [3, 4]] }, { chunks(count(5), 3) });
+assert_equals({ [[0], [1], [2], [3, 4]] }, { chunks(count(5), 4) });
+assert_equals({ [[0], [1], [2], [3], [4]] }, { chunks(count(5), 5) });
 
 // compose = { f, g => { x => g(f(x)) } }
 assert_equals({ 4 }, { compose(inc, inc)(2); });
+
+// constrain = { lo, n, hi => max(lo, min(hi, n)) }
+assert_equals({ 2 }, { constrain(2, 1, 4) });
+assert_equals({ 3 }, { constrain(2, 3, 4) });
+assert_equals({ 4 }, { constrain(2, 5, 4) });
 
 // consume = { c, q, f => ne = { l => gt(list:size(l), 0) }; while({ get(c) }, { mutate:awaits((c, q), { b, l => or(not(b), { ne(l) }) }); loop:when(get(c), { _118_13 = mutate:tau(q, ne, list:tail); b = _118_13.0; l = _118_13.1; loop:when(b, { f(list:head(l)) }); () }); () }); () }
 
@@ -85,12 +89,8 @@ assert_equals({ true }, { contains([3,4,5], 4) });
 assert_equals({ false }, { contains(["cat", "dog", "fish"], "mouse") });
 assert_equals({ true }, { contains(["cat", "dog", "fish"], "fish") });
 
-
 // converge = { func, init => diff = { x, y => and(ne(x, y), { ne(y, init) }) }; next = { x, y => (y, func(y)) }; cycle(diff, (init, func(init)), next).0 }
 assert_equals({ 9 }, { converge({inc($0) % 10}, 0) });
-
-// countn = { extent, stepsize => rangen(0, extent, stepsize) }
-assert_equals({ [0, 2, 4, 6, 8] }, { countn(10, 2) });
 
 // counts = { list => inckey = { map, key => mapset(map, key, plus(1, mapgetd(map, key, 0))) }; loop:reduce(inckey, [:], list) }
 assert_equals({ [1: 2, 2: 1, 3: 3] }, { counts([1,2,3,1,3,3]) });
@@ -98,6 +98,14 @@ assert_equals({ [1: 2, 2: 1, 3: 3] }, { counts([1,2,3,1,3,3]) });
 // cross = { xs, ys => xn = size(xs); ixs = count(times(xn, size(ys))); zip(mapll(map(ixs, { $0_47_21 => mod($0_47_21, xn) }), xs), mapll(map(ixs, { $0_47_51 => div($0_47_51, xn) }), ys)) }
 assert_equals({ [(1, 1), (2, 1), (3, 1)] }, { cross([1,2,3], [1]) });
 assert_equals({ [] }, { cross([1,2,3], []) });
+
+// cutpoints = <T> { (list: [T], ncuts: Int) -> [Int] => s = size(list); n = constrain(0, ncuts, s); c = divz(s, n); r = modz(s, n); sizes = plus(rep(minus(n, r), c), rep(r, plus(c, 1))); starts(sizes) }
+assert_equals({ [] }, { cutpoints(count(5), 0) });
+assert_equals({ [0] }, { cutpoints(count(5), 1) });
+assert_equals({ [0, 2] }, { cutpoints(count(5), 2) });
+assert_equals({ [0, 1, 3] }, { cutpoints(count(5), 3) });
+assert_equals({ [0, 1, 2, 3] }, { cutpoints(count(5), 4) });
+assert_equals({ [0, 1, 2, 3, 4] }, { cutpoints(count(5), 5) });
 
 // dec = { n => minus(n, 1) }
 assert_equals({ -1 }, { dec(0) });
@@ -158,6 +166,14 @@ assert_equals({ 2.0 }, { fdivz(4.0, 2.0) });
 assert_equals({ 0.0 }, { fdivz(0.0, 2.0) });
 assert_equals({ 0.0 }, { fdivz(3.0, 0.0) });
 
+// filet = { list, n => s = size(list); cut(list, eachleft(times)(count(plus(divz(s, n), sign(modz(s, n)))), n)) }
+assert_equals({ [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]] }, { filet(count(10), 2) });
+assert_equals({ [[0, 1, 2, 3], [4]] }, { filet(count(5), 4) });
+assert_equals({ [[0, 1, 2, 3, 4]]}, { filet(count(5), 5) });
+assert_equals({ [[0], [1], [2]] }, { filet(count(3), -1) });
+assert_equals({ [[0, 1, 2, 3, 4]]}, { filet(count(5), 6) });
+assert_equals({ [] }, { filet(count(3), 0) });
+
 // finrange = { f, fbase, fextent => and(fge(f, fbase), { flt(f, plus(fbase, fextent)) }) }
 assert_equals({ true }, { finrange(4.0, 2.0, 5.0) });
 assert_equals({ true }, { finrange(2.0, 2.0, 1.0) });
@@ -191,10 +207,8 @@ assert_equals({ 0.0 }, { fmodz(3.125, 0.0) });
 // fproduct = { ns => loop:reduce(ftimes, 1.0, ns) }
 assert_equals({ 24.0 }, { fproduct([2.0,3.0,4.0]) });
 
-// fromton = { x, y, n => rangen(x, minus(y, x), n) }
-assert_equals({ [1, 2, 3] }, { fromton(1, 4, 1) });
-assert_equals({ [4, 3, 2] }, { fromton(4, 1, 1) });
-assert_equals({ [-4, -3, -2, -1, 0] }, { fromton(-4, 1, 1) });
+// fruntot = { (fs: [Double]) -> [Double] => drop(1, scan(plus, 0.0, fs)) }
+assert_equals({ [1.0, 3.0, 6.0] }, { fruntot([1.0, 2.0, 3.0]) });
 
 // fsign = { f => guard(fgt(f, 0.0), 1, { iif(flt(f, 0.0), -1, 0) }) }
 assert_equals({ 1 }, { fsign(1.0) });
@@ -339,19 +353,6 @@ assert_equals({ [0, 1, 3] }, { pwheren([4,4,7,4,7], {$0 < 5}, 3) });
 // qsort = { lst, cmp => subsort = { lst, njobs => lang:guard(le(list:size(lst), 1), lst, { pivot = lst[math:rand(list:size(lst))]; pivcmp = { val => sign(cmp(val, pivot)) }; parts = plus([-1: [], 0: [], 1: []], list:part(lst, pivcmp)); subn = div(njobs, 2); args = [(parts[-1], subn), (parts[1], subn)]; subs = if(gt(njobs, 1), { pmap(args, subsort) }, { map(args, subsort) }); plus(plus(subs[0], parts[0]), subs[1]) }) }; subsort(lst, plus(availprocs(), 2)) }
 assert_equals({ [0, 1, 2, 3, 3, 4] }, { qsort([3,2,1,3,4,0], (-)) });
 
-// rangen = { start, extent, stepsize => steps = math:divz(plus(extent, times(math:sign(extent), minus(stepsize, 1))), stepsize); map(list:count(steps), { $0_197_25 => plus(start, times($0_197_25, stepsize)) }) }
-assert_equals({ [2, 4, 6, 8] }, { rangen(2, 8, 2) });
-assert_equals({ [2, 4, 6, 8] }, { rangen(2, 8, -2) });
-assert_equals({ [2, 0, -2, -4] }, { rangen(2, -8, 2) });
-assert_equals({ [-2, -4, -6, -8] }, { rangen(-2, -8, 2) });
-assert_equals({ [] }, { rangen(1, 3, 0) });
-
-// ravel = { lst, n => list:cut(lst, countn(list:size(lst), n)) }
-assert_equals({ [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]] }, { ravel(count(10), 2) });
-assert_equals({ [[0, 1, 2, 3], [4]] }, { ravel(count(5), 4) });
-assert_equals({ [] }, { ravel(count(3), 0) });
-assert_equals({ [[0], [1], [2]] }, { ravel(count(3), -1) });
-
 // react = { b, f => watch(b, { old, new => f(new) }) }
 assert_equals({ 2 }, { 
                     status = box(0);
@@ -393,6 +394,9 @@ assert_equals({ [2, 1, 3] }, { runlens([1,1,4,2,2,2]) });
 // runs = { list => cut(list, edges(list)) }
 assert_equals({ [[1, 1], [4], [2, 2, 2]] }, { runs([1,1,4,2,2,2]) });
 
+// runtot = { (is: [Int]) -> [Int] => drop(1, scan(plus, 0, is)) }
+assert_equals({ [1, 3, 6] }, { runtot([1, 2, 3]) });
+
 // scan_while = { pred, init, f, args => result = evolve_while(compose(list:last, pred), [init], { as, b => list:append(as, f(list:last(as), b)) }, args); list:drop(1, result) }
 assert_equals({ [2, 3, 4] }, { scan_while({$0 < 4}, 1, (+), [1,1,1,1,1]) });
 
@@ -406,6 +410,11 @@ assert_equals({ [6, 4, 3, 2, 1, 0] }, { sort([4,1,2,3,6,0], minus $ neg) });
 
 // sq = { i => times(i, i) }
 assert_equals({ 4 }, { sq(2) });
+
+// starts = { (sizes: [Int]) -> [Int] => drop(-1, scan(plus, 0, sizes)) }
+assert_equals({ [0, 1, 3] }, { starts([1, 2, 3]) });
+assert_equals({ [0, 1, 1] }, { starts([1, 0, 2]) });
+assert_equals({ [] }, { starts([]) });
 
 // sum = { ns => loop:reduce(plus, 0, ns) }
 assert_equals({ 6 }, { sum([1,2,3]) });
@@ -465,6 +474,12 @@ assert_equals({ (2, 3) }, {
 
 // tconverge = { func, init => diff = { accum, x, y => and(ne(x, y), { ne(y, init) }) }; next = { accum, x, y => (list:append(accum, y), y, func(y)) }; cycle(diff, ([init], init, func(init)), next).0 }
 assert_equals({ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] }, { tconverge({inc($0) % 10}, 0) });
+
+// trace = { p, v, f => cycle(compose(last, p), [v], { $0_43_26 => append($0_43_26, f(last($0_43_26))) }) }
+assert_equals({ [0, 1, 2, 3, 4] }, { trace({ $0 < 4 }, 0, inc) });
+
+// tracen = { n, v, f => cyclen(n, [v], { $0_57_20 => append($0_57_20, f(last($0_57_20))) }) }
+assert_equals({ [0, 1, 2, 3, 4] }, { tracen(4, 0, inc) });
 
 // twin = { v => (v, v) }
 assert_equals({ (1, 1) }, { twin(1) });

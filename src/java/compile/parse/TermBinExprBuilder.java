@@ -16,6 +16,8 @@ import compile.term.RefTerm;
 import compile.term.Term;
 import compile.term.TupleTerm;
 import compile.Pair;
+import runtime.intrinsic._eachleft;
+import runtime.intrinsic._eachright;
 
 import java.util.List;
 
@@ -40,19 +42,62 @@ public class TermBinExprBuilder extends BinExprBuilder<Term>
     protected Term buildApply(final Object op, final Term lhs, final Term rhs)
     {
         final Loc loc = lhs.getLoc();
-
-        final Term base = op instanceof Term ? (Term)op :
-            new RefTerm(loc, getOpInfo(op).func);
-
+        final Term base = buildOpTerm(loc, op);
         final Term arg = new TupleTerm(loc, lhs, rhs);
-
         return new ApplyTerm(loc, base, arg);
     }
 
+    /**
+     *
+     */
+    private Term buildOpTerm(final Loc loc, final Object op)
+    {
+        if (op instanceof Term)
+            return (Term)op;
+
+        if (op instanceof String)
+            return new RefTerm(loc, getOpInfo(op).func);
+
+        assert op instanceof Verb;
+        final Verb v = (Verb)op;
+
+        final Term base = buildOpTerm(loc, v.op);
+        return buildRightedOp(loc, v.rights, buildLeftedOp(loc, v.lefts, base));
+    }
+
+    /**
+     *
+     */
+    private Term buildLeftedOp(final Loc loc, final int n, final Term base)
+    {
+        if (n == 0)
+            return base;
+
+        return buildLeftedOp(loc, n - 1,
+            new ApplyTerm(loc, new RefTerm(loc, _eachleft.NAME), base));
+    }
+
+    /**
+     *
+     */
+    private Term buildRightedOp(final Loc loc, final int n, final Term base)
+    {
+        if (n == 0)
+            return base;
+
+        return buildRightedOp(loc, n - 1,
+            new ApplyTerm(loc, new RefTerm(loc, _eachright.NAME), base));
+    }
+
+    /**
+     * Note that dimensional modifiers do not affect precedence or associativity.
+     */
     @Override
     protected BinopInfo getOpInfo(final Object op)
     {
-        return op instanceof String ?
-            Ops.BINOP_INFO.get(op) : Ops.DEFAULT_BINOP_INFO;
+        return
+            op instanceof Verb ? getOpInfo(((Verb)op).op) :
+            op instanceof String ? Ops.BINOP_INFO.get(op) :
+            Ops.DEFAULT_BINOP_INFO;
     }
 }

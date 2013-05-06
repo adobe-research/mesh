@@ -53,11 +53,17 @@ cross(xs, ys)
 };
 
 /**
- * @param x list of items
- * @param y list of index cut points
- * @return A list of cuts starting at indexes.
+ * Cut the given list into sublist, at the given indexes.
+ * Indexes must be between 0 and size(list), in ascending
+ * order. Duplicate indexes are allowed and will produce
+ * an empty sublist for the earlier instance(s) of the duplicate.
+ * A final index equal to size(list) will produce an empty final
+ * sublist.
+ * @param list list of items
+ * @param cutpoints list of index cut points
+ * @return a list of sublists, as described above
  */
-intrinsic <T> cut(x:[T], y:[Int]) -> [[T]];
+intrinsic <T> cut(list : [T], cutpoints : [Int]) -> [[T]];
 
 /**
  * @param x List of items.
@@ -274,7 +280,7 @@ rotate(list, n)
  */
 runlens(list)
 {
-    drop(1, eachpair(0, { x, y => y - x }, append(edges(list), size(list))))
+    eachpair(0, { $1 - $0 }, drop(1, append(edges(list), size(list))))
 };
 
 /**
@@ -283,7 +289,10 @@ runlens(list)
  * @return list of lists of adjacent equal items that are within the original list
  * @code runs([1,1,4,2,2,2]) returns [[1, 1], [4], [2, 2, 2]] @endcode
  */
-runs(list) { cut(list, edges(list)) };
+runs(list)
+{
+    cut(list, edges(list))
+};
 
 /**
  * @param x list
