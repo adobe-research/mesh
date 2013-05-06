@@ -168,11 +168,35 @@ Term InfixExpr
 // Subrule for the (<op>, <rhs>) part of an infix expr.
 //
 transient compile.Pair<Object, Term> InfixRHS
-    // experimental: infix form (x 'expr y)
-    = "'" op:BaseExpr WhiteSpace arg:PrefixExpr
-        { yyValue = new compile.Pair<Object, Term>(op, arg); }
-    / op:BinaryOp WhiteSpace arg:PrefixExpr
-        { yyValue = new compile.Pair<Object, Term>(op, arg); } ;
+    = v:Verb arg:PrefixExpr
+        { yyValue = new compile.Pair<Object, Term>(v, arg); } ;
+
+//
+// A verb is an infix operator, optionally augmented with
+// pre- and postfix dimensional modifiers, which vectorize
+// left and right parameters, respectively. Note that ~op~
+// parses as (~op)~, and for non-commutative operators (~op)~
+// and ~(op~) differ. Parens can be used to disambiguate, but
+// are not allowed for unmodified operators.
+//
+transient Object Verb
+    = lefts:("~")* "(" op:Verb ")" rights:("~")* WhiteSpace
+        { yyValue = verb(lefts.list().size(), op, rights.list().size()); }
+
+    / lefts:("~")* op:InfixOp rights:("~")* WhiteSpace
+        { yyValue = verb(lefts.list().size(), op, rights.list().size()); } ;
+
+//
+// An infix op is either an ordinary binary op, or
+// a base expression preceded by a single quote
+// (latter is experimental)
+//
+transient Object InfixOp
+    = <InfixFunc> "'" e:BaseExpr
+        { yyValue = e; }
+
+    / op:BinaryOp
+        { yyValue = op; } ;
 
 //
 // Prefix expressions are unary expressions and application expressions.
@@ -180,7 +204,7 @@ transient compile.Pair<Object, Term> InfixRHS
 // the parse. Applications are left associative - ASTs are built in code
 // from lists accumulated here.
 //
-Term PrefixExpr
+transient Term PrefixExpr
     = <Unop>    op:UnaryOp WhiteSpace arg:PrefixExpr
         { yyValue = unaryExpr(loc(yyStart), op, arg); }
 
@@ -353,11 +377,11 @@ SigInfo LambdaSig
 //
 // Note: bug in Rats makes us re-add unops separately, not sure why, but seems
 // to have something to do with the presence of "-.", which will go away with overloading.
-// TODO see if BinaryOp / UnaryOp go back to working okay when FP ops are removed
+// TODO see if BinaryOp / PrefixOp go back to working okay when FP ops are removed
 //
 transient String RefOpSym
     = BinaryOp
-//    / UnaryOp ;     // TODO restore
+//    / PrefixOp ;     // TODO restore
     ;
 
 //
@@ -569,7 +593,7 @@ transient Kind StarKind
 
 //
 // Note that we have higher-level nonterminals for binary and unary operators,
-// which overlap benignly with what follows. See BinaryOp, UnaryOp, etc. above.
+// which overlap benignly with what follows. See BinaryOp, PrefixOp, etc. above.
 //
 transient void TypeKeyword = "type" MandatoryWhiteSpace ;
 transient void IntrinsicKeyword = "intrinsic" MandatoryWhiteSpace ;

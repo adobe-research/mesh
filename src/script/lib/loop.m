@@ -16,10 +16,10 @@ import * from list;
  *        be fed back into the function if guard predicate is still true.
  * @return Value of v when predicate is false.
  */
-intrinsic <T> cycle(p:(T -> Bool), v:T, f:T -> T) -> T;
+intrinsic <T> cycle(p : T -> Bool, v : T, f : T -> T) -> T;
 
 /**
- * Iterate on an endofunction fox n number of times
+ * Iterate on a function n times.
  *
  * @param n Limit of how many times f function will be called.
  * @param v Initial value of v that will be passed to the f lambda.
@@ -27,26 +27,34 @@ intrinsic <T> cycle(p:(T -> Bool), v:T, f:T -> T) -> T;
  *        be fed back into the function as long as upper limit has not been reached.
  * @return Value of v after the given number of iterations.
  */
-intrinsic <T> cyclen(n:Int, v:T, f:T -> T) -> T;
+intrinsic <T> cyclen(n : Int, v : T, f : T -> T) -> T;
 
 /**
- * Traced version of cycle(): instead of returning the final, failing value,
- * returns the list of intermediate passing values, starting with initial
- * value v.
+ * Traced version of {@link #cycle}:
+ * <code>last(trace(p, v, f)) == cycle(p, v, f)</code>.
+ * iteration, beginning with initial value v.
+ * @param p predicate function
+ * @param v initial value
+ * @param f iterator function
+ * @return list of results from each iteration, beginning with initial value v.
  */
 trace(p, v, f)
 {
-    drop(-1, cycle(last $ p, [v], { append($0, f(last($0))) }))
+    cycle(last $ p, [v], { append($0, f(last($0))) })
 };
 
 /**
- * Traced version of cyclen(): instead of returning the value after n
- * iterations, returns the list of intermediate values, returned from
- * 0 to n - 1 iterations.
+ * Traced version of {@link #cyclen}:
+ * <code>last(tracen(n, v, f)) == cyclen(n, v, f)</code>.
+ * iteration, beginning with initial value v.
+ * @param n number of iterations
+ * @param v initial value
+ * @param f iterator function
+ * @return list of results from each iteration, beginning with initial value v.
  */
 tracen(n, v, f)
 {
-    drop(-1, cyclen(n, [v], { append($0, f(last($0))) }))
+    cyclen(n, [v], { append($0, f(last($0))) })
 };
 
 /**
@@ -60,17 +68,29 @@ tracen(n, v, f)
  * @param a list of values that will be processed
  * @return value of T when predicate is false or all inputs have been processed
  */
-intrinsic <A,B> evolve_while(x:(A -> Bool), y:A, z:((A, B) -> A), a:[B]) -> A;
+intrinsic <A, B> evolve_while(x : A -> Bool, y : A, z : (A, B) -> A, a : [B]) -> A;
 
 /**
- * Reduce a set of values with a combining function.
- * @param x combining function
- * @param y initial value
- * @param z list of values
- * @return Value produced by calling x recursively with previsouly 
+ * Perform a functional reduction (foldl) using the given reducer,
+ * initial value and list of arguments.
+ * @param f reducing function
+ * @param v initial value
+ * @param l list of arguments
+ * @return value produced by calling f repeatedly with previously
  *         calculated value and next item in the list.
  */
-intrinsic <A,B> reduce(x:((A, B) -> A), y:A, z:[B]) -> A;
+intrinsic <A, B> reduce(f : (A, B) -> A, v : A, l : [B]) -> A;
+
+/**
+ * Traced version of {@link #reduce}:
+ * <code>last(scan(f, v, l)) == reduce(f, v, l)</code>
+ * @param f reducing function
+ * @param v initial value
+ * @param l list of arguments
+ * @return list of values produced by calling f repeatedly with
+ *         previously calculated value and next item in the list.
+ */
+intrinsic <A, B> scan(f: (A, B) -> A, v : A, l : [B]) -> [A];
 
 /**
  * Is predicate true for any value in a list? 
@@ -234,16 +254,6 @@ inspt(list, val) { firstwhere({ val <= $0 }, list) };
  * @return insertion point in list for the single value
  */
 finspt(list, val) { firstwhere({ val <=. $0 }, list) };
-
-/**
- * Reduce a set of values with a combining function. Return all intermediate values.
- * @param x combining function
- * @param y initial value
- * @param z list of values
- * @return A list of values produced by calling x recursively with previsouly 
- *         calculated value and next item in the list.
- */
-intrinsic <A,B> scan(x:(A, B) -> A, y:A, z:[B]) -> [A];
 
 /**
  * iter is degenerate while. Execute the predicate until it produces a true value.

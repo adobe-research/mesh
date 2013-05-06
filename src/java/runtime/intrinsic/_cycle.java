@@ -19,6 +19,10 @@ import runtime.rep.Tuple;
  * iteration is started with specified initial argument, which is
  * passed through the guard before being applied.
  *
+ * TODO once escape analysis is used to optimize away boxes,
+ * there's no reason why this couldn't be moved to source.
+ * Same with other similar intrinsics.
+ *
  * @author Basil Hosmer
  */
 public final class _cycle extends IntrinsicLambda

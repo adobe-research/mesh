@@ -28,6 +28,8 @@ import static compile.parse.ApplyFlavor.StructAddr;
 
 /**
  * static methods for building Mesh AST nodes
+ *
+ * @author Basil Hosmer
  */
 public class ASTBuilder
 {
@@ -423,6 +425,15 @@ public class ASTBuilder
     public static Term binaryExpr(final Term head, final List<Pair<Object, Term>> tail)
     {
         return TermBinExprBuilder.build(head, tail);
+    }
+
+    /**
+     * constructs a Verb structure, which wraps an infix operator (string or Term),
+     * plus left and right dimensionality ranks
+     */
+    public static Object verb(final int lefts, final Object op, final int rights)
+    {
+        return lefts + rights == 0 ? op : new Verb(lefts, op, rights);
     }
 
     /**

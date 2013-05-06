@@ -53,7 +53,7 @@ CELLCOLS = W / CELLEXT + sign(W % CELLEXT);             // number of cell column
 CELLROWS = H / CELLEXT + sign(H % CELLEXT);             // number of cell rows
 CELLIXS = cross(count(CELLCOLS), count(CELLROWS));      // precalculated list of cell index (x, y) pairs
 
-WALLSQUEEZE = 0.5;                                      // wall squeeze force, per unit position
+WALLSQUEEZE = 0.1;                                      // wall squeeze force, per unit position
 BALLSQUEEZE = 0.01 *. circarea(MINR);                   // ball squeeze force, based on min radius
 WALLDEATH = 25;                                         // 1 in WALLDEATH chance that wall kills (slow) ball
 ELASTICITY = 0.975;//0.935;                             // collision elasticity (pct energy retained on collision)

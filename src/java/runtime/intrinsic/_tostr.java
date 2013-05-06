@@ -82,7 +82,7 @@ public final class _tostr extends IntrinsicLambda
         }
         else if (value != null)
         {
-            // numbers, bools, IntrinsicLambdas
+            // numbers, bools, Lambdas
             return value.toString();
         }
         else

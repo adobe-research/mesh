@@ -5,7 +5,7 @@
 
 import i2f from integer;
 import * from list;
-import reduce from loop;
+import reduce, scan from loop;
 
 /**
  * Wraps {@link Math#atan2(double, double)}.
@@ -227,58 +227,87 @@ vec2i(vec, radix)
 };
 
 /**
- * @param ns list of integers
+ * Sum of a list of integers. E.g.,
+ * <code>sum([1, 2, 3]) == 6</code>
+ * @param is list of integers
  * @return sum of list elements
- * @code sum([1,2,3]) //returns 6 @endcode
  */
-sum(ns) { reduce((+), 0, ns) };
+sum(is : [Int]) -> Int
+{
+    reduce((+), 0, is)
+};
 
 /**
- * sum a list of float numbers.
- * @param ns list of numbers
+ * Sum a list of doubles. E.g.,
+ * <code>fsum([1.0, 2.0, 3.0]) == 6.0</code>
+ * @param fs list of doubles
  * @return sum of list elements
- * @code fsum([1.0,2.0,3.0]) //returns 6.0 @endcode
  */
-fsum(ns) { reduce((+.), 0.0, ns) };
+fsum(fs : [Double]) -> Double
+{
+    reduce((+.), 0.0, fs)
+};
 
 /**
- * multiply a list of numbers.
- * 
- * @param ns list of numbers
- * @return product of elements in list
- * @code product([2,3,4]) //returns 24 @endcode
+ * Running total of a list of integers. E.g.,
+ * <code>runtot([1, 2, 3]) == [1, 3, 6]</code>
+ * @param is list of integers
+ * @return list of running total of input
  */
-product(ns) { reduce((*), 1, ns) };
+runtot(is : [Int]) -> [Int]
+{
+    drop(1, scan((+), 0, is))
+};
 
 /**
- * @param ns list of numbers
- * @return product of elements in list
- * @code fproduct([2.0,3.0,4.0]) //returns 24.0 @endcode
+ * Running total of a list of doubles. E.g.,
+ * <code>fruntot([1.0, 2.0, 3.0]) == [1.0, 3.0, 6.0]</code>
+ * @param fs list of doubles
+ * @return list of running total of input
  */
-fproduct(ns) { reduce((*.), 1.0, ns) };
+fruntot(fs : [Double]) -> [Double]
+{
+    drop(1, scan((+), 0.0, fs))
+};
+
+/**
+ * Multiply a list of integers. E.g.,
+ * <code>product([2, 3, 4]) == 24</code>
+ * @param is list of integers
+ * @return product of elements in list
+ */
+product(is : [Int]) -> Int
+{
+    reduce((*), 1, is)
+};
+
+/**
+ * Multiply a list of doubles. E.g.,
+ * <code>product([2.0, 3.0, 4.0]) == 24.0</code>
+ * @param fs list of doubles
+ * @return product of elements in list
+ */
+fproduct(fs : [Double]) -> Double
+{
+    reduce((*.), 1.0, fs)
+};
 
 /**
  * @param lst list of int
  * @return arith mean over list of ints, 0 for empty list.
  * @code avg([2,3,4]) //returns 3 @endcode
  */
-avg(lst) { divz(sum(lst), size(lst)) };
+avg(lst)
+{
+    divz(sum(lst), size(lst))
+};
 
 /**
  * @param lst list of float
  * @return arith mean over list of floats, 0 for empty list.
  * @code favg([2.0,3.0,4.0]) //returns 3.0 @endcode
  */
-favg(lst) { fdivz(fsum(lst), i2f(size(lst))) };
-
-/**
- * @param n integer
- * @return true iff n is even
- */
-even(n) { n == 0 || { n % 2 == 0 } };
-
-/**
- * @param n integer
- * @return true iff n is odd
- */
-odd(n) { n != 0 && { n % 2 == 1 } };
+favg(lst)
+{
+    fdivz(fsum(lst), i2f(size(lst)))
+};

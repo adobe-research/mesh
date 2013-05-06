@@ -78,7 +78,6 @@ public class TermInliner
         INTRINSICS.put(_mod.class.getName(), new ModInliner());
         INTRINSICS.put(_neg.class.getName(), new NegInliner());
         INTRINSICS.put(_pow.class.getName(), new PowInliner());
-        INTRINSICS.put(_sign.class.getName(), new SignInliner());
 
         // int relops
         INTRINSICS.put(_gt.class.getName(), new GTInliner());
