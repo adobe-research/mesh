@@ -124,7 +124,7 @@ startspinner()
 // generate color from position
 spotcolor(x, y)
 {
-    ravel(rotate([0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0], f2i(x *. y) % 6), 2) | sum
+    filet(rotate([0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0], f2i(x *. y) % 6), 2) | sum
 };
 
 // draw spinner into a given rect. spinner size varies with rect size,

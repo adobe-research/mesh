@@ -221,7 +221,7 @@ drawfunc()
     {
         (lf, rt, pivotx, pivoty) = srtinfo[tid];
 
-        [r,g,b] = ravel(rotate([0x7F, 0x7F, 0, 0, 0, 0], lf % 6), 2) | sum;
+        [r,g,b] = filet(rotate([0x7F, 0x7F, 0, 0, 0, 0], lf % 6), 2) | sum;
         (x0, xmid, x1) = (x(lf) -. ITEMW2, x(pivotx) -. ITEMW2, x(rt) + ITEMW2);
         (y0, ymid, y1) = (y(-5), y(pivoty) -. ITEMH2, y(DATAMAX + 5));
 

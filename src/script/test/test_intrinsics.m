@@ -323,7 +323,7 @@ assert_equals({ "box(3)" }, { tostr(box(3)) });             // box
 
 
 //////////////////////////////////////////////////
-// each/compose
+// map/compose
 //////////////////////////////////////////////////
 // compl : <X, Y> (X -> Int, [Y]) -> (X -> Y)
 assert_equals({ "odd" },
@@ -338,6 +338,24 @@ assert_equals({ "ODD" },
               compm_func = compm({ if(eq(0, $0 % 2), {#even}, {#odd}) }, [#even: "EVEN", #odd: "ODD"]);
               compm_func(7)
               });
+
+// eachleft : <A, B, C> ((A, B) -> C) -> (([A], B) -> [C])
+assert_equals({ [5, 6, 7] }, { [0, 1, 2] ~+ 5 });
+assert_equals({ [5, 6, 7] }, { eachleft(plus)([0, 1, 2], 5) });
+assert_equals({ [[5, 6], [7, 8]] }, { [[0, 1], [2, 3]] ~~+ 5 });
+assert_equals({ [[5, 6], [7, 8]] }, { eachleft(eachleft(plus))([[0, 1], [2, 3]], 5) });
+assert_equals({ [5, 6, 7] }, { eachleft(plus)([0, 1, 2], 5) });
+assert_equals({ [[10, 9, 8], [10, 9, 8], [10, 9, 8]] }, { [10, 10, 10] ~(-~) [0, 1, 2] });
+assert_equals({ [[10, 9, 8], [10, 9, 8], [10, 9, 8]] }, { eachleft(eachright(minus))([10, 10, 10], [0, 1, 2]) });
+
+// eachright : <A, B, C> ((A, B) -> C) -> ((A, [B]) -> [C])
+assert_equals({ [5, 6, 7] }, { 5 +~ [0, 1, 2] });
+assert_equals({ [5, 6, 7] }, { eachright(plus)(5, [0, 1, 2]) });
+assert_equals({ [[5, 6], [7, 8]] }, { 5 +~~ [[0, 1], [2, 3]] });
+assert_equals({ [[5, 6], [7, 8]] }, { eachright(eachright(plus))(5, [[0, 1], [2, 3]]) });
+assert_equals({ [[10, 10, 10], [9, 9, 9], [8, 8, 8]] }, { [10, 10, 10] ~-~ [0, 1, 2] });
+assert_equals({ [[10, 10, 10], [9, 9, 9], [8, 8, 8]] }, { [10, 10, 10] (~-)~ [0, 1, 2] });
+assert_equals({ [[10, 10, 10], [9, 9, 9], [8, 8, 8]] }, { eachright(eachleft(minus))([10, 10, 10], [0, 1, 2]) });
 
 // map : <X, Y> ([X], X -> Y) -> [Y]
 assert_equals({ [2,3,4] }, { map([1,2,3], inc) });
@@ -369,10 +387,10 @@ assert_equals({ [6, 8, 8, 10] }, { mapz(([5, 6], [1,2,3,4]) , (+)) });
 // cond : (T, V.., R => (Sum(Assoc(T, V)), Rec(Assoc(T, (v => v -> R) @ V))) -> R) = <intrinsic>
 
 // cycle : (T => (T -> Bool, T, T -> T) -> T) = <intrinsic>
-assert_equals({ 4 }, { cycle({ $0 < 4 }, 0, { $0 + 1; }) });
+assert_equals({ 4 }, { cycle({ $0 < 4 }, 0, inc) });
 
 // cyclen : (T => (Int, T, T -> T) -> T) = <intrinsic>
-assert_equals({ 4 }, { cyclen(4, 0, { $0 + 1; }) });
+assert_equals({ 4 }, { cyclen(4, 0, inc) });
 
 // evolve_while : (A, B => (A -> Bool, A, (A, B) -> A, [B]) -> A) = <intrinsic>
 assert_equals({ 4 }, { evolve_while({$0 < 4}, 1, (+), [1,1,1,1,1]) });
@@ -429,8 +447,8 @@ assert_equals({
 assert_equals({ 13 }, { reduce((+), 1, [2,4,6]) });
 
 // scan : (A, B => ((A, B) -> A, A, [B]) -> [A]) = <intrinsic>
-// same as reduce but provides each intermediate value
-assert_equals({ [3, 7, 13] }, { scan((+), 1, [2,4,6]) });
+// same as reduce but provides list of (initial and) intermediate values
+assert_equals({ [1, 3, 7, 13] }, { scan((+), 1, [2,4,6]) });
 
 // when : (T => (Bool, () -> T) -> ()) = <intrinsic>
 assert_equals({ 1 }, {
