@@ -1016,10 +1016,12 @@ public final class StatementFormatter extends BindingVisitorBase<String>
             Session.error(apply.getLoc(),
                 "internal error: dynamic record access not currently supported");
 
-        assert arg.isConstant();
+        {
+            final Term argDeref = arg instanceof RefTerm ? ((RefTerm)arg).deref() : arg;
+            assert argDeref.isConstant();
+        }
 
         // name lookup for now, see comment
-
         final String expr = formatTermAs(base, Record.class) +
             ".get(" + formatTermAs(arg, Object.class) + ")";
 
