@@ -11,6 +11,7 @@
 package compile.parse;
 
 import compile.Loc;
+import compile.Session;
 import compile.term.ApplyTerm;
 import compile.term.RefTerm;
 import compile.term.Term;
@@ -56,7 +57,16 @@ public class TermBinExprBuilder extends BinExprBuilder<Term>
             return (Term)op;
 
         if (op instanceof String)
-            return new RefTerm(loc, getOpInfo(op).func);
+        {
+            BinopInfo info = getOpInfo(op);
+            if (info == null)
+            {
+                Session.error(loc, "operator ''{0}'' not yet supported", op);
+                info = Ops.DEFAULT_BINOP_INFO;
+            }
+
+            return new RefTerm(loc, info.func);
+        }
 
         assert op instanceof Verb;
         final Verb v = (Verb)op;
