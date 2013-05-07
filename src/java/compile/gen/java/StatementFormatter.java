@@ -987,7 +987,12 @@ public final class StatementFormatter extends BindingVisitorBase<String>
             Session.error(apply.getLoc(),
                 "internal error: dynamic tuple access not currently supported");
 
-        assert arg.isConstant() && arg.getType() == Types.INT;
+        assert arg.getType() == Types.INT;
+
+        {
+            final Term argDeref = arg instanceof RefTerm ? ((RefTerm)arg).deref() : arg;
+            assert argDeref.isConstant();
+        }
 
         final String expr = formatTermAs(base, Tuple.class) + ".get(" +
             formatTermAs(arg, int.class) + ")";
@@ -1011,10 +1016,12 @@ public final class StatementFormatter extends BindingVisitorBase<String>
             Session.error(apply.getLoc(),
                 "internal error: dynamic record access not currently supported");
 
-        assert arg.isConstant();
+        {
+            final Term argDeref = arg instanceof RefTerm ? ((RefTerm)arg).deref() : arg;
+            assert argDeref.isConstant();
+        }
 
         // name lookup for now, see comment
-
         final String expr = formatTermAs(base, Record.class) +
             ".get(" + formatTermAs(arg, Object.class) + ")";
 

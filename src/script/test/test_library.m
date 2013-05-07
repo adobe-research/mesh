@@ -32,7 +32,7 @@ assert_equals({ 5 }, { avg([3,3,3,11]) });
 // bench = { b => t0 = millitime(); result = b(); (#result: result, #time: integer:l2i(lang:lminus(millitime(), t0))) }
 assert_equals({ true }, {
                         res = bench({ sleep(15); inc(2) });
-                        eq(3, res.#result);
+                        eq(3, res.result);
                         });
 
 // benchn = { n, f => timer = { start = millitime(); f(); integer:l2i(lang:lminus(millitime(), start)) }; math:avg(list:repeat(n, timer)) }
@@ -46,6 +46,16 @@ assert_equals({ true }, { x = box(1); cas(x, 1, 3) });
 assert_equals({ 3 }, { x = box(1); cas(x, 1, 3); *x });
 assert_equals({ false }, { x = box(1); cas(x, 2, 3) });
 assert_equals({ 1 }, { x = box(1); cas(x, 2, 3); *x });
+
+// cascade = <A, B> { (cases: [(A -> Bool, A -> B)], default: A -> B) -> A -> B => n = size(cases); { a => c = cycle({ i => and(lt(i, n), { not(cases[i].0(a)) }) }, 0, inc); if(lt(c, n), { cases[c].1(a) }, { default(a) }) } }
+assert_equals({ [(-1, "neg"), (0, "little"), (10, "med"), (100, "big")] }, {
+    c = cascade([
+            ({ $0 < 0 }, { ($0, "neg") }),
+            ({ $0 < 10 }, { ($0, "little") }),
+            ({ $0 < 100 }, { ($0, "med") })],
+        { ($0, "big") });
+    [-1, 0, 10, 100] | c
+});
 
 // cast = { bs, os, ns => do({ and(eq(owns(bs), os), { puts(bs, ns); true }) }) }
 assert_equals({ true }, { x = box(3); y = box(6); cast((x,y), (3,6), (4,7)) });
@@ -233,6 +243,17 @@ assert_equals({ (4, "a") }, { x = fuse(inc, id); x(3, "a"); });
 // id = { v => v }
 assert_equals({ "a" }, { id("a") });
 assert_equals({ 3 }, { id(3) });
+
+// ifelse = <T> { (cases: [(() -> Bool, () -> T)], default: () -> T) -> T => cascade(cases, default)() }
+assert_equals({ ["neg", "little", "med", "big"] }, {
+    [-1, 0, 10, 100] | { x =>
+        ifelse([
+            ({x < 0}, {"neg"}),
+            ({x < 10}, {"little"}),
+            ({x < 100}, {"med"})
+        ], {"big"})
+    }
+});
 
 // inc = { n => plus(n, 1) }
 assert_equals({ 0 }, { inc(-1) });

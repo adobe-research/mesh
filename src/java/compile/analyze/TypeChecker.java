@@ -1235,9 +1235,10 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                     Session.error(loc,
                         "structure addressing argument {0} is not constant",
                         arg.dump());
-                }
 
-                if (Types.isRec(baseType))
+                    resultType = Types.unit();
+                }
+                else if (Types.isRec(baseType))
                 {
                     // base type is known to be a record
                     final Type fields = Types.recFields(baseType).deref();
