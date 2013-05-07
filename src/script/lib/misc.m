@@ -6,7 +6,7 @@
 import * from list;
 import * from mutate;
 import * from math;
-import scan, tracen from loop;
+import scan, tracen, cycle from loop;
 import mapz from map;
 import l2i, l2f from integer;
 
@@ -354,10 +354,13 @@ shunt(p, f)
 /**
  * Transformer for binary functions, returns a version of the
  * given function vectorized over its left (first) argument.
- * E.g. given f : (X, Y) -> Z, returns a function ([X], Y) -> [Z],
- * which returns the result of applying f(x, y) for each x.
- * The prefix attribute ~ on infix operators desugars to this,
- * e.g. for +, xs ~+ y => eachleft(+)(xs, y)
+ * E.g. given <code>f : (X, Y) -> Z</code>, <code>eachleft(f)</code>
+ * returns a function of type <code>([X], Y) -> [Z]</code>,
+ * which returns the results of applying <code>f(x, y)</code>
+ * for each <code>x : X</code>.
+ * The prefix attribute <code>~</code> on infix operators desugars
+ * to <code>eachleft</code>,
+ * e.g. <code>xs ~+ y</code> => <code>eachleft(+)(xs, y)</code>.
  * @param f binary function to transform
  * @return transformed function
  */
@@ -366,11 +369,51 @@ intrinsic <A, B, C> eachleft(f : (A, B) -> C) -> ([A], B) -> [C];
 /**
  * Transformer for binary functions, returns a version of the
  * given function vectorized over its right (second) argument.
- * E.g. given f : (X, Y) -> Z, returns a function (X, [Y]) -> [Z],
- * which returns the result of applying f(x, y) for each y.
- * The postfix attribute ~ on infix operators desugars to this,
- * e.g. for +, x +~ ys => eachright(+)(x, ys)
+ * E.g. given <code>f : (X, Y) -> Z</code>, <code>eachright(f)</code>
+ * returns a function of type <code>(X, [Y]) -> [Z]</code>,
+ * which returns the results of applying <code>f(x, y)</code>
+ * for each <code>y : Y</code>.
+ * The postfix attribute <code>~</code> on infix operators desugars
+ * to <code>eachright</code>,
+ * e.g. <code>x +~ ys</code> => <code>eachright(+)(x, ys)</code>.
  * @param f binary function to transform
  * @return transformed function
  */
 intrinsic <A, B, C> eachright(f : (A, B) -> C) -> (A, [B]) -> [C];
+
+/**
+ * Deferred if-else combinator. Given a list of parameterized
+ * predicate/action pairs and default action, produces a function
+ * which takes an argument and runs each predicate on it in turn
+ * until a predicate returns true, then passes it to the corresponding
+ * action and returns the value. If no predicate returns true, the
+ * argument is passed to the default action. E.g.
+ * <code>ifelse(cases, default) == cascade(cases, default)()</code>
+ * @param cases list of guard/action pairs
+ * @param default default action
+ * @return result of executed action
+ */
+<A, B> cascade(cases : [(A -> Bool, A -> B)], default : A -> B) -> A -> B
+{
+    n = size(cases);
+    { a =>
+        c = cycle({ i => i < n && { !cases[i].0(a) } }, 0, inc);
+        if(c < n, { cases[c].1(a) }, { default(a) })
+    }
+};
+
+/**
+ * If-else combinator. Given a list of guard/action
+ * pairs and a default action, run each guard in turn until one
+ * returns true, then execute the corresponding action.
+ * If no guard returns true, execute the default action.
+ * Return the result of the executed action.
+ * @param cases list of guard/action pairs
+ * @param default default action
+ * @return result of executed action
+ */
+<T> ifelse(cases : [(() -> Bool, () -> T)], default : () -> T) -> T
+{
+    cascade(cases, default)()
+};
+
