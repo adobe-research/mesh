@@ -2,9 +2,6 @@
 // Aggregation of lib functions
 //
 
-import * from lang;
-
-import * from integer;
 import * from io;
 import * from list;
 import * from loop;

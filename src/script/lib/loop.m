@@ -5,31 +5,6 @@
 import * from list;
 
 /**
- * Iterate on an endofunction while guard predicate returns true.
- * Iteration is started with specified initial argument, which is
- * passed through the guard before being applied.
- *
- * @param p Predicate lambda that accepts the value of v, determines when cycle ends.
- * @param v Initial value of v that will be passed to the f lambda, value of v is applied
- *        to the predicate prior to being passed into the f lambda parameter.
- * @param f Function that accepts passed in value T and returns the next value T that will
- *        be fed back into the function if guard predicate is still true.
- * @return Value of v when predicate is false.
- */
-intrinsic <T> cycle(p : T -> Bool, v : T, f : T -> T) -> T;
-
-/**
- * Iterate on a function n times.
- *
- * @param n Limit of how many times f function will be called.
- * @param v Initial value of v that will be passed to the f lambda.
- * @param f Function that accepts passed in value T and returns the next value T that will
- *        be fed back into the function as long as upper limit has not been reached.
- * @return Value of v after the given number of iterations.
- */
-intrinsic <T> cyclen(n : Int, v : T, f : T -> T) -> T;
-
-/**
  * Traced version of {@link #cycle}:
  * <code>last(trace(p, v, f)) == cycle(p, v, f)</code>.
  * iteration, beginning with initial value v.
@@ -56,41 +31,6 @@ tracen(n, v, f)
 {
     cyclen(n, [v], { append($0, f(last($0))) })
 };
-
-/**
- * Evolve (reduce) until stop condition is met, or inputs
- * are exhausted.
- *
- * @param x Predicate lambda that accepts the value of y, determines when cycle ends.
- * @param y Initial value of y that will be passed as the first argument to the z lambda,
- *        value of y is applied to the predicate prior to being passed into the z lambda parameter.
- * @param z Function that accepts passed in value y and the next item in a. Returns new value of 
- * @param a list of values that will be processed
- * @return value of T when predicate is false or all inputs have been processed
- */
-intrinsic <A, B> evolve_while(x : A -> Bool, y : A, z : (A, B) -> A, a : [B]) -> A;
-
-/**
- * Perform a functional reduction (foldl) using the given reducer,
- * initial value and list of arguments.
- * @param f reducing function
- * @param v initial value
- * @param l list of arguments
- * @return value produced by calling f repeatedly with previously
- *         calculated value and next item in the list.
- */
-intrinsic <A, B> reduce(f : (A, B) -> A, v : A, l : [B]) -> A;
-
-/**
- * Traced version of {@link #reduce}:
- * <code>last(scan(f, v, l)) == reduce(f, v, l)</code>
- * @param f reducing function
- * @param v initial value
- * @param l list of arguments
- * @return list of values produced by calling f repeatedly with
- *         previously calculated value and next item in the list.
- */
-intrinsic <A, B> scan(f: (A, B) -> A, v : A, l : [B]) -> [A];
 
 /**
  * Is predicate true for any value in a list? 

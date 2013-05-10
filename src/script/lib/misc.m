@@ -8,7 +8,6 @@ import * from mutate;
 import * from math;
 import scan, tracen, cycle from loop;
 import mapz from map;
-import l2i, l2f from integer;
 
 /**
  * Given a list of sizes, return a list of starting points.
@@ -88,16 +87,6 @@ starts(sizes : [Int]) -> [Int]
 {
     { (f($0), g($1)) }
 };
-
-/**
- * @return current time in millis.
- */
-intrinsic millitime() -> Long;
-
-/**
- * @return current time in nanos.
- */
-intrinsic nanotime() -> Long;
 
 /**
  *

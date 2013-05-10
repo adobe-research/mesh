@@ -11,34 +11,6 @@
 intrinsic endswith(x:String, y:String) -> Bool;
 
 /**
- * Convert string to float value.
- * @param x string value
- * @return float representation of x.
- */
-intrinsic s2f(x:String) -> Double;
-
-/**
- * Convert string to integer value.
- * @param x string value
- * @return integer representation of x.
- */
-intrinsic s2i(x:String) -> Int;
-
-/**
- * Convert string to long value.
- * @param x string value
- * @return long representation of x.
- */
-intrinsic s2l(x:String) -> Long;
-
-/**
- * Convert string to a symbol.
- * @param x string value
- * @return symbol representated by x.
- */
-intrinsic s2sym(x:String) -> Symbol;
-
-/**
  * {@link String#startsWith(String)}
  * @param x base string
  * @param y prefix string

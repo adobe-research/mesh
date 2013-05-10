@@ -32,7 +32,7 @@ public final class _when extends IntrinsicLambda
     public Object apply(final Object arg)
     {
         final Tuple args = (Tuple)arg;
-        return invoke((Boolean)args.get(0), (Lambda)args.get(2));
+        return invoke((Boolean)args.get(0), (Lambda)args.get(1));
     }
 
     public static Tuple invoke(final boolean cond, final Lambda block)
