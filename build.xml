@@ -19,6 +19,8 @@
     <property name="wssrc.dir" value="${basedir}/ws/src"/>
     <property name="ws.jar" value="${basedir}/ws/ws.jar"/>
 
+    <property name="test.extra_vmargs" value="-server"/>
+
     <property name="dependent.jars" value="
         collections-generic-4.01.jar,
         commons-lang-2.4.jar,
@@ -38,6 +40,25 @@
         </or>
     </condition>
 
+    <!-- CLOVER code coverage targets, these should all be guarded on actually having clover.jar -->
+    <property name="clover.jar" location="${lib.dir}/clover.jar"/>
+    <taskdef resource="cloverlib.xml" classpath="${clover.jar}" onerror="ignore"/>
+    <target name="-check.clover">
+        <available property="clover.installed" classname="com.cenqua.clover.CloverInstr" />
+    </target>
+    <target name="guard.noclover" depends="-check.clover" unless="clover.installed">
+        <fail message="The target you are attempting to run requires Clover, which doesn't appear to be installed"/>
+    </target>
+    <target name="with.clover" depends="guard.noclover">
+        <clover-setup/>
+    </target>
+    <target name="clover.html" depends="guard.noclover">
+        <clover-html-report outdir="clover_html" title="Mesh Project"/>
+    </target>
+    <target name="clover.clean" depends="guard.noclover">
+        <clover-clean keepdb="true"/>
+    </target>
+
     <!-- paths -->
 
     <path id="classpath">
@@ -47,6 +68,7 @@
     <path id="shell.classpath">
         <pathelement location="mesh.jar" /> 
         <fileset dir="${lib.dir}" includes="${dependent.jars}"/>
+        <pathelement location="${clover.jar}" />
     </path>    
 
     <!-- targets -->
@@ -134,6 +156,7 @@
             <jvmarg value="-Xmx1024m" />
             <jvmarg value="-ea" />
             <jvmarg value="-server" />
+            <jvmarg line="${test.extra_vmargs}" />
             <arg value="-path" />
             <arg value="./src/script;./src/script/lib" />
             <arg value="-import" />

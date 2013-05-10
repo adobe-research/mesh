@@ -12,6 +12,10 @@ syntax: glob
 # patching rejects
 *.rej
 
+# clover files
+.clover/**
+clover_**
+
 # .DS_Store
 .DS_Store
 
