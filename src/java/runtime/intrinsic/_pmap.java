@@ -11,6 +11,7 @@
 package runtime.intrinsic;
 
 import runtime.conc.ConcurrencyManager;
+import runtime.rep.Tuple;
 import runtime.rep.lambda.IntrinsicLambda;
 import runtime.rep.lambda.Lambda;
 import runtime.rep.list.ListValue;
@@ -22,7 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 /**
- * Parallel version of {@link Map}. Aliased to infix
+ * Parallel version of {@link _map}. Aliased to infix
  * operator '|:' in {@link compile.parse.Ops}.
  *
  * @author Basil Hosmer
@@ -39,8 +40,8 @@ public final class _pmap extends IntrinsicLambda
 
     public Object apply(final Object arg)
     {
-        final Object[] args = (Object[])arg;
-        return invoke((ListValue)args[0], (Lambda)args[1]);
+        final Tuple args = (Tuple)arg;
+        return invoke((ListValue)args.get(0), (Lambda)args.get(1));
     }
 
     public static ListValue invoke(final ListValue args, final Lambda func)

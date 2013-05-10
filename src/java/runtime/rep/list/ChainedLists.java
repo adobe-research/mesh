@@ -167,9 +167,10 @@ public final class ChainedLists implements ListValue
         {
             final ListValue list = (ListValue)item;
             final int i = list.find(value);
-            if (i < list.size())
+            final int listSize = list.size();
+            if (i < listSize)
                 return base + i;
-            base += size;
+            base += listSize;
         }
         return base;
     }

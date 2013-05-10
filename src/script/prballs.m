@@ -205,7 +205,7 @@ squeeze(lo, hi, pos)
 //
 // calculate new velocity from walls, player's position and velocity -
 // near the boundary this is just the elastic bounce off box walls.
-// if we're way outseide, we add in a rubber-band squeeze
+// if we're way outside, we add in a rubber-band squeeze
 // proportional to how far ball is outside play box. Latter comes
 // into play when ball has been dragged out
 //
@@ -410,8 +410,8 @@ turn(last)
         { for(CELLIXS, cellcollisions) },
         { pforn(CELLIXS, cellcollisions, ct) });
 
-    // update players to reflect the passage of time
-    elapsedms = elapsed /. MSNANOS;
+    // update players to reflect the passage of time (limited)
+    elapsedms = fmin(elapsed /. MSNANOS, 100.0);
     if (ct <= 1,
         { for(*players, { age($0, elapsedms) }) },
         { pforn(*players, { age($0, elapsedms) }, ct) });

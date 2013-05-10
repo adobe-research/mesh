@@ -3,7 +3,6 @@
 // TODO refactor once we have interfaces
 //
 
-import i2f from integer;
 import * from list;
 import reduce, scan from loop;
 
@@ -11,7 +10,7 @@ import reduce, scan from loop;
  * Wraps {@link Math#atan2(double, double)}.
  * @param y the ordinate coordinate
  * @param x the abscissa coordinate
- * @return 
+ * @return
  */
 intrinsic atan2(y:Double, x:Double) -> Double;
 

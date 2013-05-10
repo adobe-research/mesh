@@ -4,12 +4,6 @@
 // TODO document, reorg, replace intrinsic types
 //
 
-// logging--these are real, should move out of here
-intrinsic <T> logdebug(x:T) -> ();
-intrinsic <T> logerror(x:T) -> ();
-intrinsic <T> loginfo(x:T) -> ();
-intrinsic <T> logwarning(x:T) -> ();
-
 // XML parsing--ditto
 intrinsic type XNode;   // a structural record type
 intrinsic parsexml(x:String) -> XNode;
