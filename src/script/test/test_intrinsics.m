@@ -629,13 +629,11 @@ assert_equals({ 0 }, {
         *when_data;
         });
 
-/* FIXME: https://github.com/adobe-research/mesh/issues/34
 assert_equals({ 1 }, {
         when_data = box(0);
         apply(when, (true, {when_data <- inc}));
         *when_data;
         });
-*/
 
 // where : (T => ([T], T -> Bool) -> [Int]) = <intrinsic>
 assert_equals({ [0, 1, 3] }, { where([4,4,7,4,7], {$0 < 5}) });
@@ -707,9 +705,7 @@ assert_equals({ 2 }, { find(take(34, count(33)), 2) }); // biglist
 assert_equals({ 1 }, { find(flatten([[0,1], [2,3]]), 1) }); // ChainedListPair
 assert_equals({ 4 }, { find(flatten([[0,1], [2,3]]), 5) }); // ChainedListPair
 assert_equals({ 1 }, { find(flatten([[0,1], [2], [3]]), 1) }); // ChainedList
-// FIXME https://github.com/adobe-research/mesh/issues/38
-// CORRECT ANSERT IS 4
-assert_equals({ 12 }, { find(flatten([[0,1] ,[2], [3]]), 5) }); // ChainedList
+assert_equals({ 4 }, { find(flatten([[0,1] ,[2], [3]]), 5) }); // ChainedList
 
 
 
@@ -1023,8 +1019,7 @@ assert_equals({ [2,3,4] }, { pmap([1,2,3], inc) });
 assert_equals({ [2,3,4] }, { [1,2,3] |: inc });
 assert_equals({ [] }, { pmap([], inc) });
 assert_equals({ map([1,2,3], inc) }, { pmap([1,2,3], inc) });
-// FIXME: https://github.com/adobe-research/mesh/issues/33
-//assert_equals({ [2,3,4] }, { apply(pmap, ([1,2,3], inc)) });
+assert_equals({ [2,3,4] }, { apply(pmap, ([1,2,3], inc)) });
 
 // sleep : Int -> () = <intrinsic>
 assert_equals({ true }, { sleep(3); true });

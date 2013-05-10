@@ -122,21 +122,18 @@ public final class ImportResolver extends ModuleVisitor<Object>
         return null;
     }
 
+    /**
+     * Find and load a module specified by the given name.
+     * Search is based on importing module's path and the
+     * current search path.
+     * TODO rework pipeline to handle circularity
+     */
     private Module performLoad(final Loc loc, final String moduleName)
     {
         final String pathFragment = moduleNameToPathFragment(moduleName);
-        File modulePath = null;
 
-        // TODO: should there be a module-relative path component?  I.e, can 
-        //       module.abc load module.def just by specifying "import def"?
-        final List<String> searchPaths = Session.getSearchPaths();
-        for (int i = 0; modulePath == null && i < searchPaths.size(); ++i) 
-        {
-            final String rootPath = searchPaths.get(i);
-            modulePath = findModuleInPath(loc, rootPath, pathFragment);
-        }
-
-        if (modulePath == null) 
+        final File modulePath = getModulePath(loc, pathFragment);
+        if (modulePath == null)
         {
             Session.error(loc, "Could not load module ''{0}''", moduleName);
             return null;
@@ -172,6 +169,36 @@ public final class ImportResolver extends ModuleVisitor<Object>
 
             return module;
         }
+    }
+
+    /**
+     * Attempt to build a valid full module path from a path fragment,
+     * using the importing module's path and the current search path
+     * as context.
+     */
+    private File getModulePath(final Loc loc, final String pathFragment)
+    {
+        File modulePath = null;
+
+        final String currentModulePath = getModule().getLoc().getPath();
+        final File currentModuleFile = new File(currentModulePath);
+        if (currentModuleFile.isFile())
+        {
+            final String rootPath = currentModuleFile.getParent();
+            modulePath = findModuleInPath(loc, rootPath, pathFragment);
+        }
+
+        if (modulePath == null)
+        {
+            final List<String> searchPaths = Session.getSearchPaths();
+            for (int i = 0; modulePath == null && i < searchPaths.size(); ++i)
+            {
+                final String rootPath = searchPaths.get(i);
+                modulePath = findModuleInPath(loc, rootPath, pathFragment);
+            }
+        }
+
+        return modulePath;
     }
 
     private static File findModuleInPath(final Loc loc, final String path, final String fragment) 

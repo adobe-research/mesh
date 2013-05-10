@@ -10,10 +10,6 @@
  */
 package runtime.rep.lambda;
 
-import compile.term.ValueBinding;
-import compile.type.Type;
-import compile.type.visit.TypeDumper;
-
 /**
  * Extends {@link Lambda} with attributes used
  * to hook up intrinsics.

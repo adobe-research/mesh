@@ -18,7 +18,7 @@ import compile.term.TupleTerm;
 import java.util.List;
 
 /**
- * Try inlining calls to {@link runtime.intrinsic.Div}.
+ * Try inlining calls to {@link runtime.intrinsic._div}.
  *
  * @author Basil Hosmer
  */
