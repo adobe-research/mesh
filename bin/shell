@@ -34,6 +34,7 @@ CP="-cp ${ROOTDIR}/mesh.jar"
 for jar in ${LIBJARS}; do 
     CP="${CP}${PATHSEP}${ROOTDIR}/lib/${jar}.jar"
 done
+CP="${CP}${PATHSEP}${CP_APPEND}"
 
 JVM_ARGS="-Xmx1024m -ea -server ${CP} ${JAVA_PROPS}"
 
