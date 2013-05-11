@@ -18,7 +18,7 @@ import compile.term.TupleTerm;
 import java.util.List;
 
 /**
- * Try inlining calls to {@link runtime.intrinsic.FPow}.
+ * Try inlining calls to {@link runtime.intrinsic._fpow}.
  *
  * @author Basil Hosmer
  */
@@ -38,6 +38,6 @@ public class FPowInliner implements Inliner
         if (stmtsOkay)
             return expr;
 
-        return fmt.fixup(apply.getLoc(), expr, int.class);
+        return fmt.fixup(apply.getLoc(), expr, double.class);
     }
 }
