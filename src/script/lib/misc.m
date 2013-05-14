@@ -281,7 +281,7 @@ pfiltern(list, pred, n)
 <T> pwheren(list : [T], pred : T -> Bool, ntasks : Int) -> [Int]
 {
     cps = cutpoints(list, ntasks);
-    ixs = zip(cut(list, cps), cps) |: { where($0, pred) ~+ $1 };
+    ixs = zip(cut(list, cps), cps) |: { where($0, pred) @+ $1 };
     flatten(ixs)
 };
 
@@ -324,7 +324,7 @@ filet(list, n)
 {
     s = size(list);
     slices = divz(s, n) + sign(modz(s, n));
-    cut(list, count(slices) ~* n)
+    cut(list, count(slices) @* n)
 };
 
 /**
@@ -347,9 +347,9 @@ shunt(p, f)
  * returns a function of type <code>([X], Y) -> [Z]</code>,
  * which returns the results of applying <code>f(x, y)</code>
  * for each <code>x : X</code>.
- * The prefix attribute <code>~</code> on infix operators desugars
+ * The prefix attribute <code>@</code> on infix operators desugars
  * to <code>eachleft</code>,
- * e.g. <code>xs ~+ y</code> => <code>eachleft(+)(xs, y)</code>.
+ * e.g. <code>xs @+ y</code> => <code>eachleft(+)(xs, y)</code>.
  * @param f binary function to transform
  * @return transformed function
  */
@@ -362,9 +362,9 @@ intrinsic <A, B, C> eachleft(f : (A, B) -> C) -> ([A], B) -> [C];
  * returns a function of type <code>(X, [Y]) -> [Z]</code>,
  * which returns the results of applying <code>f(x, y)</code>
  * for each <code>y : Y</code>.
- * The postfix attribute <code>~</code> on infix operators desugars
+ * The postfix attribute <code>@</code> on infix operators desugars
  * to <code>eachright</code>,
- * e.g. <code>x +~ ys</code> => <code>eachright(+)(x, ys)</code>.
+ * e.g. <code>x +@ ys</code> => <code>eachright(+)(x, ys)</code>.
  * @param f binary function to transform
  * @return transformed function
  */
