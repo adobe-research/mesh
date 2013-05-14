@@ -39,28 +39,28 @@ Stopwatch() {
     _reset() { set(false, 0.0, 0.0); };
 
     _start() {
-        if(!(*members).running, { set(true, seconds(), 0.0) }, {()})
+        guard((*members).running, (), { set(true, seconds(), 0.0); })
     };
 
     _resume() {
         this = *members;
-        if(!this.running, { set(true, seconds(), this.total) }, {()})
+        guard(this.running, (), { set(true, seconds(), this.total) })
     };
 
     _stop() {
         this = *members;
-        if(this.running, 
-           { set(false, this.last_time, seconds() -. this.last_time) }, {()})
+        guard(!this.running, (), 
+            { set(false, this.last_time, seconds() -. this.last_time) })
     };
 
     _read() -> Double {
         this = *members;
-        if(this.running, { 
+        guard(!this.running, this.total, {
             t = seconds(); 
             total = t -. this.last_time; 
             set(true, t, total);
             total
-        }, { this.total })
+        })
     };
 
     _reset();

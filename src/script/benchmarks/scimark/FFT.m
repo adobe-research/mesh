@@ -34,7 +34,7 @@ FFT() {
             k = n / 2;
             // swap entries in map (maybe)
             mapping = if(i < j, 
-                { m | { iif($0 == i, j, iif($0 == j, i, $0)) } }, 
+                { m | { guard($0 == i, j, { iif($$0 == j, i, $$0) }) } }, 
                 { m });
     
             // Calculate next j
@@ -44,7 +44,7 @@ FFT() {
     
         // Apply mapping to data (which is complex, so one mapping entry represents
         // two doubles)
-        count(size(data)) | { data[rmap[$0 / 2] * 2 + ($0 % 2)] }
+        index(data) | { data[rmap[$0 / 2] * 2 + ($0 % 2)] }
     };
 
     // TODO: This is implemented as in-place replacement in an array of boxes.
@@ -55,7 +55,7 @@ FFT() {
         n = N/2;
         PI = 3.14159265;
         
-        if (n == 1 || { N == 0 }, { data }, {
+        guard(n == 1 || { N == 0 }, data, {
             logn = int_log2(n);
             D = bitreverse(data) | box;
     

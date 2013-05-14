@@ -20,7 +20,7 @@ LU() {
     // end up popping the stack with a big enough array.  We should 
     // try this iteratively.
     factor(M:Int, N:Int, A:[[Double]]) -> ([[Double]], [Int]) {
-        if(or(M == 1, { N == 1 }), { (A, [0] ) }, { 
+        guard(M == 1 || { N == 1 }, (A, [0] ), { 
             // Find the row with the largest abs max value in the first column.  
             col0 = A | head;
             pivot_pos = reduce(

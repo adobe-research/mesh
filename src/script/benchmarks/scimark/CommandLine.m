@@ -70,13 +70,11 @@ res = [
     kernel.measureLU( LU_size, min_time, R)
 ];
 
-average = reduce(plus, 0.0, res) /. i2f(size(res));
-
 // print out results
 print();
 print("SciMark 2.0a");
 print();
-print("Composite Score: " + f2s(average));
+print("Composite Score: " + f2s(favg(res)));
 if (res[0] == 0.0, {
     print("FFT: ERROR, INVALID NUMERICAL RESULT!")
 }, {

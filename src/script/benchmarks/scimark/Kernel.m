@@ -94,10 +94,10 @@ Kernel() {
         anz = nr * N; // _actual_ number of nonzeros
         val = repeat(anz, R);
 
-        rows = count(N+1) | { $0 * nr };
+        rows = count(N+1) ~* nr;
         cols = flatten(count(N) | { r => 
             step = iif(r / nr < 1, 1, r / nr); // take at least unit steps
-            count(nr) | { i => i * step }
+            count(nr) ~* step
         });
 
         (cycles, time) = iterate_until(mintime, { c =>

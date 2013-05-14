@@ -21,9 +21,9 @@ randomgen(seed:Int) -> (() -> Double)
     k0 = 9069 % m2;
     k1 = 9069 / m2;
 
-    actualseed = if(seed == 0, { l2i(millitime()) }, { seed }); 
+    actualseed = guard(seed != 0, seed, { l2i(millitime()) }); 
 
-    makeodd = { iif($0 % 2 == 0, dec($0), $0) };
+    makeodd = { guard($0 % 2 != 0, $0, { dec($$0) }) };
     jseed = (min $ makeodd)(abs(actualseed), m1);
 
     initseeds = { 
@@ -44,8 +44,8 @@ randomgen(seed:Int) -> (() -> Double)
     members := (#i:4, #j:16, #m:m);
 
     // private utils
-    makepositive = { iif($0 < 0, $0 + m1, $0) };
-    decwrap = { iif($0 == 0, 16, dec($0)) };
+    makepositive = { guard($0 >= 0, $0, { $$0 + m1 }) };
+    decwrap = { guard($0 == 0, 16, { dec($$0) }) };
 
     { 
         this = *members;

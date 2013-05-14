@@ -49,7 +49,7 @@ MonteCarlo() {
             x = run(R);
             y = run(R);
     
-            iif((x *. x) +. (y *. y) <=. 1.0, $0 + 1, $0)
+            guard((x *. x) +. (y *. y) >. 1.0, $0, { inc($$0) })
         });
     
         i2f(under) /. i2f(num_samples) *. 4.0
