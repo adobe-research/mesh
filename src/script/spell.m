@@ -80,7 +80,7 @@ correct(word)
     // return first word with highest nonzero count,
     // or fall back to original
     guard(hi == 0, word, {
-        candidates[firstwhere({ dict[$0] == hi }, candidates)]
+        candidates[first_where({ dict[$0] == hi }, candidates)]
     })
 };
 

@@ -177,13 +177,11 @@ transient compile.Pair<Object, Term> InfixRHS
 // character, which vectorize left and right parameters,
 // respectively.
 //
-// (Note on double modifiers: @op@ parses as (@op)@, and
-// (@op)@ has a different meaning than @(op@): the former's
-// result matrix will have a row (sublist) per right operand,
-// the latter's a row per left operand. For non-commutative
-// operators these two matrices will not be identical. Parens
-// can be used to disambiguate, but are not allowed for
-// unmodified operators.)
+// Note on double modifiers: @op@ parses as (@op)@, which
+// has a different meaning than @(op@). The former's result
+// matrix will have a row (sublist) per right operand, the
+// latter's one per left operand. Parens can be used to
+// disambiguate, but are not allowed for unmodified operators.
 //
 transient Object Verb
     = lefts:("@")* "(" op:Verb ")" rights:("@")* WhiteSpace
