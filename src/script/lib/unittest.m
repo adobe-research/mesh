@@ -1,10 +1,9 @@
-
-import * from string;
-import logerror from io;
-
 //
 // Testing functions
 //
+
+/** {@link std.m} */
+import * from std;
 
 assert_equals(expected, actual)
 {

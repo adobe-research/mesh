@@ -47,16 +47,6 @@ assert_equals({ 3 }, { x = box(1); cas(x, 1, 3); *x });
 assert_equals({ false }, { x = box(1); cas(x, 2, 3) });
 assert_equals({ 1 }, { x = box(1); cas(x, 2, 3); *x });
 
-// cascade = <A, B> { (cases: [(A -> Bool, A -> B)], default: A -> B) -> A -> B => n = size(cases); { a => c = cycle({ i => and(lt(i, n), { not(cases[i].0(a)) }) }, 0, inc); if(lt(c, n), { cases[c].1(a) }, { default(a) }) } }
-assert_equals({ [(-1, "neg"), (0, "little"), (10, "med"), (100, "big")] }, {
-    c = cascade([
-            ({ $0 < 0 }, { ($0, "neg") }),
-            ({ $0 < 10 }, { ($0, "little") }),
-            ({ $0 < 100 }, { ($0, "med") })],
-        { ($0, "big") });
-    [-1, 0, 10, 100] | c
-});
-
 // cast = { bs, os, ns => do({ and(eq(owns(bs), os), { puts(bs, ns); true }) }) }
 assert_equals({ true }, { x = box(3); y = box(6); cast((x,y), (3,6), (4,7)) });
 assert_equals({ (4, 7) }, { x = box(3); y = box(6); cast((x,y), (3,6), (4,7)); (*x, *y) });
@@ -91,7 +81,7 @@ assert_equals({ 2 }, { constrain(2, 1, 4) });
 assert_equals({ 3 }, { constrain(2, 3, 4) });
 assert_equals({ 4 }, { constrain(2, 5, 4) });
 
-// consume = { c, q, f => ne = { l => gt(list:size(l), 0) }; while({ get(c) }, { mutate:awaits((c, q), { b, l => or(not(b), { ne(l) }) }); loop:when(get(c), { _118_13 = mutate:tau(q, ne, list:tail); b = _118_13.0; l = _118_13.1; loop:when(b, { f(list:head(l)) }); () }); () }); () }
+// consume = { c, q, f => ne = { l => gt(list:size(l), 0) }; while({ get(c) }, { mutate:awaits((c, q), { b, l => or(not(b), { ne(l) }) }); loop:when(get(c), { _118_13 = mutate:tau(q, ne, list:rest); b = _118_13.0; l = _118_13.1; loop:when(b, { f(list:first(l)) }); () }); () }); () }
 
 // contains = { list, item => lt(find(list, item), size(list)) }
 assert_equals({ false }, { contains([3,4,5], 2) });
@@ -190,13 +180,8 @@ assert_equals({ true }, { finrange(2.0, 2.0, 1.0) });
 assert_equals({ false }, { finrange(1.0, 2.0, 1.0) });
 assert_equals({ false }, { finrange(3.0, 2.0, 1.0) });
 
-// finspt = { list, val => firstwhere({ $0_200_32 => fle(val, $0_200_32) }, list) }
-assert_equals({ 1 }, { finspt([1.0,2.2,3.1], 2.0) });
-assert_equals({ 1 }, { finspt([1.0,2.2,3.1], 2.2) });
-assert_equals({ 2 }, { finspt([1.0,2.2,3.1], 2.3) });
-
-// firstwhere = { pred, vals => n = list:size(vals); cycle({ i => and(lt(i, n), { not(pred(vals[i])) }) }, 0, inc) }
-assert_equals({ 4 }, { firstwhere({ 3 < $0 }, [0,1,2,3,4,5]) });
+// first_where = { pred, vals => n = list:size(vals); cycle({ i => and(lt(i, n), { not(pred(vals[i])) }) }, 0, inc) }
+assert_equals({ 4 }, { first_where({ 3 < $0 }, [0,1,2,3,4,5]) });
 
 // fmax = { x, y => iif(fge(x, y), x, y) }
 assert_equals({ 1.0 }, { fmax(1.0, 1.0) });
@@ -269,12 +254,11 @@ assert_equals({ true }, { inrange(2, 2, 1) });
 assert_equals({ false }, { inrange(1, 2, 1) });
 assert_equals({ false }, { inrange(3, 2, 1) });
 
-// inspt = { list, val => firstwhere({ $0_199_31 => le(val, $0_199_31) }, list) }
-assert_equals({ 1 }, { inspt([0,2,4], 1) });
-assert_equals({ 1 }, { inspt([0,2,4], 2) });
-assert_equals({ 2 }, { inspt([0,2,4], 3) });
+// insertion_point = { list, val => first_where({ $0_199_31 => le(val, $0_199_31) }, list) }
+assert_equals({ 1 }, { insertion_point(1, [0,2,4]) });
+assert_equals({ 1 }, { insertion_point(2, [0,2,4]) });
+assert_equals({ 2 }, { insertion_point(3, [0,2,4]) });
 
-// instr = { f => num_recs = lang:box(0); avg_time = lang:box(0.0); wrapped_f = { x => t0 = nanotime(); y = f(x); mutate:updates((num_recs, avg_time), { num, avg => elapsed = lang:lminus(nanotime(), t0); new_num = plus(num, 1); new_avg = fdiv(plus(ftimes(avg, integer:l2f(num)), integer:l2f(elapsed)), integer:l2f(new_num)); (new_num, new_avg) }); y }; (wrapped_f, (#num: num_recs, #avg: avg_time)) }
 // intersection = { list1, list2 => map2 = mapns:assoc(list2, [()]); list:unique(list:filter(list1, { $0_16_36 => mapns:iskey(map2, $0_16_36) })) }
 assert_equals({ [2, 4] }, { intersection([2,2,3,4], [5,4,4,2,1]) });
 
@@ -535,10 +519,6 @@ assert_equals({ (1, 1) }, { twin(1) });
 
 // union = { list1, list2 => list:unique(plus(list1, list2)) }
 assert_equals({ [0, 1, 2, 3, 4] }, { union([1,1,2,3], [0,2,4]) });
-
-// vec2i = { vec, radix => sum(map(list:zip(vec, list:reverse(list:index(vec))), { d, p => times(d, pow(radix, p)) })) }
-assert_equals({ 1024 }, { vec2i([1, 0, 2, 4], 10) });
-assert_equals({ 1024 }, { vec2i([2, 0, 0, 0], 8) });
 
 // wtau = { b, p, f => await(b, p); tau(b, p, f) }
 assert_equals({ 10 }, {

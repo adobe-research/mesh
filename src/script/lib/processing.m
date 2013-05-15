@@ -1,12 +1,21 @@
 //
-// Processing library intrinsics
+// Processing library hookups.
+//
+// Demoware--these are handwritten intrinsic wrappers around
+// methods of the processing applet, of which there is at most
+// one global instance, created with a call to propen().
+//
+// TODO ultimately, use this as a test case for real Java interop
 //
 
 // processing FFI types
-// TODO use New(Opaque) once type matching is in
+// TODO replace with New(Opaque) typedefs
 intrinsic type Font;
 intrinsic type Image;
 intrinsic type Matrix3D;
+
+intrinsic hsb2rgb(h : Double, s : Double, b : Double) -> Int;
+intrinsic rgb2hsb(rgb : Int) -> (Double, Double, Double);
 
 intrinsic prarc(x:Double, y:Double, z:Double, a:Double, b:Double, c:Double) -> ();
 intrinsic prbackground(x:Int) -> ();

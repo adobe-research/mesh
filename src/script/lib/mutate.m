@@ -2,81 +2,10 @@
 // Box and mutation related functionality
 //
 
-import * from list;
-
-/**
- * Perform an action on a boxed variable, updating its state
- * and returning the action's result.
- * @param b boxed state variable
- * @param f action function on a state value of type S.
- * returning a pair of (new state, action result).
- * @return result of action on b's state
- */
-<S, T> act(b : *S, f : S -> (S, T)) -> T
-{
-    do {
-        (next, result) = f(own(b));
-        b := next;
-        result
-    }
-};
-
-/**
- * Update box to new value, return its prior value.
- * @param b box to modify
- * @param v new value to place in the box
- * @return original value in the box
- */
-postput(b, v) { act(b, { (v, $0) }) };
-
-/**
- * Run update function f on current value of box b.
- * Update b with the result, and also return it.
- * Note: action function argument to act() is
- * equivalent to <code>f $ twin</code>.
- */
-preupdate(b, f) { act(b, { v = f($0); (v, v) }) };
-
-/**
- * Run update function f on current value of box b.
- * Update b with the result, and return b's original
- * value.
- * @param b box to update
- * @param f update function
- * @return box's prior value
- */
-postupdate(b, f) { act(b, { (f($0), $0) }) };
-
-/**
- * Atomic pre-decrement.
- * @param b box to decrement
- * @return decremented value
- */
-predec(b) { preupdate(b, dec) };
-
-/**
- * Atomic pre-increment.
- * @param b box to increment
- * @return incremented value
- */
-preinc(b) { preupdate(b, inc) };
-
-/**
- * Atomic post-increment.
- * @param b box to increment
- * @return box's original value
- */
-postinc(b) { postupdate(b, inc) };
-
-/**
- * Atomic post-decrement.
- * @param b box to increment
- * @return box's original value
- */
-postdec(b) { postupdate(b, dec) };
+// --------------------------------------------------------------
 
 //
-// cas and variations.
+// CAS and variations.
 // In all cases, boxes are owned up front, making the
 // rest of the transaction inevitable, mod (a) outer
 // transactions and (b) box acquisition in passed
@@ -184,6 +113,17 @@ caut(bs, os, f)
 };
 
 /**
+ * swap the last value in a boxed list with a new value
+ * @param s boxed list
+ * @param v new value
+ * @return previous value at the end of boxed list
+ */
+swap(s, v)
+{
+    act(s, { lst => (append(drop(-1, lst), v), last(lst)) })
+};
+
+/**
  * tuplized test and swap
  * @param bs tuple of boxes
  * @param p function to test the tuple to see if swap should proceeed
@@ -223,6 +163,154 @@ wtaut(bs, p, f)
     awaits(bs, p);
     taut(bs, p, f)
 };
+
+// -------------------------------------------------------------------
+
+//
+// producer/consumer
+//
+
+/**
+ * Driver function for a producer task.
+ * Normally asynchronous: spawn { produce(...) }.
+ * Given
+ *
+ * - boxed boolean c, a circuit breaker
+ * - boxed list q, a work queue
+ * - int n, a max size for q
+ * - function f, a producer
+ *
+ * Attempt to run f() and push the result onto q
+ * when *q is not full, until/unless *c is false.
+ *
+ * Note: values produced but not enqueued, due to
+ * c having been concurrently set false during
+ * production, are discarded.
+ */
+produce(c, q, n, f)
+{
+    nf(l) { size(l) < n };
+    while({*c}, {
+        awaits((c, q), { b, l => !b || {nf(l)} });
+        when(*c, {
+            v = f();
+            while({*c && {
+                !tau(q, nf, { append($0, v) }).0
+            }}, {()})
+        })
+    })
+};
+
+/**
+ * Driver function for a consumer task.
+ * Normally asynchronous: spawn { consume(...) }.
+ * Given:
+ *
+ * - boxed boolean c, a circuit breaker
+ * - boxed list q, a work queue
+ * - function f, a consumer
+ *
+ * Attempt to pop first value v from q and run f(v)
+ * when *q is not empty, unless/until *c is false.
+ *
+ * Note: values dequeued but not consumed, due to c
+ * having been concurrently set false during
+ * dequeueing, are discarded.
+ */
+consume(c, q, f)
+{
+    ne(l) { size(l) > 0 };
+    while({*c}, {
+        awaits((c, q), { b, l => !b || {ne(l)} });
+        when(*c, {
+            (b, l) = tau(q, ne, rest);
+            when(b, { f(first(l)) })
+        })
+    })
+};
+
+// --------------------------------------------------------------
+
+//
+// actions on boxed values
+//
+
+/**
+ * Perform an action on a boxed variable, updating its state
+ * and returning the action's result.
+ * @param b boxed state variable
+ * @param f action function on a state value of type S.
+ * returning a pair of (new state, action result).
+ * @return result of action on b's state
+ */
+<S, T> act(b : *S, f : S -> (S, T)) -> T
+{
+    do {
+        (next, result) = f(own(b));
+        b := next;
+        result
+    }
+};
+
+/**
+ * Update box to new value, return its prior value.
+ * @param b box to modify
+ * @param v new value to place in the box
+ * @return original value in the box
+ */
+postput(b, v) { act(b, { (v, $0) }) };
+
+/**
+ * Run update function f on current value of box b.
+ * Update b with the result, and also return it.
+ * Note: action function argument to act() is
+ * equivalent to <code>f $ twin</code>.
+ */
+preupdate(b, f) { act(b, { v = f($0); (v, v) }) };
+
+/**
+ * Run update function f on current value of box b.
+ * Update b with the result, and return b's original
+ * value.
+ * @param b box to update
+ * @param f update function
+ * @return box's prior value
+ */
+postupdate(b, f) { act(b, { (f($0), $0) }) };
+
+/**
+ * Atomic pre-decrement.
+ * @param b box to decrement
+ * @return decremented value
+ */
+predec(b) { preupdate(b, dec) };
+
+/**
+ * Atomic pre-increment.
+ * @param b box to increment
+ * @return incremented value
+ */
+preinc(b) { preupdate(b, inc) };
+
+/**
+ * Atomic post-increment.
+ * @param b box to increment
+ * @return box's original value
+ */
+postinc(b) { postupdate(b, inc) };
+
+/**
+ * Atomic post-decrement.
+ * @param b box to increment
+ * @return box's original value
+ */
+postdec(b) { postupdate(b, dec) };
+
+// -------------------------------------------------------------------
+
+//
+// boxed list as stack/queue
+//
 
 /**
  * push v onto front of boxed list, enqueue
@@ -280,27 +368,11 @@ push = pushback;
 pop = popback;
 peek = peekback;
 
-/**
- * swap the last value in a boxed list with a new value
- * @param s boxed list
- * @param v new value
- * @return previous value at the end of boxed list
- */
-swap(s, v)
-{
-    act(s, { lst => (append(drop(-1, lst), v), last(lst)) })
-};
+// ----------------------------------------------------------------------
 
 //
-// reactivity
+// dependencies
 //
-
-/**
- * react is like watch, but with only new value passed to watcher.
- * @param b box to watch
- * @param f function that will be invoked with the new value in box
- */
-react(b, f) { watch(b, { old, new => f(new) }) };
 
 /**
  * create and return a box whose value tracks the value
