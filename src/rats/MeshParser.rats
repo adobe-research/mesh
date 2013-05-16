@@ -83,10 +83,25 @@ transient List<Statement> Statement
             { yyValue = typeDefStmt(loc(yyStart), name, texpr); }
 
     // import sym1,sym2,sym3 from <module> into <namespace>
-    / <ImportDirective>
-        ImportKeyword syms:(ImportSymbolList FromKeyword)? 
-        module:NamespaceSpec as:(AsKeyword NamespaceSpec)?
+    / <ImportUnqualified>
+        ImportKeyword syms:SymbolList FromKeyword module:QName 
+            { yyValue = importStmt(loc(yyStart), syms, module, null); }
+
+    / <ImportQualifiedAs>
+        ImportKeyword module:QName AsKeyword as:QName
+            { yyValue = importStmt(loc(yyStart), null, module, as); }
+
+    / <ImportQualified>
+        ImportKeyword module:QName syms:QualifiedTerm?
+            { yyValue = importStmt(loc(yyStart), syms, module, module); }
+
+    / <ImportQualifiedAsWL>
+        ImportKeyword LeftParen module:QName AsKeyword as:QName RightParen syms:QualifiedTerm?
             { yyValue = importStmt(loc(yyStart), syms, module, as); }
+
+    / <ExportStatement>
+        ExportKeyword syms:SymbolList
+            { yyValue = exportStmt(loc(yyStart), syms); }
 
     // Parameterized type defs: type T(<params>) = RHS
     / <ParamTypeDef>
@@ -407,19 +422,42 @@ transient String BinaryOp
 transient String UnaryOp
     = "**" / "*" / "!" / "-." / "-";
 
-// Used for import statements
-// TODO: Use regexes instead of Id?
-transient List<String> ImportSymbolList
-    = h:Id t:(Comma Id)*
-        { yyValue = cons(h, t.list()); } 
-    / Star 
-        { yyValue = cons("*", null) ; } ;
-
-String NamespaceSpec
-    = name:Id Dot spec:NamespaceSpec
+//
+// Import and export statements
+//
+String QName
+    = name:Id Dot spec:QName
         { yyValue = name + "." + spec; }
     / name:Id
         { yyValue = name; } ;
+
+transient List<String> ParenSymbolList
+    = LeftParen RightParen
+        { yyValue = empty(); } 
+    / LeftParen h:SymbolListEntry t:(Comma SymbolListEntry)* RightParen
+        { yyValue = flatten(h, t.list()); } ;
+
+transient List<String> SymbolList
+    = h:SymbolListEntry t:(Comma SymbolListEntry)*
+        { yyValue = flatten(h, t.list()); } 
+    / psl:ParenSymbolList
+        { yyValue = psl; } 
+    / Star 
+        { yyValue = cons("*", null); }
+    / Dot 
+        { yyValue = cons(".", null); } ;
+
+transient List<String> QualifiedTerm
+    = Dot Star
+        { yyValue = cons("*", null); }
+    / Dot p:ParenSymbolList
+        { yyValue = p; } ;
+
+transient List<String> SymbolListEntry
+    = q:QName t:QualifiedTerm
+        { yyValue = distribute(q + ".", t); }
+    / h:QName
+        { yyValue = cons(h, null); } ;
 
 //
 // Parameter list
@@ -493,7 +531,7 @@ Type TypePrefixExpr
 // base type expr
 //
 Type TypeBaseExpr
-    = <IdRef>       id:Id
+    = <IdRef>       id:QName
         { yyValue = typeIdRef(loc(yyStart), id); }
 
     / <Wildcard>    Question
@@ -601,6 +639,7 @@ transient Kind StarKind
 //
 transient void TypeKeyword = "type" MandatoryWhiteSpace ;
 transient void IntrinsicKeyword = "intrinsic" MandatoryWhiteSpace ;
+transient void ExportKeyword = "export" MandatoryWhiteSpace ;
 transient void ImportKeyword = "import" MandatoryWhiteSpace ;
 transient void FromKeyword = "from" MandatoryWhiteSpace ;
 transient void AsKeyword = "as" MandatoryWhiteSpace ;

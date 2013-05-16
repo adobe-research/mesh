@@ -29,12 +29,16 @@ public final class ModuleAnalyzer
      */
     public static boolean analyze(final Module module)
     {
-        // setup namespaces
+        // setup namespaces and import symbols and types
         if (!new ImportResolver(module).resolve())
             return false;
 
         // collect value bindings, type bindings, module imports
         if (!new BindingCollector(module).collect())
+            return false;
+        
+        // setup export list
+        if (!new ExportResolver(module).resolve())
             return false;
 
         // resolve names

@@ -26,7 +26,16 @@ public final class ImportStatement implements Statement
     private final String as;
 
     /**
-     *
+     * import * from M:        symbols=null,      from="M",   as=null
+     * import x,y from M:      symbols={"x","y"}, from="M",   as=null
+     * import () from M:       symbols={},        from="M",   as=null
+     * import M:               symbols=null,      from="M",   as="M"
+     * import M.(x,y):         symbols={"x","y"}, from="M",   as="M"
+     * import M.():            symbols={},        from="M",   as="M"
+     * import M as N:          symbols=null,      from="M",   as="N"
+     * import (M as N).(x,y):  symbols={"x","y"}, from="M",   as="N"
+     * import (M as N).():     symbols={},        from="M",   as="N"
+     * 
      */
     public ImportStatement(final Loc loc, final List<String> symbols, 
         final String from, final String as)
@@ -43,11 +52,6 @@ public final class ImportStatement implements Statement
 
     public boolean isWildcard() 
     { 
-        return symbols != null && symbols.size() == 1 && symbols.get(0).equals("*"); 
-    }
-
-    public boolean qualifiedOnly()
-    {
         return symbols == null;
     }
 
@@ -57,12 +61,13 @@ public final class ImportStatement implements Statement
     {
         final StringBuilder sb = new StringBuilder();
         sb.append("import ");
-        if (!qualifiedOnly()) 
+        if (as == null)
         {
+            if (symbols != null && symbols.isEmpty())
+                sb.append("(");
+
             if (isWildcard()) 
-            {
                 sb.append("*");
-            }
             else
             {
                 String sep = "";
@@ -73,13 +78,44 @@ public final class ImportStatement implements Statement
                     sep = ",";
                 }
             }
+            if (symbols != null && symbols.isEmpty())
+                sb.append(")");
+
             sb.append(" from ");
+            sb.append(from);
         }
-        sb.append(from);
-        if (as != null) 
+        else
         {
-            sb.append(" as ");
-            sb.append(as);
+            if (!as.equals(from) && !isWildcard()) 
+                sb.append("(");
+
+            sb.append(from);
+            if (!as.equals(from)) 
+            {
+                sb.append(" as ");
+                sb.append(as);
+            }
+
+            if (!as.equals(from) && !isWildcard()) 
+                sb.append(")");
+
+            if (!isWildcard()) 
+            {
+                sb.append(".");
+                if (symbols.size() != 1) 
+                    sb.append("(");
+
+                String sep = "";
+                for (final String sym : symbols) 
+                {
+                    sb.append(sep);
+                    sb.append(sym);
+                    sep = ",";
+                }
+
+                if (symbols.size() != 1) 
+                    sb.append(")");
+            }
         }
         return sb.toString();
     }
@@ -108,8 +144,9 @@ public final class ImportStatement implements Statement
 
         final ImportStatement that = (ImportStatement)o;
         if (!from.equals(that.from)) return false;
+        if (!checkNullEquals(as, that.as)) return false;
         if (!checkNullEquals(symbols, that.symbols)) return false;
-        return checkNullEquals(as, that.as);
+        return true;
     }
 
     private static boolean checkNullEquals(final Object o1, final Object o2) 
@@ -123,7 +160,7 @@ public final class ImportStatement implements Statement
     public int hashCode()
     {
         int h = from.hashCode();
-        if (symbols != null) 
+        if (symbols != null)
         {
             for (final String sym : symbols)
             {

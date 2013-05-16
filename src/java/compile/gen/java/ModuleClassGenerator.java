@@ -11,7 +11,6 @@
 package compile.gen.java;
 
 import compile.analyze.SymbolConstantCollector;
-import compile.module.ImportedModule;
 import compile.module.Module;
 import compile.term.*;
 import compile.type.Types;
@@ -207,8 +206,8 @@ public final class ModuleClassGenerator extends ClassGenerator
 
         final Set<Module> runModules = new HashSet<Module>();
 
-        for (final ImportedModule importedModule : module.getImportMap().values())
-            addModuleRunStatement(methodDef, importedModule.getModule(), runModules);
+        for (final Module importedModule : module.getImportList())
+            addModuleRunStatement(methodDef, importedModule, runModules);
 
         methodDef.addStatement(new JavaStatement("INSTANCE.run()"));
 
@@ -221,9 +220,9 @@ public final class ModuleClassGenerator extends ClassGenerator
     private static void addModuleRunStatement(final MethodDef methodDef,
         final Module module, final Set<Module> runModules)
     {
-        for (final ImportedModule importedModule : module.getImportMap().values())
+        for (final Module importedModule : module.getImportList())
         {
-            addModuleRunStatement(methodDef, importedModule.getModule(), runModules);
+            addModuleRunStatement(methodDef, importedModule, runModules);
         }
 
         if (!runModules.contains(module))

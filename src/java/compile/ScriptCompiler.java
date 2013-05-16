@@ -14,9 +14,7 @@ import compile.analyze.ModuleAnalyzer;
 import compile.gen.java.Unit;
 import compile.gen.java.UnitBuilder;
 import compile.gen.java.UnitDictionary;
-import compile.module.ImportedModule;
-import compile.module.Module;
-import compile.module.ModuleDictionary;
+import compile.module.*;
 import compile.parse.RatsScriptParser;
 import compile.parse.RatsShellScriptParser;
 import compile.term.ImportStatement;
@@ -167,7 +165,7 @@ public class ScriptCompiler
 
         // add (other) implicit imports -- see comment header
         for (final Module implicitImport : implicitImports)
-            module.addImport(new ImportedModule(implicitImport, true));
+            module.addImport(new Import(implicitImport, null, WhiteList.open()));
 
         // add the newly created module to the passed dictionary
         dict.add(module);
@@ -191,12 +189,9 @@ public class ScriptCompiler
 
         final List<Statement> prepended = new ArrayList<Statement>();
 
-        final List<String> symbols = new ArrayList<String>();
-        symbols.add("*");
-
         for (final String implicitImport : Session.getImplicitImports())
             prepended.add(
-                new ImportStatement(Loc.INTRINSIC, symbols, implicitImport, null));
+                new ImportStatement(Loc.INTRINSIC, null, implicitImport, null));
 
         prepended.addAll(statements);
         return prepended;

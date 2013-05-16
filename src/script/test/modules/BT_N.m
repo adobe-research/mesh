@@ -1,0 +1,3 @@
+import BT;
+
+BT.foo();

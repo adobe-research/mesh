@@ -68,10 +68,7 @@ public final class TermDumper extends TermVisitorBase<String>
     @Override
     public String visit(final RefTerm ref)
     {
-        if (ref.getQualifier() == null) 
-            return ref.getName();
-        else 
-            return ref.getQualifier() + ":" + ref.getName();
+        return ref.getName();
     }
 
     @Override

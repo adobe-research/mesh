@@ -134,6 +134,11 @@ public final class LetBinding extends ValueBinding
 
     public String dump()
     {
+        return dump(this.name);
+    }
+
+    public String dump(final String name) 
+    {
         final StringBuilder buf = new StringBuilder(name);
 
         if (hasDeclaredType())

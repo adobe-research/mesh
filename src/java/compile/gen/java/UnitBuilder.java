@@ -11,7 +11,6 @@
 package compile.gen.java;
 
 import compile.Session;
-import compile.module.ImportedModule;
 import compile.module.Module;
 
 /**
@@ -91,12 +90,12 @@ public final class UnitBuilder
     {
         final UnitDictionary importedUnits = new UnitDictionary();
 
-        for (final ImportedModule importedModule : module.getImportList())
+        for (final Module importedModule : module.getImportList())
         {
             Unit importedUnit = unitDictionary.getUnit(importedModule.getName());
             if (importedUnit == null)
             {
-                importedUnit = build(importedModule.getModule(), unitDictionary, debug);
+                importedUnit = build(importedModule, unitDictionary, debug);
             }
 
             if (importedUnit != null)
