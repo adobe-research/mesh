@@ -1,9 +1,15 @@
 
 import * from unittest;
 
-import * from test.test_imports_right as right;
+import () from modules.combotest;
+import () from modules.scopetest;
+import () from modules.qualifiedtypetest;
+
+import * from test.test_imports_right;
+import test.test_imports_right into right;
 import leftop,status from test.test_imports_left;
-import test.test_imports_right;
+import test.test_imports_right qualified;
+import test.test_imports_left qualified;
 
 // This lambda should never get used
 lambda() { assert(false, "should not be called") };
