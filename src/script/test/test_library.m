@@ -275,6 +275,13 @@ assert_equals({ true }, { isperm(["a", "b", "c"], ["b", "c", "a"]) });
 assert_equals({ false }, { isperm(["a", "b", "c"], ["B", "c", "a"]) });
 
 // iter = { p => while(p, { () }); () }
+assert_equals({ 10 }, { b = box(0); iter({ b <- inc; *b < 10 }); *b });
+
+// log = { b, n => fdiv(ln(n), ln(b)) }
+assert_equals({ 2.0 }, { log(10.0, 100.0) });
+
+// log2 = { n => fdiv(ln(n), LN2) }
+assert_equals({ 4.0 }, { log2(16.0) });
 
 // mapgetd = { map, key, default => guard(not(iskey(map, key)), default, { map[key] }) }
 assert_equals({ "charlie" }, { mapgetd(["a":"alpha", "b":"bee"], "c", "charlie") });

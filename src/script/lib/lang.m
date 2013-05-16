@@ -219,17 +219,17 @@ intrinsic <A, B> evolve_while(x : A -> Bool, y : A, z : (A, B) -> A, a : [B]) ->
  * discarding any results. Currently this is guaranteed
  * to run serially.
  *
- * @param x list of values
- * @param y function to be applied to each value in x
+ * @param indexes list of index values
+ * @param body function to be applied to each index value
  * @return
  */
-intrinsic <X, Y> for(x : [X], y : X -> Y) -> ();
+intrinsic <A, B> for(indexes : [A], body : A -> B) -> ();
 
 /**
- * iter is degenerate while. Execute the predicate until it produces a true value.
+ * iter is degenerate while. Execute the predicate until it produces a false value.
  * @param p predicate for empty while loop
  */
-iter(p)
+iter(p : () -> Bool) -> ()
 {
     while(p, {()})
 };
@@ -367,10 +367,11 @@ tracen(n, v, f)
 
 /**
  * Run a block repeatedly while guard predicate returns true.
- * @param x predicate block
- * @param y function to execute while predicate is true.
+ * @param pred predicate
+ * @param body block to execute while predicate is true.
+ * @return
  */
-intrinsic <T> while(x : () -> Bool, y : () -> T) -> ();
+intrinsic <T> while(pred : () -> Bool, b : () -> T) -> ();
 
 // ------------------------------------------------------------------
 

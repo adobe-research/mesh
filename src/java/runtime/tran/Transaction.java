@@ -427,8 +427,11 @@ final class Transaction
     }
 
     /**
-     * Run watcher functions collected during commit.
-     * Watchers are run on a separate thread.
+     * Run watche
+     * r functions collected during commit.
+     * Watchers are currently run on the transaction's
+     * thread.
+     * TODO formalize whether that's a guarantee or not.
      */
     private static void fireEvents(final ArrayList<ChangeEvent> events)
     {
