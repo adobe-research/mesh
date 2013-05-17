@@ -144,7 +144,7 @@ class TermRefResolver extends TermTransformerBase {
 
             if (Session.isDebug())
                 Session.debug(loc, "name ''{0}'' prebound to binding {1} from {2}",
-                    name, binding.dump(), binding.getLoc());
+                    ref.getName(), binding.dump(), binding.getLoc());
 
             if (bindingScope.isLambda())
             {
@@ -164,17 +164,10 @@ class TermRefResolver extends TermTransformerBase {
         }
         else
         {
-            final String qual = ref.getQualifier();
+            final Module module = refResolver.getModule();
+            final ValueBinding vb = currentScope.findValueBinding(name);
 
-            if (qual == null) 
-            {
-                binding = currentScope.findValueBinding(name);
-            }
-            else
-            {
-                final Module module = refResolver.getModule();
-                binding = module.findValueBinding(qual, name);
-            }
+            binding = (vb != null) ? vb : module.findValueBinding(name);
 
             // error cases:
 
@@ -182,8 +175,7 @@ class TermRefResolver extends TermTransformerBase {
             if (binding == null)
             {
                 if (emitNoBindingError()) 
-                   Session.error(loc, "no value binding found for name ''{0}''{1}", name,
-                           qual == null ? "" : (" in namespace '" + qual + "'"));
+                   Session.error(loc, "no value binding found for name {0}", name);
                 return super.visit(ref);
             }
 

@@ -17,6 +17,8 @@ import compile.gen.java.Unit;
 import compile.gen.java.UnitBuilder;
 import compile.gen.java.UnitDumper;
 import compile.module.Module;
+import compile.module.Import;
+import compile.term.ValueBinding;
 import compile.term.LetBinding;
 import shell.console.Console;
 import runtime.Logging;
@@ -623,55 +625,80 @@ public final class Main
      */
     private void cmdDumpVars(final String[] words)
     {
-        final Map<String, LetBinding> valueBindings = new TreeMap<String, LetBinding>();
-
-        for (int i = 1; i < words.length; ++i) 
-        {
-            if (words[i].equals(".")) 
-                getUnqualifiedValues(valueBindings);
-            else if (words[i].equals("?"))
-                dumpQualifiers();
-            else 
-                getBindingsIn(words[i], valueBindings);
-        }
-
-        if (words.length < 2) 
-            getUnqualifiedValues(valueBindings);
-
-        final List<String> list = new ArrayList<String>();
-        for (final LetBinding valueBinding : valueBindings.values())
-            list.add(valueBinding.dump());
-
-        System.out.println(StringUtils.join(list, "\n"));
-    }
-
-    private void getUnqualifiedValues(final Map<String, LetBinding> accum)
-    {
         final List<Unit> history = shellScriptManager.getUnitHistory();
-        if (history.size() > 0) 
-            accum.putAll(history.get(0).getModule().getTransitiveLets());
-    }
 
-    private void dumpQualifiers() 
-    {
-        final List<Unit> history = shellScriptManager.getUnitHistory();
-        if (history.size() > 0) 
+        if (history.size() == 0) 
+            return;
+
+        final Module module = history.get(0).getModule();
+
+        final Set<String> names = new HashSet<String>();
+        getAllBindings(module, "", new HashSet<String>(), names);
+
+        if (words.length == 2 && words[1].equals("?")) 
         {
-            final Module module = history.get(0).getModule();
-            for (final String s : module.getTransitiveNamespaces())
+            final Set<String> namespaces = new HashSet<String>();
+            for (final String sym : names)
             {
-                System.out.println(s);
+                if (module.findValueBinding(sym) != null)
+                {
+                    final int idx = sym.lastIndexOf(".");
+                    if (idx != -1)
+                        namespaces.add(sym.substring(0, idx));
+                }
             }
+            for (final String ns : namespaces)
+                System.out.println(ns);
+        }
+        else 
+        {
+            final Map<String, LetBinding> bindings = new TreeMap<String, LetBinding>();
+            if (words.length == 1) 
+            {
+                for (final String name : names)
+                {
+                    final ValueBinding vb = module.findValueBinding(name);
+                    if (vb != null && vb.isLet())
+                        bindings.put(name, (LetBinding)vb);
+                }
+            }
+            else
+            {
+                for (int i = 1; i < words.length; ++i) 
+                {
+                    for (final String name : names)
+                    {
+                        final ValueBinding vb = module.findValueBinding(name);
+                        if (vb != null && vb.isLet() && name.startsWith(words[i] + "."))
+                            bindings.put(name, (LetBinding)vb);
+                    }
+                }
+            }
+
+            for (final Map.Entry<String,LetBinding> binding : bindings.entrySet())
+                System.out.println(binding.getValue().dump(binding.getKey()));
         }
     }
 
-    private void getBindingsIn(final String namespace, final Map<String,LetBinding> accum)
+    private void getAllBindings(final Module module, final String qual, 
+        final Set<String> circDetect, final Set<String> accum)
     {
-        final List<Unit> history = shellScriptManager.getUnitHistory();
-        if (history.size() > 0) 
+        if (!circDetect.contains(module.getName())) 
         {
-            final Module module = history.get(0).getModule();
-            accum.putAll(module.getTransitiveLets(namespace));
+            circDetect.add(module.getName());
+            for (final String name : module.getLetNames())
+                accum.add(qual + name);
+
+            for (final Import imp : module.getImports())
+            {
+                final String qualifier = imp.getQualifier();
+                if (qualifier != null)
+                  getAllBindings(imp.getModule(), qual + qualifier + ".",
+                      circDetect, accum);
+                else
+                    getAllBindings(imp.getModule(), qual, circDetect, accum);
+            }
+            circDetect.remove(module.getName());
         }
     }
 

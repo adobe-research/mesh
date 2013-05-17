@@ -21,30 +21,19 @@ import compile.type.Type;
  */
 public final class RefTerm extends AbstractTerm
 {
-    private String qualifier; // namespace qualifier
     private String name;
     private ValueBinding binding;
 
     public RefTerm(final Loc loc, final String name)
     {
         super(loc);
-        this.qualifier = null;
         this.name = name;
     }
 
-    public RefTerm(final Loc loc, final String qualifier, final String name)
-    {
-        super(loc);
-        this.qualifier = qualifier;
-        this.name = name;
-    }
-    
     public RefTerm(final Loc loc, final RefTerm ref, final String name)
     {
         super(loc);
-        this.name = name;
-        final String qual = ref.getQualifier();
-        this.qualifier = (qual == null) ? ref.getName() : qual + "." + ref.getName();
+        this.name = ref.getName() + "." + name;
     }
 
     public String getName()
@@ -52,10 +41,6 @@ public final class RefTerm extends AbstractTerm
         return name;
     }
 
-    public String getQualifier()
-    {
-        return qualifier;
-    }
 
     /**
      * used by {@link compile.analyze.BindingCollector}
@@ -120,15 +105,9 @@ public final class RefTerm extends AbstractTerm
 
         final RefTerm that = (RefTerm)o;
 
-        if (qualifier == null) 
-        {
-            if (that.qualifier != null) return false;
-        }
-        else
-        {
-            if (!qualifier.equals(that.qualifier)) return false;
-        }
-        if (!name.equals(that.name)) return false;
+        if (!that.getName().equals(name)) 
+            return false;
+
         return binding == that.binding;
 
     }
@@ -136,6 +115,6 @@ public final class RefTerm extends AbstractTerm
     @Override
     public int hashCode()
     {
-        return name.hashCode();
+        return getName().hashCode();
     }
 }

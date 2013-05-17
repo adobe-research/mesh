@@ -58,8 +58,21 @@ public class ASTBuilder
     public static List<Statement> importStmt(
         final Loc loc, final List<String> syms, final String from, final String as) 
     {
+        final boolean wild = syms != null && syms.size() == 1 && 
+            syms.get(0).equals("*");
         return Collections.<Statement>singletonList(
-                new ImportStatement(loc, syms, from, as));
+                new ImportStatement(loc, wild ? null : syms, from, as));
+    }
+
+    public static List<Statement> exportStmt(final Loc loc, final List<String> syms) 
+    {
+        final boolean localsOnly = syms != null && syms.size() == 1 && 
+            syms.get(0).equals(".");
+        final boolean wild = syms != null && syms.size() == 1 && 
+            syms.get(0).equals("*");
+
+        return Collections.<Statement>singletonList(
+                new ExportStatement(loc, wild ? null : syms, localsOnly));
     }
 
     /**
@@ -902,6 +915,21 @@ public class ASTBuilder
         list.add(0, head);
         if (tail != null)
             list.addAll(tail);
+        return list;
+    }
+
+    public static <T> List<T> concat(final List<T> head, final List<T> tail)
+    {
+        final List<T> list = new ArrayList<T>(head.size() + tail.size());
+        list.addAll(head);
+        list.addAll(tail);
+        return list;
+    }
+
+    public static List<String> distribute(final String prefix, final List<String> rest)
+    {
+        final List<String> list = new ArrayList<String>(rest.size());
+        for (final String s : rest) list.add(prefix + s);
         return list;
     }
 }

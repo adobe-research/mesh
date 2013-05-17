@@ -13,12 +13,8 @@ package compile.analyze;
 import compile.Loc;
 import compile.Session;
 import compile.ScriptCompiler;
-import compile.module.ImportedModule;
-import compile.module.Module;
-import compile.module.ModuleDictionary;
-import compile.term.ImportStatement;
-import compile.term.Binding;
-import compile.term.UnboundTerm;
+import compile.module.*;
+import compile.term.*;
 
 import java.util.*;
 import java.io.*;
@@ -87,25 +83,68 @@ public final class ImportResolver extends ModuleVisitor<Object>
 
         if (loaded != null) 
         {
-            String namespace = stmt.getAs();
-            if (namespace == null)
-                namespace = moduleName;
+            WhiteList wl = WhiteList.open();
 
-            final ImportedModule imported = new ImportedModule(loaded, false);
-            current.addQualifiedSymbols(namespace, loaded);
-            current.addImport(imported);
-
-            if (stmt.isWildcard()) 
+            if (!stmt.isWildcard())
             {
-                imported.setFullyExported();
+                final List<String> syms = stmt.getSymbols();
+
+                verifyImports(syms, loaded);
+                wl = WhiteList.enumerated(syms);
             }
-            else if (!stmt.qualifiedOnly())
+
+            current.addImport(new Import(loaded, stmt.getAs(), wl));
+        }
+    }
+
+    private boolean verifyImports(final List<String> syms, final Module module)
+    {
+        return verifySymbols(syms, module, "import");
+    }
+
+    // TODO: An exact duplicate of this function exists in ExportResolver.
+    // Find a way to unify them.
+    private boolean verifySymbols(
+        final List<String> syms, final Module module, final String direction)
+    {
+        boolean status = true;
+        final Set<String> namespaces = module.getAllNamespaces();
+
+        for (final String sym : syms) 
+        {
+            if (sym.endsWith(".*")) 
             {
-                for (final String sym : stmt.getSymbols())
+                final String ns = sym.substring(0, sym.length() - 2);
+                if (!namespaces.contains(ns)) 
                 {
-                    imported.addExport(sym);
+                    Session.error("No ''{0}'' namespace available for {1}", 
+                        ns, direction);
+                    status = false;
                 }
             }
+            else
+            {
+                if (module.findValueBinding(sym) == null &&
+                    module.findType(sym) == null)
+                {
+                    Session.error("No value or type ''{0}'' available for {1}",
+                        sym, direction);
+                    status = false;
+                }
+            }
+        }
+        return status;
+    }
+
+    @Override
+    protected void visitExportStatement(final ExportStatement stmt) 
+    {
+        final Loc loc = stmt.getLoc();
+
+        if (importsDone) 
+        {
+            Session.error(loc, "Export statement occurs after executable statements");
+            return;
         }
     }
 

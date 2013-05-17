@@ -101,6 +101,10 @@ public abstract class ModuleVisitor<T> extends BindingVisitorBase<T>
         {
             visitImportStatement((ImportStatement)statement);
         }
+        else if (statement instanceof ExportStatement) 
+        {
+            visitExportStatement((ExportStatement)statement);
+        }
         else
         {
             assert statement instanceof UnboundTerm;
@@ -109,6 +113,10 @@ public abstract class ModuleVisitor<T> extends BindingVisitorBase<T>
     }
 
     protected void visitImportStatement(final ImportStatement stmt)
+    {
+    }
+
+    protected void visitExportStatement(final ExportStatement stmt)
     {
     }
 
