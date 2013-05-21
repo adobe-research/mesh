@@ -1,5 +1,6 @@
 
 import b from test.test_imports_middle;
+import test.test_imports_middle qualified;
 
 type RIGHT = (Int, Int);
 

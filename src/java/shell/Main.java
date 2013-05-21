@@ -17,6 +17,8 @@ import compile.gen.java.Unit;
 import compile.gen.java.UnitBuilder;
 import compile.gen.java.UnitDumper;
 import compile.module.Module;
+import compile.module.Import;
+import compile.term.ValueBinding;
 import compile.term.LetBinding;
 import shell.console.Console;
 import runtime.Logging;
@@ -561,8 +563,8 @@ public final class Main
         {
             try
             {
-                dumpUnit(shellScriptManager.getPastUnit(Integer.valueOf(words[1])),
-                    false);
+                dumpUnit(shellScriptManager.getPastUnit(
+                    Integer.valueOf(words[1])), false);
             }
             catch (NumberFormatException ignored)
             {
@@ -605,7 +607,7 @@ public final class Main
 
     private void dumpAllUnits(final Unit unit, final Set<String> alreadyDumped)
     {
-        for (Unit imported : unit.getUnitDictionary().getUnits())
+        for (final Unit imported : unit.getUnitDictionary().getUnits())
         {
             dumpAllUnits(imported, alreadyDumped);
         }
@@ -617,62 +619,73 @@ public final class Main
     }
 
     /**
-     * Dump current var bindings, sorted by name. "!" arg includes intrinsics, "." is 
-     * the current set of bindings in the default namespace, "?" prints the known
-     * namespaces, and any other arg is a namespace that will be printed.
+     * Dump current var bindings, sorted by name. "!" arg includes intrinsics,
+     * "." is the current set of bindings in the default namespace, "?" prints
+     * the known namespaces, and any other arg is a namespace that will be
+     * printed.
      */
     private void cmdDumpVars(final String[] words)
     {
-        final Map<String, LetBinding> valueBindings = new TreeMap<String, LetBinding>();
+        final List<Unit> history = shellScriptManager.getUnitHistory();
 
-        for (int i = 1; i < words.length; ++i) 
+        if (history.size() == 0) 
+            return;
+
+        final Module module = history.get(0).getModule();
+
+        final Set<String> names = getAllBindings(module);
+
+        if (words.length == 2 && words[1].equals("?")) 
         {
-            if (words[i].equals(".")) 
-                getUnqualifiedValues(valueBindings);
-            else if (words[i].equals("?"))
-                dumpQualifiers();
-            else 
-                getBindingsIn(words[i], valueBindings);
+            for (final String ns : module.getNamespaces())
+                System.out.println(ns);
         }
-
-        if (words.length < 2) 
-            getUnqualifiedValues(valueBindings);
-
-        final List<String> list = new ArrayList<String>();
-        for (final LetBinding valueBinding : valueBindings.values())
-            list.add(valueBinding.dump());
-
-        System.out.println(StringUtils.join(list, "\n"));
-    }
-
-    private void getUnqualifiedValues(final Map<String, LetBinding> accum)
-    {
-        final List<Unit> history = shellScriptManager.getUnitHistory();
-        if (history.size() > 0) 
-            accum.putAll(history.get(0).getModule().getTransitiveLets());
-    }
-
-    private void dumpQualifiers() 
-    {
-        final List<Unit> history = shellScriptManager.getUnitHistory();
-        if (history.size() > 0) 
+        else 
         {
-            final Module module = history.get(0).getModule();
-            for (final String s : module.getTransitiveNamespaces())
+            final Map<String, LetBinding> bindings = new TreeMap<String, LetBinding>();
+            if (words.length == 1) 
             {
-                System.out.println(s);
+                for (final String name : names)
+                {
+                    final ValueBinding vb = module.findUnqualBinding(name);
+                    if (vb != null && vb.isLet())
+                        bindings.put(name, (LetBinding)vb);
+                }
             }
+            else
+            {
+                for (int i = 1; i < words.length; ++i) 
+                {
+                    for (final String name : names)
+                    {
+                        final ValueBinding vb = module.findValueBinding(name);
+                        if (vb != null && vb.isLet() &&
+                            name.startsWith(words[i] + "."))
+                            bindings.put(name, (LetBinding)vb);
+                    }
+                }
+            }
+
+            for (final Map.Entry<String,LetBinding> b : bindings.entrySet())
+                System.out.println(b.getValue().dump(b.getKey()));
         }
     }
 
-    private void getBindingsIn(final String namespace, final Map<String,LetBinding> accum)
+    private Set<String> getAllBindings(final Module module)
     {
-        final List<Unit> history = shellScriptManager.getUnitHistory();
-        if (history.size() > 0) 
+        final Set<String> names = new HashSet<String>();
+        for (final String name : module.getUnqualifiedNames())
+            names.add(name);
+
+        for (final Import imp : module.getImports())
         {
-            final Module module = history.get(0).getModule();
-            accum.putAll(module.getTransitiveLets(namespace));
+            final Module m = imp.getModule();
+            final String qualifier = imp.getQualifier();
+            if (qualifier != null)
+                for (final String name : m.getUnqualifiedNames())
+                    names.add(qualifier + "." + name);
         }
+        return names;
     }
 
     /**

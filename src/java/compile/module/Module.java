@@ -29,9 +29,10 @@ public class Module extends AbstractScope
         EMPTY_PARAM_MAP = Maps.newHashMap();
 
     private final String name;
-    private final Map<String, ImportedModule> importMap;
-    private final List<ImportedModule> importList;
-    private final QualifiedSymbols qualifiedSymbols;
+    private final Map<String, Module> importMap;
+    private final List<Import> imports;
+    private WhiteList exports;
+    private boolean exportLocalsOnly; // for "export ."
 
     private final ModuleDictionary moduleDictionary;
 
@@ -40,10 +41,11 @@ public class Module extends AbstractScope
     {
         super(loc, body);
         this.name = name;
-        this.importMap = new LinkedHashMap<String, ImportedModule>();
-        this.importList = new ArrayList<ImportedModule>();
+        this.importMap = new LinkedHashMap<String, Module>();
+        this.imports = new LinkedList<Import>();
+        this.exports = WhiteList.open();
+        this.exportLocalsOnly = false;
         this.moduleDictionary = dict;
-        this.qualifiedSymbols = new QualifiedSymbols();
     }
 
     public String getName()
@@ -56,34 +58,49 @@ public class Module extends AbstractScope
     /**
      * map of imported modules by name
      */
-    public Map<String, ImportedModule> getImportMap()
+    public Map<String, Module> getImportMap()
     {
         return importMap;
+    }
+
+    public List<Import> getImports()
+    {
+        return imports;
+    }
+
+    public void setExportLocalsOnly() { exportLocalsOnly = true; }
+    public void setExports(final WhiteList wl) { exports = wl; }
+
+    public boolean isExported(final String name)
+    {
+        if (exportLocalsOnly) 
+            return getValueBinding(name) != null || getTypeDef(name) != null;
+        else
+            return exports.allows(name);
     }
 
     /**
      * List of imported modules
      */
-    public List<ImportedModule> getImportList()
+    public List<Module> getImportList()
     {
-        return importList;
+        return new ArrayList<Module>(importMap.values());
     }
 
     /**
-     * note: breadth-first transitive search, most recent imports
-     * searched first
+     * note: breadth-first transitive search
      */
-    public ImportedModule getImport(final String name)
+    public Module getImportedModule(final String name)
     {
-        ImportedModule module = importMap.get(name);
+        final Module module = importMap.get(name);
         if (module != null)
             return module;
 
-        for (final ImportedModule importedModule : importList)
+        for (final Module importedModule : importMap.values())
         {
-            module = importedModule.getImport(name);
-            if (module != null)
-                return module;
+            final Module sub = importedModule.getImportedModule(name);
+            if (sub != null)
+                return sub;
         }
         return null;
     }
@@ -92,10 +109,22 @@ public class Module extends AbstractScope
      * Note: importList order is reversed, so that the contents of later
      * importList occlude the contents of earlier ones.
      */
-    public void addImport(final ImportedModule module)
+    public void addImport(final Import imp)
     {
-        importMap.put(module.getName(), module);
-        importList.add(0, module);
+        importMap.put(imp.getModule().getName(), imp.getModule());
+        imports.add(0, imp);
+    }
+
+    public Set<String> getNamespaces()
+    {
+        final Set<String> namespaces = new HashSet<String>();
+        for (final Import imp : imports)
+        {
+            final String qualifier = imp.getQualifier();
+            if (qualifier != null) 
+                namespaces.add(qualifier);
+        }
+        return namespaces;
     }
 
     // Scope
@@ -122,20 +151,22 @@ public class Module extends AbstractScope
 
     public ValueBinding getValueBinding(final String name)
     {
-        final LetBinding let = lets.get(name);
-        if (let != null)
-            return let;
+        return lets.get(name);
+    }
 
-        // look for a binding with this name locally defined in
-        // a module we import - most recent first
-        for (final ImportedModule importedModule : importList)
-        {
-            final ValueBinding binding = importedModule.getValueBinding(name);
-            if (binding != null)
-                return binding;
-        }
+    public Set<String> getLetNames() 
+    {
+        return lets.keySet();
+    }
 
-        return null;
+    public Set<String> getUnqualifiedNames() 
+    {
+        final Set<String> names = new HashSet<String>();
+        names.addAll(getLetNames());
+        for (final Import imp : getImports())
+            if (imp.getQualifier() == null) 
+                names.addAll(imp.getModule().getUnqualifiedNames());
+        return names;
     }
 
     public HashMap<String, ParamBinding> getParams()
@@ -143,113 +174,54 @@ public class Module extends AbstractScope
         return EMPTY_PARAM_MAP;
     }
 
-    public ValueBinding findValueBinding(final String name)
-    {
-        return getValueBinding(name);
+    public ValueBinding findUnqualBinding(final String name) {
+        return findBinding(name, false);
     }
 
-    public ValueBinding findValueBinding(final String qualifier, final String name)
+    public ValueBinding findValueBinding(final String qname) {
+        return findBinding(qname, true);
+    }
+
+    private ValueBinding findBinding(
+        final String qname, final boolean qualifiedOk)
     {
-        ValueBinding vb = qualifiedSymbols.getValue(qualifier, name);
-        if (vb != null)
+        final ValueBinding vb = getValueBinding(qname);
+
+        if (vb != null) 
             return vb;
 
-        for (final ImportedModule importedModule : importList)
+        // look for a binding with this name locally defined in
+        // a module we import - most recent first
+        for (final Import imp : imports) 
         {
-            vb = importedModule.findValueBinding(qualifier, name);
-            if (vb != null)
-                return vb;
+            if (imp.getQualifier() == null || qualifiedOk)
+            {
+                final ValueBinding binding = imp.findValueBinding(qname);
+                if (binding != null) 
+                    return binding;
+            }
         }
-
         return null;
     }
 
-    public TypeDef findType(final String name)
-    {
-        final TypeDef def = getTypeDef(name);
-        if (def != null)
-            return def;
-
-        // search bindings in imported modules - most recent import first
-        for (final ImportedModule importedModule : importList)
-        {
-            final TypeDef importedDef = importedModule.findType(name);
-            if (importedDef != null)
-                return importedDef;
-        }
-
-        return null;
-    }
-
-    public TypeDef findType(final String qualifier, final String name)
-    {
-        TypeDef td = qualifiedSymbols.getType(qualifier, name);
-        if (td != null)
+    public TypeDef findType(final String qname) {
+        final TypeDef td = getTypeDef(qname);
+        
+        if (td != null) 
             return td;
 
-        for (final ImportedModule importedModule : importList)
+        for (final Import imp : imports) 
         {
-            td = importedModule.findType(qualifier, name);
-            if (td != null)
-                return td;
+            final TypeDef type = imp.findTypeDef(qname);
+            if (type != null) 
+                return type;
         }
-
         return null;
     }
 
     public TypeDef getTypeDef(final String name)
     {
         return typeDefs.get(name);
-    }
-
-    public Map<String,TypeDef> getTransitiveTypeDefs() 
-    {
-        final Map<String,TypeDef> types = new HashMap<String,TypeDef>();
-        types.putAll(getTypeDefs());
-
-        for (final ImportedModule imported : importList)
-            types.putAll(imported.getTransitiveTypeDefs());
-
-        return types;
-    }
-
-    public void addQualifiedSymbols(final String namespace, final Module imported)
-    {
-        qualifiedSymbols.putAllTypes(namespace, imported);
-        qualifiedSymbols.putAllValues(namespace, imported);
-    }
-
-    public Map<String,LetBinding> getTransitiveLets() 
-    {
-        final Map<String,LetBinding> lets = new HashMap<String,LetBinding>();
-        lets.putAll(getLets());
-
-        for (final ImportedModule imported : importList)
-            lets.putAll(imported.getTransitiveLets());
-
-        return lets;
-    }
-
-    public Map<String,LetBinding> getTransitiveLets(final String namespace)
-    {
-        final Map<String,LetBinding> lets = new HashMap<String,LetBinding>();
-        lets.putAll(qualifiedSymbols.getValues(namespace));
-
-        for (final ImportedModule imported : importList)
-            lets.putAll(imported.getTransitiveLets(namespace));
-
-        return lets;
-    }
-
-    public Set<String> getTransitiveNamespaces()
-    {
-        final Set<String> ns = new HashSet<String>();
-        ns.addAll(qualifiedSymbols.getNamespaces());
-
-        for (final ImportedModule imported : importList)
-            ns.addAll(imported.getTransitiveNamespaces());
-
-        return ns;
     }
 
     public void addDependency(final Statement statement, final Binding binding)

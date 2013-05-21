@@ -134,6 +134,11 @@ public final class LetBinding extends ValueBinding
 
     public String dump()
     {
+        return dump(this.name);
+    }
+
+    public String dump(final String name) 
+    {
         final StringBuilder buf = new StringBuilder(name);
 
         if (hasDeclaredType())
@@ -165,7 +170,8 @@ public final class LetBinding extends ValueBinding
         if (scope != that.scope) return false;
         if (hasDeclaredType() ? !declaredType.equals(that.declaredType) :
             that.hasDeclaredType()) return false;
-        if (value != null ? !value.equals(that.value) : that.value != null) return false;
+        if (value != null ? !value.equals(that.value) : that.value != null)
+            return false;
 
         return true;
     }
