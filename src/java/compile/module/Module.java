@@ -68,8 +68,15 @@ public class Module extends AbstractScope
         return imports;
     }
 
-    public void setExportLocalsOnly() { exportLocalsOnly = true; }
-    public void setExports(final WhiteList wl) { exports = wl; }
+    public void setExportLocalsOnly()
+    {
+        exportLocalsOnly = true;
+    }
+
+    public void setExports(final WhiteList wl)
+    {
+        exports = wl;
+    }
 
     public boolean isExported(final String name)
     {
@@ -174,11 +181,13 @@ public class Module extends AbstractScope
         return EMPTY_PARAM_MAP;
     }
 
-    public ValueBinding findUnqualBinding(final String name) {
+    public ValueBinding findUnqualBinding(final String name)
+    {
         return findBinding(name, false);
     }
 
-    public ValueBinding findValueBinding(final String qname) {
+    public ValueBinding findValueBinding(final String qname)
+    {
         return findBinding(qname, true);
     }
 
@@ -204,7 +213,8 @@ public class Module extends AbstractScope
         return null;
     }
 
-    public TypeDef findType(final String qname) {
+    public TypeDef findType(final String qname)
+    {
         final TypeDef td = getTypeDef(qname);
         
         if (td != null) 
@@ -226,9 +236,11 @@ public class Module extends AbstractScope
 
     public void addDependency(final Statement statement, final Binding binding)
     {
-        // NOTE: we only track dependencies whose targets are in our immediate module, NOT in
-        // imported modules. This will break as soon as there are non-intrinsic imports.
-        // TODO fix when we have real module imports
+        // NOTE: we only track dependencies whose targets are in our immediate module,
+        // NOT in imported modules. This forces all imports to have been typechecked
+        // before us, which precludes cycles in imports under current pipeline.
+        // TODO either 1) no cycles, 2) split pipeline + annotations in cycles,
+        // 3) cross-module typechecking. (2) looks like the winner currently
 
         if (binding.getScope() == this)
         {

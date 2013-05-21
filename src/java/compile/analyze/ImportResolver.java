@@ -84,7 +84,7 @@ public final class ImportResolver extends ImportExportResolverBase
 
         if (loaded != null) 
         {
-            WhiteList wl = WhiteList.open();
+            final WhiteList wl;
 
             if (!stmt.isWildcard())
             {
@@ -92,6 +92,10 @@ public final class ImportResolver extends ImportExportResolverBase
 
                 verifyImports(syms, loaded);
                 wl = WhiteList.enumerated(syms);
+            }
+            else
+            {
+                wl = WhiteList.open();
             }
 
             current.addImport(new Import(loaded, stmt.getInto(), wl));

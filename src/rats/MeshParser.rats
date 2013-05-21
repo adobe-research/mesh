@@ -82,15 +82,10 @@ transient List<Statement> Statement
         TypeKeyword name:Id Equals texpr:TypeExpr
             { yyValue = typeDefStmt(loc(yyStart), name, texpr); }
 
-    // import [ sym1,sym2,sym3 from ] <module> [ into <namespace> ]
-    / <ImportQualified>
-        ImportKeyword syms:(SymbolList FromKeyword)? module:QName QualifiedKeyword
-            { yyValue = importStmt(loc(yyStart), syms, module, module); }
-
-    // import [ sym1,sym2,sym3 from ] <module> qualified
-    / <Import>
-        ImportKeyword syms:(SymbolList FromKeyword)? module:QName into:(IntoKeyword QName)?
-            { yyValue = importStmt(loc(yyStart), syms, module, into); }
+    // import [ sym1,sym2,sym3 from ] <module> [ qualified | into <namespace> ]
+    / <ImportStatement>
+        ImportKeyword syms:(SymbolList FromKeyword)? module:QName qual:ImportQualifier
+            { yyValue = importStmt(loc(yyStart), syms, module, qual); }
 
     / <ExportStatement>
         ExportKeyword syms:ExportSymbolList
@@ -136,6 +131,9 @@ transient List<Statement> Statement
     / <UnboundExpr>
         e:Expr
             { yyValue = unboundExprStmt(e); } ;
+
+//
+// Import
 
 //
 // Function declaration: [<typeparams>] name(params) [-> returntype]
@@ -437,6 +435,20 @@ transient List<String> ExportSymbolList
         { yyValue = syms; }
     / Dot 
         { yyValue = cons(".", null); } ;
+
+//
+// designates target namespace for import. 3 cases:
+// 1. nothing for unqualified, 2. "qualified" for namespace
+// named after imported module, 3. "into <namespace>"
+// Using poor man's union: null for nothing, "" for "qualified",
+// name for "into <name>"
+//
+transient String ImportQualifier
+    = IntoKeyword name:QName
+        { yyValue = name; }
+    / QualifiedKeyword
+        { yyValue = ""; }
+    / ;
 
 //
 // Parameter list

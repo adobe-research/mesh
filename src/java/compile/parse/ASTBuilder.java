@@ -59,8 +59,11 @@ public class ASTBuilder
         final Loc loc, final List<String> syms, final String from,
         final String into)
     {
+        // Note: cook parser argument
+        final String targetNamespace = "".equals(into) ? from : into;
+
         return Collections.<Statement>singletonList(
-                new ImportStatement(loc, syms, from, into));
+                new ImportStatement(loc, syms, from, targetNamespace));
     }
 
     public static List<Statement> exportStmt(final Loc loc,
