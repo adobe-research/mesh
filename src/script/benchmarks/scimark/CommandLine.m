@@ -7,9 +7,11 @@
 
 import * from std;
 
-import Constants;
+import Constants qualified;
 import * from Random;
 import * from Kernel;
+
+export ();
 
 /* Benchmark 5 kernels with individual Mflops.
  "results[0]" has the average Mflop rate.
@@ -60,14 +62,12 @@ if (args.length > 0)
 
 R = randomgen(Constants.RANDOM_SEED);
 
-kernel = Kernel();
-
 res = [ 
-    kernel.measureFFT(FFT_size, min_time, R),
-    kernel.measureSOR(SOR_size, min_time, R),
-    kernel.measureMonteCarlo(min_time, R),
-    kernel.measureSparseMatmult(Sparse_size_M, Sparse_size_nz, min_time, R),
-    kernel.measureLU( LU_size, min_time, R)
+    measureFFT(FFT_size, min_time, R),
+    measureSOR(SOR_size, min_time, R),
+    measureMonteCarlo(min_time, R),
+    measureSparseMatmult(Sparse_size_M, Sparse_size_nz, min_time, R),
+    measureLU( LU_size, min_time, R)
 ];
 
 // print out results

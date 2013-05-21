@@ -5,6 +5,7 @@
  */
 
 import * from std;
+export .;
 
 // Creates and returns a new pseudo-random number generator 
 // If 'seed' is 0, then the generator is seeded using the current time (in millis)

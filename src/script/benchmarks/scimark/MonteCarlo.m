@@ -29,31 +29,28 @@
 */
 
 import * from std;
-import Random;
+import Random qualified;
 
-MonteCarlo() {
+export .;
 
-    num_flops(num_samples) 
-    {   
-        // 3 flops in x^2+y^2 and 1 flop in random routine
-        i2f(num_samples) *. 4.0 
-    };
-    
-    integrate(num_samples)
-    {
-        SEED = 113;
-    
-        R = Random.randomgen(SEED);
-    
-        under = cyclen(num_samples, 0, {
+num_flops(num_samples) 
+{   
+    // 3 flops in x^2+y^2 and 1 flop in random routine
+    i2f(num_samples) *. 4.0 
+};
+
+integrate(num_samples)
+{
+    SEED = 113;
+
+    R = Random.randomgen(SEED);
+
+    under = cyclen(num_samples, 0, {
             x = run(R);
             y = run(R);
-    
-            guard((x *. x) +. (y *. y) >. 1.0, $0, { inc($$0) })
-        });
-    
-        i2f(under) /. i2f(num_samples) *. 4.0
-    };
 
-    ( #num_flops: num_flops, #integrate: integrate )
+            guard((x *. x) +. (y *. y) >. 1.0, $0, { inc($$0) })
+            });
+
+    i2f(under) /. i2f(num_samples) *. 4.0
 };

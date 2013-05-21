@@ -23,14 +23,16 @@
 */
 
 import * from std;
+export Stopwatch;
 
-seconds() -> Double {
-    l2f(millitime()) /. 1000.0
-};
 
 Stopwatch() {
 
     members = box(#running: false, #last_time: 0.0, #total: 0.0);
+
+    seconds() -> Double {
+        l2f(millitime()) /. 1000.0
+    };
 
     set(running, last, total) { 
         members := (#running: running, #last_time: last, #total: total);
