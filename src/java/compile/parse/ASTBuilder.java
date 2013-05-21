@@ -56,10 +56,21 @@ public class ASTBuilder
     }
 
     public static List<Statement> importStmt(
-        final Loc loc, final List<String> syms, final String from, final String as) 
+        final Loc loc, final List<String> syms, final String from,
+        final String into)
+    {
+        // Note: cook parser argument
+        final String targetNamespace = "".equals(into) ? from : into;
+
+        return Collections.<Statement>singletonList(
+                new ImportStatement(loc, syms, from, targetNamespace));
+    }
+
+    public static List<Statement> exportStmt(final Loc loc,
+                                             final List<String> syms)
     {
         return Collections.<Statement>singletonList(
-                new ImportStatement(loc, syms, from, as));
+                new ExportStatement(loc, syms));
     }
 
     /**
@@ -902,6 +913,21 @@ public class ASTBuilder
         list.add(0, head);
         if (tail != null)
             list.addAll(tail);
+        return list;
+    }
+
+    public static <T> List<T> concat(final List<T> head, final List<T> tail)
+    {
+        final List<T> list = new ArrayList<T>(head.size() + tail.size());
+        list.addAll(head);
+        list.addAll(tail);
+        return list;
+    }
+
+    public static List<String> distribute(final String prefix, final List<String> rest)
+    {
+        final List<String> list = new ArrayList<String>(rest.size());
+        for (final String s : rest) list.add(prefix + s);
         return list;
     }
 }
