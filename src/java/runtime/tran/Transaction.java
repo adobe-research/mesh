@@ -27,8 +27,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * Currently, serializable consistency is guaranteed, at
  * the cost of foregoing lightweight reads in read-only
  * transactions (except when they take the form of naked
- * calls to {@link runtime.intrinsic.tran.Get} or
- * {@link runtime.intrinsic.tran.Gets}).
+ * calls to {@link runtime.intrinsic.tran._get} or
+ * {@link runtime.intrinsic.tran._gets}).
  * TODO static analysis to mark read-only transactions.
  *
  * NOTE: the use of STM over ML-style managed containers,

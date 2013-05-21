@@ -82,11 +82,14 @@ transient List<Statement> Statement
         TypeKeyword name:Id Equals texpr:TypeExpr
             { yyValue = typeDefStmt(loc(yyStart), name, texpr); }
 
-    // import sym1,sym2,sym3 from <module> into <namespace>
-    / <ImportDirective>
-        ImportKeyword syms:(ImportSymbolList FromKeyword)? 
-        module:NamespaceSpec as:(AsKeyword NamespaceSpec)?
-            { yyValue = importStmt(loc(yyStart), syms, module, as); }
+    // import [ sym1,sym2,sym3 from ] <module> [ qualified | into <namespace> ]
+    / <ImportStatement>
+        ImportKeyword syms:(SymbolList FromKeyword)? module:QName qual:ImportQualifier
+            { yyValue = importStmt(loc(yyStart), syms, module, qual); }
+
+    / <ExportStatement>
+        ExportKeyword syms:ExportSymbolList
+            { yyValue = exportStmt(loc(yyStart), syms); }
 
     // Parameterized type defs: type T(<params>) = RHS
     / <ParamTypeDef>
@@ -128,6 +131,9 @@ transient List<Statement> Statement
     / <UnboundExpr>
         e:Expr
             { yyValue = unboundExprStmt(e); } ;
+
+//
+// Import
 
 //
 // Function declaration: [<typeparams>] name(params) [-> returntype]
@@ -173,17 +179,21 @@ transient compile.Pair<Object, Term> InfixRHS
 
 //
 // A verb is an infix operator, optionally augmented with
-// pre- and postfix dimensional modifiers, which vectorize
-// left and right parameters, respectively. Note that ~op~
-// parses as (~op)~, and for non-commutative operators (~op)~
-// and ~(op~) differ. Parens can be used to disambiguate, but
-// are not allowed for unmodified operators.
+// pre- and postfix dimensional modifiers denoted by the @
+// character, which vectorize left and right parameters,
+// respectively.
+//
+// Note on double modifiers: @op@ parses as (@op)@, which
+// has a different meaning than @(op@). The former's result
+// matrix will have a row (sublist) per right operand, the
+// latter's one per left operand. Parens can be used to
+// disambiguate, but are not allowed for unmodified operators.
 //
 transient Object Verb
-    = lefts:("~")* "(" op:Verb ")" rights:("~")* WhiteSpace
+    = lefts:("@")* "(" op:Verb ")" rights:("@")* WhiteSpace
         { yyValue = verb(lefts.list().size(), op, rights.list().size()); }
 
-    / lefts:("~")* op:InfixOp rights:("~")* WhiteSpace
+    / lefts:("@")* op:InfixOp rights:("@")* WhiteSpace
         { yyValue = verb(lefts.list().size(), op, rights.list().size()); } ;
 
 //
@@ -403,19 +413,42 @@ transient String BinaryOp
 transient String UnaryOp
     = "**" / "*" / "!" / "-." / "-";
 
-// Used for import statements
-// TODO: Use regexes instead of Id?
-transient List<String> ImportSymbolList
-    = h:Id t:(Comma Id)*
-        { yyValue = cons(h, t.list()); } 
-    / Star 
-        { yyValue = cons("*", null) ; } ;
-
-String NamespaceSpec
-    = name:Id Dot spec:NamespaceSpec
+//
+// Import and export statements
+//
+String QName
+    = name:Id Dot spec:QName
         { yyValue = name + "." + spec; }
     / name:Id
         { yyValue = name; } ;
+
+transient List<String> SymbolList
+    = h:Id t:(Comma Id)*
+        { yyValue = cons(h, t.list()); } 
+    / Star 
+        { yyValue = cons("*", null); }
+    / LeftParen RightParen
+        { yyValue = empty(); } ;
+
+transient List<String> ExportSymbolList
+    = syms:SymbolList
+        { yyValue = syms; }
+    / Dot 
+        { yyValue = cons(".", null); } ;
+
+//
+// designates target namespace for import. 3 cases:
+// 1. nothing for unqualified, 2. "qualified" for namespace
+// named after imported module, 3. "into <namespace>"
+// Using poor man's union: null for nothing, "" for "qualified",
+// name for "into <name>"
+//
+transient String ImportQualifier
+    = IntoKeyword name:QName
+        { yyValue = name; }
+    / QualifiedKeyword
+        { yyValue = ""; }
+    / ;
 
 //
 // Parameter list
@@ -489,7 +522,7 @@ Type TypePrefixExpr
 // base type expr
 //
 Type TypeBaseExpr
-    = <IdRef>       id:Id
+    = <IdRef>       id:QName
         { yyValue = typeIdRef(loc(yyStart), id); }
 
     / <Wildcard>    Question
@@ -597,9 +630,11 @@ transient Kind StarKind
 //
 transient void TypeKeyword = "type" MandatoryWhiteSpace ;
 transient void IntrinsicKeyword = "intrinsic" MandatoryWhiteSpace ;
+transient void ExportKeyword = "export" MandatoryWhiteSpace ;
 transient void ImportKeyword = "import" MandatoryWhiteSpace ;
 transient void FromKeyword = "from" MandatoryWhiteSpace ;
-transient void AsKeyword = "as" MandatoryWhiteSpace ;
+transient void IntoKeyword = "into" MandatoryWhiteSpace ;
+transient void QualifiedKeyword = "qualified" WhiteSpace ;
 
 transient void Semi = ";" WhiteSpace ;
 transient void Colon = ":" WhiteSpace ;

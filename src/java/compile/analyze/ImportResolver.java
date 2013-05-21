@@ -13,12 +13,8 @@ package compile.analyze;
 import compile.Loc;
 import compile.Session;
 import compile.ScriptCompiler;
-import compile.module.ImportedModule;
-import compile.module.Module;
-import compile.module.ModuleDictionary;
-import compile.term.ImportStatement;
-import compile.term.Binding;
-import compile.term.UnboundTerm;
+import compile.module.*;
+import compile.term.*;
 
 import java.util.*;
 import java.io.*;
@@ -29,7 +25,7 @@ import java.io.*;
  *
  * @author Keith McGuigan
  */
-public final class ImportResolver extends ModuleVisitor<Object>
+public final class ImportResolver extends ImportExportResolverBase
 {
     private boolean importsDone;
 
@@ -62,7 +58,8 @@ public final class ImportResolver extends ModuleVisitor<Object>
 
         if (importsDone) 
         {
-            Session.error(loc, "Import statement occurs after executable statements");
+            Session.error(loc,
+                "Import statement occurs after executable statements");
             return;
         }
 
@@ -87,25 +84,38 @@ public final class ImportResolver extends ModuleVisitor<Object>
 
         if (loaded != null) 
         {
-            String namespace = stmt.getAs();
-            if (namespace == null)
-                namespace = moduleName;
+            final WhiteList wl;
 
-            final ImportedModule imported = new ImportedModule(loaded, false);
-            current.addQualifiedSymbols(namespace, loaded);
-            current.addImport(imported);
+            if (!stmt.isWildcard())
+            {
+                final List<String> syms = stmt.getSymbols();
 
-            if (stmt.isWildcard()) 
-            {
-                imported.setFullyExported();
+                verifyImports(syms, loaded);
+                wl = WhiteList.enumerated(syms);
             }
-            else if (!stmt.qualifiedOnly())
+            else
             {
-                for (final String sym : stmt.getSymbols())
-                {
-                    imported.addExport(sym);
-                }
+                wl = WhiteList.open();
             }
+
+            current.addImport(new Import(loaded, stmt.getInto(), wl));
+        }
+    }
+
+    private boolean verifyImports(final List<String> syms, final Module module)
+    {
+        return verifySymbols(syms, module, "import");
+    }
+
+    @Override
+    protected void visitExportStatement(final ExportStatement stmt) 
+    {
+        final Loc loc = stmt.getLoc();
+
+        if (importsDone) 
+        {
+            Session.error(loc,
+                "Export statement occurs after executable statements");
         }
     }
 
@@ -140,7 +150,8 @@ public final class ImportResolver extends ModuleVisitor<Object>
         }
 
         if (Session.isDebug())
-            Session.debug(loc, "Module ''{0}'' is at ''{1}''", moduleName, modulePath.getPath());
+            Session.debug(loc, "Module ''{0}'' is at ''{1}''",
+                moduleName, modulePath.getPath());
 
         final Reader reader = openFile(loc, modulePath);
 
@@ -155,7 +166,8 @@ public final class ImportResolver extends ModuleVisitor<Object>
         }
 
         final Module module = ScriptCompiler.compileModule(
-                new Loc(filePath), reader, moduleName, getModule().getModuleDictionary());
+            new Loc(filePath), reader, moduleName,
+            getModule().getModuleDictionary());
 
         if (module == null) 
         {
@@ -165,7 +177,8 @@ public final class ImportResolver extends ModuleVisitor<Object>
         else
         {
             if (Session.isDebug())
-                Session.debug(loc, "Successfully loaded module ''{0}''", moduleName);
+                Session.debug(loc,
+                    "Successfully loaded module ''{0}''", moduleName);
 
             return module;
         }
@@ -201,7 +214,8 @@ public final class ImportResolver extends ModuleVisitor<Object>
         return modulePath;
     }
 
-    private static File findModuleInPath(final Loc loc, final String path, final String fragment) 
+    private static File findModuleInPath(
+        final Loc loc, final String path, final String fragment)
     {
         final File file = new File(path, fragment);
 
@@ -224,8 +238,9 @@ public final class ImportResolver extends ModuleVisitor<Object>
         }
         catch (IOException e)
         {
-            Session.error(loc, "Could not load module from file ''{0}'': ''{1}''", 
-                    file.toString(), e.toString());
+            Session.error(loc,
+                "Could not load module from file ''{0}'': ''{1}''",
+                file.toString(), e.toString());
         }
 
         return reader;
