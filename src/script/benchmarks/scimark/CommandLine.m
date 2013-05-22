@@ -72,21 +72,21 @@ res = [
 
 // print out results
 printstr("");
-print("SciMark 2.0a");
+printstr("SciMark 2.0a");
 printstr("");
-print("Composite Score: " + f2s(favg(res)));
+printstr("Composite Score: " + f2s(favg(res)));
 if (res[0] == 0.0, {
-    print("FFT: ERROR, INVALID NUMERICAL RESULT!")
+    printstr("FFT: ERROR, INVALID NUMERICAL RESULT!")
 }, {
-    print("FFT (" + i2s(FFT_size) + "): " + f2s(res[0]))
+    printstr("FFT (" + i2s(FFT_size) + "): " + f2s(res[0]))
 });
 
-print("SOR (" + i2s(SOR_size) + "x" + i2s(SOR_size) + "): " + f2s(res[1]));
-print("Monte Carlo : " + f2s(res[2]));
-print("Sparse matmult (N=" + i2s(Sparse_size_M) + ", nz=" + i2s(Sparse_size_nz) + "): " + f2s(res[3]));
+printstr("SOR (" + i2s(SOR_size) + "x" + i2s(SOR_size) + "): " + f2s(res[1]));
+printstr("Monte Carlo : " + f2s(res[2]));
+printstr("Sparse matmult (N=" + i2s(Sparse_size_M) + ", nz=" + i2s(Sparse_size_nz) + "): " + f2s(res[3]));
 if (res[4] == 0.0, {
-    print("LU: ERROR, INVALID NUMERICAL RESULT!")
+    printstr("LU: ERROR, INVALID NUMERICAL RESULT!")
 }, {
-    print("LU (" + i2s(LU_size) + "x" + i2s(LU_size) + "): " + f2s(res[4]))
+    printstr("LU (" + i2s(LU_size) + "x" + i2s(LU_size) + "): " + f2s(res[4]))
 });
 printstr("");
