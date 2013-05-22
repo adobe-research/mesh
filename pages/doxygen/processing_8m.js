@@ -1,5 +1,6 @@
 var processing_8m =
 [
+    [ "hsb2rgb", "processing_8m.html#a19768058e871ed38776d96904af70046", null ],
     [ "prarc", "processing_8m.html#af5daac750081e0329b2609aae1b502cc", null ],
     [ "prbackground", "processing_8m.html#ae9321211288ca1e85c28f495806bf691", null ],
     [ "prbeginshape", "processing_8m.html#ab75d3bff8b319cb2b8c51f1ef22f2250", null ],
@@ -55,6 +56,7 @@ var processing_8m =
     [ "prtriangle", "processing_8m.html#a35f62bf96caa74cee19ac5cb983563ca", null ],
     [ "prvertex", "processing_8m.html#aa32ef8ff479059c7b27dfb482e277633", null ],
     [ "prvertex3d", "processing_8m.html#a6d5f4d7f8eea3cadea8b98250db6f821", null ],
+    [ "rgb2hsb", "processing_8m.html#ada7352f8d3cdc4a375929e1bea0812ae", null ],
     [ "Font", "processing_8m.html#aa60ee1d245e407388f7683bf478f3c7e", null ],
     [ "Image", "processing_8m.html#a9cc636619653eef214e011e29db31862", null ],
     [ "Matrix3D", "processing_8m.html#a5040e26d17f274c7aa725d2a6090d03a", null ]

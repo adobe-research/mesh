@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3.1"/>
-<title>Mesh: src/script/lib/skunk.m File Reference</title>
+<title>Mesh: src/script/lib/bench.m File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -81,7 +81,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('skunk_8m.html','');});
+$(document).ready(function(){initNavTree('bench_8m.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -102,25 +102,53 @@ $(document).ready(function(){initNavTree('skunk_8m.html','');});
   <div class="summary">
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">skunk.m File Reference</div>  </div>
+<div class="title">bench.m File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a33fa25ffa75c089c5b78be385db00e86"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="skunk_8m.html#a33fa25ffa75c089c5b78be385db00e86">shunt</a> (p, f)</td></tr>
-<tr class="memdesc:a33fa25ffa75c089c5b78be385db00e86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Lifted guard: given a predicate and a function, builds a deferred guard expression that takes a value, returns it if the predicate is satisfied, and otherwise returns the result of applying the function.  <a href="#a33fa25ffa75c089c5b78be385db00e86">More...</a><br/></td></tr>
-<tr class="separator:a33fa25ffa75c089c5b78be385db00e86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0bd6a37765b8a91afeddac163a0411ce"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="bench_8m.html#a0bd6a37765b8a91afeddac163a0411ce">bench</a> (b)</td></tr>
+<tr class="memdesc:a0bd6a37765b8a91afeddac163a0411ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">run a block, return elapsed time and result.  <a href="#a0bd6a37765b8a91afeddac163a0411ce">More...</a><br/></td></tr>
+<tr class="separator:a0bd6a37765b8a91afeddac163a0411ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bef3dfed274c828568606e194860e1a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="bench_8m.html#a2bef3dfed274c828568606e194860e1a">benchn</a> (n, f)</td></tr>
+<tr class="memdesc:a2bef3dfed274c828568606e194860e1a"><td class="mdescLeft">&#160;</td><td class="mdescRight">run a block n times, return average elapsed time (no result).  <a href="#a2bef3dfed274c828568606e194860e1a">More...</a><br/></td></tr>
+<tr class="separator:a2bef3dfed274c828568606e194860e1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="a33fa25ffa75c089c5b78be385db00e86"></a>
+<a class="anchor" id="a0bd6a37765b8a91afeddac163a0411ce"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">shunt </td>
+          <td class="memname">bench </td>
           <td>(</td>
-          <td class="paramtype">p&#160;</td>
+          <td class="paramtype">b&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>run a block, return elapsed time and result. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">b</td><td>block of code to benchmark </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>record containing #time, milliseconds taken to execute the block of code, #result, the result of the block of code. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a2bef3dfed274c828568606e194860e1a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">benchn </td>
+          <td>(</td>
+          <td class="paramtype">n&#160;</td>
           <td class="paramname">, </td>
         </tr>
         <tr>
@@ -137,15 +165,15 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Lifted guard: given a predicate and a function, builds a deferred guard expression that takes a value, returns it if the predicate is satisfied, and otherwise returns the result of applying the function. </p>
+<p>run a block n times, return average elapsed time (no result). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">p</td><td>predicate </td></tr>
-    <tr><td class="paramname">f</td><td>processing function </td></tr>
+    <tr><td class="paramname">b</td><td>block of code to benchmark </td></tr>
+    <tr><td class="paramname">n</td><td>number of times to execute the block of code </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>lambda that takes a value v, returns v iff p(v) is true, and f(v) otherwise </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>return average elapsed time </dd></dl>
 
 </div>
 </div>
@@ -154,8 +182,8 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_fe414d616bd0c4668e6515f48824338f.html">script</a></li><li class="navelem"><a class="el" href="dir_27fed6fb62859f95799fbbcb665c9364.html">lib</a></li><li class="navelem"><a class="el" href="skunk_8m.html">skunk.m</a></li>
-    <li class="footer">Generated on Fri May 3 2013 07:38:15 for Mesh by
+    <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_fe414d616bd0c4668e6515f48824338f.html">script</a></li><li class="navelem"><a class="el" href="dir_27fed6fb62859f95799fbbcb665c9364.html">lib</a></li><li class="navelem"><a class="el" href="bench_8m.html">bench.m</a></li>
+    <li class="footer">Generated on Wed May 22 2013 10:05:21 for Mesh by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>
