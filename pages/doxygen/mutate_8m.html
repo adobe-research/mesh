@@ -109,42 +109,45 @@ $(document).ready(function(){initNavTree('mutate_8m.html','');});
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ac09a9bfbd1feb2814a3292944ed17f32"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#ac09a9bfbd1feb2814a3292944ed17f32">await</a> (x:*T, y:(T-&gt; <a class="el" href="lang_8m.html#a87bf7178372d8fab76b61d6b75fe89ec">Bool</a>)) -&gt;()</td></tr>
-<tr class="memdesc:ac09a9bfbd1feb2814a3292944ed17f32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transactional wait/notify.  <a href="#ac09a9bfbd1feb2814a3292944ed17f32">More...</a><br/></td></tr>
-<tr class="separator:ac09a9bfbd1feb2814a3292944ed17f32"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a92d2ab5c3dd4edddc9f752575fb6ed"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; T:[*]&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a9a92d2ab5c3dd4edddc9f752575fb6ed">awaits</a> (x:Tup(T|<a class="el" href="lang_8m.html#a25e6a778c6c3fced11ee1110e015b173">Box</a>), y:(<a class="el" href="lang_8m.html#a1c03e5bb5c1d823007e9e056effdf87a">Tup</a>(T) -&gt; <a class="el" href="lang_8m.html#a87bf7178372d8fab76b61d6b75fe89ec">Bool</a>)) -&gt;()</td></tr>
-<tr class="memdesc:a9a92d2ab5c3dd4edddc9f752575fb6ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transactional wait/notify.  <a href="#a9a92d2ab5c3dd4edddc9f752575fb6ed">More...</a><br/></td></tr>
-<tr class="separator:a9a92d2ab5c3dd4edddc9f752575fb6ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab60fc9450d7e0190ce75a5e1cbe0d433"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#ab60fc9450d7e0190ce75a5e1cbe0d433">own</a> (x:*T) -&gt; T</td></tr>
-<tr class="memdesc:ab60fc9450d7e0190ce75a5e1cbe0d433"><td class="mdescLeft">&#160;</td><td class="mdescRight">Own a box.  <a href="#ab60fc9450d7e0190ce75a5e1cbe0d433">More...</a><br/></td></tr>
-<tr class="separator:ab60fc9450d7e0190ce75a5e1cbe0d433"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1f59b5972b0ade5f83446bf12a538343"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; Ts:[*]&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a1f59b5972b0ade5f83446bf12a538343">owns</a> (x:Tup(Ts|<a class="el" href="lang_8m.html#a25e6a778c6c3fced11ee1110e015b173">Box</a>)) -&gt; <a class="el" href="lang_8m.html#a1c03e5bb5c1d823007e9e056effdf87a">Tup</a>(Ts)</td></tr>
-<tr class="memdesc:a1f59b5972b0ade5f83446bf12a538343"><td class="mdescLeft">&#160;</td><td class="mdescRight">Own a tuple of boxes.  <a href="#a1f59b5972b0ade5f83446bf12a538343">More...</a><br/></td></tr>
-<tr class="separator:a1f59b5972b0ade5f83446bf12a538343"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa2c8acd69efb2741c7c011274f1185c2"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; A, B &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#aa2c8acd69efb2741c7c011274f1185c2">transfer</a> (x:*B, y:A-&gt; B, z:*A) -&gt;()</td></tr>
-<tr class="memdesc:aa2c8acd69efb2741c7c011274f1185c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Within a transaction, runs the function on the input box and writes the result to the output box.  <a href="#aa2c8acd69efb2741c7c011274f1185c2">More...</a><br/></td></tr>
-<tr class="separator:aa2c8acd69efb2741c7c011274f1185c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe0094c2681fa1ee0af6539bd1e8d7de"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; Outs:[*], Ins:[*]&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#abe0094c2681fa1ee0af6539bd1e8d7de">transfers</a> (x:Tup(Outs|<a class="el" href="lang_8m.html#a25e6a778c6c3fced11ee1110e015b173">Box</a>), y:(<a class="el" href="lang_8m.html#a1c03e5bb5c1d823007e9e056effdf87a">Tup</a>(Ins) -&gt; <a class="el" href="lang_8m.html#a1c03e5bb5c1d823007e9e056effdf87a">Tup</a>(Outs)), z:Tup(Ins|<a class="el" href="lang_8m.html#a25e6a778c6c3fced11ee1110e015b173">Box</a>)) -&gt;()</td></tr>
-<tr class="memdesc:abe0094c2681fa1ee0af6539bd1e8d7de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Within a transaction, runs the function on the input boxes and writes the result to the output boxes.  <a href="#abe0094c2681fa1ee0af6539bd1e8d7de">More...</a><br/></td></tr>
-<tr class="separator:abe0094c2681fa1ee0af6539bd1e8d7de"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7430afc71912338d57d170ff5203e564"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; T, X &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a7430afc71912338d57d170ff5203e564">unwatch</a> (x:*T, y:(T, T) -&gt; X) -&gt; *T</td></tr>
-<tr class="memdesc:a7430afc71912338d57d170ff5203e564"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove a watcher function from a box.  <a href="#a7430afc71912338d57d170ff5203e564">More...</a><br/></td></tr>
-<tr class="separator:a7430afc71912338d57d170ff5203e564"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa7aa9c8b9cd95416600126d0160c35b"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#afa7aa9c8b9cd95416600126d0160c35b">update</a> (x:*T, y:T-&gt; T) -&gt;()</td></tr>
-<tr class="memdesc:afa7aa9c8b9cd95416600126d0160c35b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update a box with the result of a function that takes box's current value as input.  <a href="#afa7aa9c8b9cd95416600126d0160c35b">More...</a><br/></td></tr>
-<tr class="separator:afa7aa9c8b9cd95416600126d0160c35b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a353d04a78faabce8e48463a626548b56"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; T:[*]&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a353d04a78faabce8e48463a626548b56">updates</a> (x:Tup(T|<a class="el" href="lang_8m.html#a25e6a778c6c3fced11ee1110e015b173">Box</a>), y:(<a class="el" href="lang_8m.html#a1c03e5bb5c1d823007e9e056effdf87a">Tup</a>(T) -&gt; <a class="el" href="lang_8m.html#a1c03e5bb5c1d823007e9e056effdf87a">Tup</a>(T))) -&gt;()</td></tr>
-<tr class="memdesc:a353d04a78faabce8e48463a626548b56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update a tuple of boxes with the result of a function that takes tuple of values as input, returns new tuple as output.  <a href="#a353d04a78faabce8e48463a626548b56">More...</a><br/></td></tr>
-<tr class="separator:a353d04a78faabce8e48463a626548b56"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a46f50331b66fb45a81a13d3f156be330"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; T, X &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a46f50331b66fb45a81a13d3f156be330">watch</a> (x:*T, y:(T, T) -&gt; X) -&gt;((T, T) -&gt; X)</td></tr>
-<tr class="memdesc:a46f50331b66fb45a81a13d3f156be330"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a watcher to a box, return watcher.  <a href="#a46f50331b66fb45a81a13d3f156be330">More...</a><br/></td></tr>
-<tr class="separator:a46f50331b66fb45a81a13d3f156be330"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac19d8d5f7e2f89b43c2ae95fa7075cba"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; T &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#ac19d8d5f7e2f89b43c2ae95fa7075cba">snap</a> (x:*T) -&gt; T</td></tr>
-<tr class="memdesc:ac19d8d5f7e2f89b43c2ae95fa7075cba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Snapshot the value held in a box.  <a href="#ac19d8d5f7e2f89b43c2ae95fa7075cba">More...</a><br/></td></tr>
-<tr class="separator:ac19d8d5f7e2f89b43c2ae95fa7075cba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a095d311030e4ce59fff57e83ec65f791"><td class="memItemLeft" align="right" valign="top">intrinsic&lt; Ts:[*]&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a095d311030e4ce59fff57e83ec65f791">snaps</a> (x:Tup(Ts|<a class="el" href="lang_8m.html#a25e6a778c6c3fced11ee1110e015b173">Box</a>)) -&gt; <a class="el" href="lang_8m.html#a1c03e5bb5c1d823007e9e056effdf87a">Tup</a>(Ts)</td></tr>
-<tr class="memdesc:a095d311030e4ce59fff57e83ec65f791"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a tuple of the values held in a tuple of boxes.  <a href="#a095d311030e4ce59fff57e83ec65f791">More...</a><br/></td></tr>
-<tr class="separator:a095d311030e4ce59fff57e83ec65f791"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a018e0b6fbd75543a3f6a9749b9392d8f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a018e0b6fbd75543a3f6a9749b9392d8f">cas</a> (b, o, n)</td></tr>
+<tr class="memdesc:a018e0b6fbd75543a3f6a9749b9392d8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">compare and swap.  <a href="#a018e0b6fbd75543a3f6a9749b9392d8f">More...</a><br/></td></tr>
+<tr class="separator:a018e0b6fbd75543a3f6a9749b9392d8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9253b7842ab65987b1b007c334f8b61a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a9253b7842ab65987b1b007c334f8b61a">cau</a> (b, o, f)</td></tr>
+<tr class="memdesc:a9253b7842ab65987b1b007c334f8b61a"><td class="mdescLeft">&#160;</td><td class="mdescRight">compare and update.  <a href="#a9253b7842ab65987b1b007c334f8b61a">More...</a><br/></td></tr>
+<tr class="separator:a9253b7842ab65987b1b007c334f8b61a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b844c188bbd7240dc1d933c1017c220"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a4b844c188bbd7240dc1d933c1017c220">tas</a> (b, p, n)</td></tr>
+<tr class="memdesc:a4b844c188bbd7240dc1d933c1017c220"><td class="mdescLeft">&#160;</td><td class="mdescRight">test and swap.  <a href="#a4b844c188bbd7240dc1d933c1017c220">More...</a><br/></td></tr>
+<tr class="separator:a4b844c188bbd7240dc1d933c1017c220"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b7d8fa7be049334f6ff53c56ed4ca64"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a4b7d8fa7be049334f6ff53c56ed4ca64">tau</a> (b, p, f)</td></tr>
+<tr class="memdesc:a4b7d8fa7be049334f6ff53c56ed4ca64"><td class="mdescLeft">&#160;</td><td class="mdescRight">test and update.  <a href="#a4b7d8fa7be049334f6ff53c56ed4ca64">More...</a><br/></td></tr>
+<tr class="separator:a4b7d8fa7be049334f6ff53c56ed4ca64"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1cb614719815bd45038b6e1f3b5d044d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a1cb614719815bd45038b6e1f3b5d044d">wtau</a> (b, p, f)</td></tr>
+<tr class="memdesc:a1cb614719815bd45038b6e1f3b5d044d"><td class="mdescLeft">&#160;</td><td class="mdescRight">wait, then test and update using the same (box, pred) for wait and test.  <a href="#a1cb614719815bd45038b6e1f3b5d044d">More...</a><br/></td></tr>
+<tr class="separator:a1cb614719815bd45038b6e1f3b5d044d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a210483e38d060c2ea4f33519f8ee7705"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a210483e38d060c2ea4f33519f8ee7705">cast</a> (bs, os, ns)</td></tr>
+<tr class="memdesc:a210483e38d060c2ea4f33519f8ee7705"><td class="mdescLeft">&#160;</td><td class="mdescRight">tuplized compare and swap  <a href="#a210483e38d060c2ea4f33519f8ee7705">More...</a><br/></td></tr>
+<tr class="separator:a210483e38d060c2ea4f33519f8ee7705"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b21b880a6e0906d1323584d7230085f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a9b21b880a6e0906d1323584d7230085f">caut</a> (bs, os, f)</td></tr>
+<tr class="memdesc:a9b21b880a6e0906d1323584d7230085f"><td class="mdescLeft">&#160;</td><td class="mdescRight">tuplized compare and update  <a href="#a9b21b880a6e0906d1323584d7230085f">More...</a><br/></td></tr>
+<tr class="separator:a9b21b880a6e0906d1323584d7230085f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee8818255fcf320ff70e7cf359a811e2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#aee8818255fcf320ff70e7cf359a811e2">swap</a> (s, v)</td></tr>
+<tr class="memdesc:aee8818255fcf320ff70e7cf359a811e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">swap the last value in a boxed list with a new value  <a href="#aee8818255fcf320ff70e7cf359a811e2">More...</a><br/></td></tr>
+<tr class="separator:aee8818255fcf320ff70e7cf359a811e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa21ccbb17d89bc62517a57f81017d773"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#aa21ccbb17d89bc62517a57f81017d773">tast</a> (bs, p, ns)</td></tr>
+<tr class="memdesc:aa21ccbb17d89bc62517a57f81017d773"><td class="mdescLeft">&#160;</td><td class="mdescRight">tuplized test and swap  <a href="#aa21ccbb17d89bc62517a57f81017d773">More...</a><br/></td></tr>
+<tr class="separator:aa21ccbb17d89bc62517a57f81017d773"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37925b7758e2e453bd9fd4a41693b3a3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a37925b7758e2e453bd9fd4a41693b3a3">taut</a> (bs, p, f)</td></tr>
+<tr class="memdesc:a37925b7758e2e453bd9fd4a41693b3a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">tuplized test and update  <a href="#a37925b7758e2e453bd9fd4a41693b3a3">More...</a><br/></td></tr>
+<tr class="separator:a37925b7758e2e453bd9fd4a41693b3a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfdaaa1fb9c7a438914f66ca161e2c69"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#adfdaaa1fb9c7a438914f66ca161e2c69">wtaut</a> (bs, p, f)</td></tr>
+<tr class="memdesc:adfdaaa1fb9c7a438914f66ca161e2c69"><td class="mdescLeft">&#160;</td><td class="mdescRight">multiwait, then test and update using the same (boxes, pred) for wait and test.  <a href="#adfdaaa1fb9c7a438914f66ca161e2c69">More...</a><br/></td></tr>
+<tr class="separator:adfdaaa1fb9c7a438914f66ca161e2c69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9a53fe5a05f0812df21f2c77d797b57"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#ac9a53fe5a05f0812df21f2c77d797b57">produce</a> (c, q, n, f)</td></tr>
+<tr class="memdesc:ac9a53fe5a05f0812df21f2c77d797b57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Driver function for a producer task.  <a href="#ac9a53fe5a05f0812df21f2c77d797b57">More...</a><br/></td></tr>
+<tr class="separator:ac9a53fe5a05f0812df21f2c77d797b57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21228509bcd1f5fc4f375e12fccdf541"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a21228509bcd1f5fc4f375e12fccdf541">consume</a> (c, q, f)</td></tr>
+<tr class="memdesc:a21228509bcd1f5fc4f375e12fccdf541"><td class="mdescLeft">&#160;</td><td class="mdescRight">Driver function for a consumer task.  <a href="#a21228509bcd1f5fc4f375e12fccdf541">More...</a><br/></td></tr>
+<tr class="separator:a21228509bcd1f5fc4f375e12fccdf541"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4e84ea2bcf49f0c09d536dec5c2e58ba"><td class="memItemLeft" align="right" valign="top">&lt; S, T &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a4e84ea2bcf49f0c09d536dec5c2e58ba">act</a> (b:*S, f:S-&gt;(S, T)) -&gt; T</td></tr>
 <tr class="memdesc:a4e84ea2bcf49f0c09d536dec5c2e58ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform an action on a boxed variable, updating its state and returning the action's result.  <a href="#a4e84ea2bcf49f0c09d536dec5c2e58ba">More...</a><br/></td></tr>
 <tr class="separator:a4e84ea2bcf49f0c09d536dec5c2e58ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -169,36 +172,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a0c49896869289732de4700d18ce602b0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a0c49896869289732de4700d18ce602b0">postdec</a> (b)</td></tr>
 <tr class="memdesc:a0c49896869289732de4700d18ce602b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Atomic post-decrement.  <a href="#a0c49896869289732de4700d18ce602b0">More...</a><br/></td></tr>
 <tr class="separator:a0c49896869289732de4700d18ce602b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a018e0b6fbd75543a3f6a9749b9392d8f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a018e0b6fbd75543a3f6a9749b9392d8f">cas</a> (b, o, n)</td></tr>
-<tr class="memdesc:a018e0b6fbd75543a3f6a9749b9392d8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">compare and swap.  <a href="#a018e0b6fbd75543a3f6a9749b9392d8f">More...</a><br/></td></tr>
-<tr class="separator:a018e0b6fbd75543a3f6a9749b9392d8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9253b7842ab65987b1b007c334f8b61a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a9253b7842ab65987b1b007c334f8b61a">cau</a> (b, o, f)</td></tr>
-<tr class="memdesc:a9253b7842ab65987b1b007c334f8b61a"><td class="mdescLeft">&#160;</td><td class="mdescRight">compare and update.  <a href="#a9253b7842ab65987b1b007c334f8b61a">More...</a><br/></td></tr>
-<tr class="separator:a9253b7842ab65987b1b007c334f8b61a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4b844c188bbd7240dc1d933c1017c220"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a4b844c188bbd7240dc1d933c1017c220">tas</a> (b, p, n)</td></tr>
-<tr class="memdesc:a4b844c188bbd7240dc1d933c1017c220"><td class="mdescLeft">&#160;</td><td class="mdescRight">test and swap.  <a href="#a4b844c188bbd7240dc1d933c1017c220">More...</a><br/></td></tr>
-<tr class="separator:a4b844c188bbd7240dc1d933c1017c220"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4b7d8fa7be049334f6ff53c56ed4ca64"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a4b7d8fa7be049334f6ff53c56ed4ca64">tau</a> (b, p, f)</td></tr>
-<tr class="memdesc:a4b7d8fa7be049334f6ff53c56ed4ca64"><td class="mdescLeft">&#160;</td><td class="mdescRight">test and update.  <a href="#a4b7d8fa7be049334f6ff53c56ed4ca64">More...</a><br/></td></tr>
-<tr class="separator:a4b7d8fa7be049334f6ff53c56ed4ca64"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1cb614719815bd45038b6e1f3b5d044d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a1cb614719815bd45038b6e1f3b5d044d">wtau</a> (b, p, f)</td></tr>
-<tr class="memdesc:a1cb614719815bd45038b6e1f3b5d044d"><td class="mdescLeft">&#160;</td><td class="mdescRight">wait, then test and update using the same (box, pred) for wait and test.  <a href="#a1cb614719815bd45038b6e1f3b5d044d">More...</a><br/></td></tr>
-<tr class="separator:a1cb614719815bd45038b6e1f3b5d044d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a210483e38d060c2ea4f33519f8ee7705"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a210483e38d060c2ea4f33519f8ee7705">cast</a> (bs, os, ns)</td></tr>
-<tr class="memdesc:a210483e38d060c2ea4f33519f8ee7705"><td class="mdescLeft">&#160;</td><td class="mdescRight">tuplized compare and swap  <a href="#a210483e38d060c2ea4f33519f8ee7705">More...</a><br/></td></tr>
-<tr class="separator:a210483e38d060c2ea4f33519f8ee7705"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9b21b880a6e0906d1323584d7230085f"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a9b21b880a6e0906d1323584d7230085f">caut</a> (bs, os, f)</td></tr>
-<tr class="memdesc:a9b21b880a6e0906d1323584d7230085f"><td class="mdescLeft">&#160;</td><td class="mdescRight">tuplized compare and update  <a href="#a9b21b880a6e0906d1323584d7230085f">More...</a><br/></td></tr>
-<tr class="separator:a9b21b880a6e0906d1323584d7230085f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa21ccbb17d89bc62517a57f81017d773"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#aa21ccbb17d89bc62517a57f81017d773">tast</a> (bs, p, ns)</td></tr>
-<tr class="memdesc:aa21ccbb17d89bc62517a57f81017d773"><td class="mdescLeft">&#160;</td><td class="mdescRight">tuplized test and swap  <a href="#aa21ccbb17d89bc62517a57f81017d773">More...</a><br/></td></tr>
-<tr class="separator:aa21ccbb17d89bc62517a57f81017d773"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37925b7758e2e453bd9fd4a41693b3a3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a37925b7758e2e453bd9fd4a41693b3a3">taut</a> (bs, p, f)</td></tr>
-<tr class="memdesc:a37925b7758e2e453bd9fd4a41693b3a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">tuplized test and update  <a href="#a37925b7758e2e453bd9fd4a41693b3a3">More...</a><br/></td></tr>
-<tr class="separator:a37925b7758e2e453bd9fd4a41693b3a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adfdaaa1fb9c7a438914f66ca161e2c69"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#adfdaaa1fb9c7a438914f66ca161e2c69">wtaut</a> (bs, p, f)</td></tr>
-<tr class="memdesc:adfdaaa1fb9c7a438914f66ca161e2c69"><td class="mdescLeft">&#160;</td><td class="mdescRight">multiwait, then test and update using the same (boxes, pred) for wait and test.  <a href="#adfdaaa1fb9c7a438914f66ca161e2c69">More...</a><br/></td></tr>
-<tr class="separator:adfdaaa1fb9c7a438914f66ca161e2c69"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3099cbc9f5aec5810a034bab48af0ba9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a3099cbc9f5aec5810a034bab48af0ba9">pushfront</a> (blst, v)</td></tr>
 <tr class="memdesc:a3099cbc9f5aec5810a034bab48af0ba9"><td class="mdescLeft">&#160;</td><td class="mdescRight">push v onto front of boxed list, enqueue  <a href="#a3099cbc9f5aec5810a034bab48af0ba9">More...</a><br/></td></tr>
 <tr class="separator:a3099cbc9f5aec5810a034bab48af0ba9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -217,12 +190,6 @@ Functions</h2></td></tr>
 <tr class="memitem:ab9d8050e9688dbf1e9d363d4588a86ba"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#ab9d8050e9688dbf1e9d363d4588a86ba">peekback</a> (blst)</td></tr>
 <tr class="memdesc:ab9d8050e9688dbf1e9d363d4588a86ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">return the last value in a boxed list  <a href="#ab9d8050e9688dbf1e9d363d4588a86ba">More...</a><br/></td></tr>
 <tr class="separator:ab9d8050e9688dbf1e9d363d4588a86ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aee8818255fcf320ff70e7cf359a811e2"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#aee8818255fcf320ff70e7cf359a811e2">swap</a> (s, v)</td></tr>
-<tr class="memdesc:aee8818255fcf320ff70e7cf359a811e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">swap the last value in a boxed list with a new value  <a href="#aee8818255fcf320ff70e7cf359a811e2">More...</a><br/></td></tr>
-<tr class="separator:aee8818255fcf320ff70e7cf359a811e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a81b0c0ac267261253c1e9ef162b2d294"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a81b0c0ac267261253c1e9ef162b2d294">react</a> (b, f)</td></tr>
-<tr class="memdesc:a81b0c0ac267261253c1e9ef162b2d294"><td class="mdescLeft">&#160;</td><td class="mdescRight">react is like watch, but with only new value passed to watcher.  <a href="#a81b0c0ac267261253c1e9ef162b2d294">More...</a><br/></td></tr>
-<tr class="separator:a81b0c0ac267261253c1e9ef162b2d294"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34117543470eea5d25467580b1160fae"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a34117543470eea5d25467580b1160fae">dep</a> (src, f)</td></tr>
 <tr class="memdesc:a34117543470eea5d25467580b1160fae"><td class="mdescLeft">&#160;</td><td class="mdescRight">create and return a box whose value tracks the value of the passed box, mapped through the passed function.  <a href="#a34117543470eea5d25467580b1160fae">More...</a><br/></td></tr>
 <tr class="separator:a34117543470eea5d25467580b1160fae"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -232,8 +199,6 @@ Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:a2d369581f2ef32199ee209d88c63282a"><td class="memItemLeft" align="right" valign="top">import *from&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a2d369581f2ef32199ee209d88c63282a">list</a></td></tr>
-<tr class="separator:a2d369581f2ef32199ee209d88c63282a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a621b10853014cf08ab8c64ed31a87f93"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a621b10853014cf08ab8c64ed31a87f93">pushq</a> = <a class="el" href="mutate_8m.html#abd1e837d687d83944d964271a9d18033">pushback</a></td></tr>
 <tr class="separator:a621b10853014cf08ab8c64ed31a87f93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e5c75bd134e8ae1f2af4552a9b621db"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="mutate_8m.html#a8e5c75bd134e8ae1f2af4552a9b621db">popq</a> = <a class="el" href="mutate_8m.html#a101e32bdf27c1a819e3f9e818544ca20">popfront</a></td></tr>
@@ -282,78 +247,6 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>result of action on b's state </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="ac09a9bfbd1feb2814a3292944ed17f32"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;T&gt; await </td>
-          <td>(</td>
-          <td class="paramtype">x:*&#160;</td>
-          <td class="paramname"><em>T</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">y:&#160;</td>
-          <td class="paramname">T-&gt; Bool&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> -&gt; ()</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Transactional wait/notify. </p>
-<p>await(box, pred) puts current thread into wait state until/unless pred(get(box)) returns true. pred() is called each time a value is committed to box. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>box </td></tr>
-    <tr><td class="paramname">y</td><td>predicate </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="a9a92d2ab5c3dd4edddc9f752575fb6ed"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;T:[*]&gt; awaits </td>
-          <td>(</td>
-          <td class="paramtype">x:&#160;</td>
-          <td class="paramname"><em>Tup</em>T|Box, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">y:&#160;</td>
-          <td class="paramname">Tup(T) -&gt; Bool&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> -&gt; ()</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Transactional wait/notify. </p>
-<p>awaits((boxes), pred) puts current thread into wait state until/unless pred(gets(boxes)) returns true. pred() is called each time a value is committed to one of the boxes. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>tuple of boxes </td></tr>
-    <tr><td class="paramname">y</td><td>predicate </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -531,6 +424,48 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a21228509bcd1f5fc4f375e12fccdf541"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">consume </td>
+          <td>(</td>
+          <td class="paramtype">c&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">q&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">f&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Driver function for a consumer task. </p>
+<p>Normally asynchronous: spawn { consume(...) }. Given:</p>
+<ul>
+<li>boxed boolean c, a circuit breaker</li>
+<li>boxed list q, a work queue</li>
+<li>function f, a consumer</li>
+</ul>
+<p>Attempt to pop first value v from q and run f(v) when *q is not empty, unless/until *c is false.</p>
+<p>Note: values dequeued but not consumed, due to c having been concurrently set false during dequeueing, are discarded. </p>
+
+</div>
+</div>
 <a class="anchor" id="a34117543470eea5d25467580b1160fae"></a>
 <div class="memitem">
 <div class="memproto">
@@ -601,58 +536,6 @@ Variables</h2></td></tr>
   </table>
   </dd>
 </dl>
-
-</div>
-</div>
-<a class="anchor" id="ab60fc9450d7e0190ce75a5e1cbe0d433"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;T&gt; own </td>
-          <td>(</td>
-          <td class="paramtype">x:*&#160;</td>
-          <td class="paramname"><em>T</em></td><td>)</td>
-          <td> -&gt;  T</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Own a box. </p>
-<p>Valid only in a transaction. returns box value. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>box </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>box value </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="a1f59b5972b0ade5f83446bf12a538343"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;Ts:[*]&gt; owns </td>
-          <td>(</td>
-          <td class="paramtype">x:&#160;</td>
-          <td class="paramname"><em>Tup</em>Ts|Box</td><td>)</td>
-          <td> -&gt;  <a class="el" href="lang_8m.html#a1c03e5bb5c1d823007e9e056effdf87a">Tup</a>(Ts)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Own a tuple of boxes. </p>
-<p>Valid only in a transaction. returns tuple of box values. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>tuple of boxes </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>tuple of box values </dd></dl>
 
 </div>
 </div>
@@ -958,6 +841,55 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ac9a53fe5a05f0812df21f2c77d797b57"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">produce </td>
+          <td>(</td>
+          <td class="paramtype">c&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">q&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">n&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">f&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Driver function for a producer task. </p>
+<p>Normally asynchronous: spawn { produce(...) }. Given</p>
+<ul>
+<li>boxed boolean c, a circuit breaker</li>
+<li>boxed list q, a work queue</li>
+<li>int n, a max size for q</li>
+<li>function f, a producer</li>
+</ul>
+<p>Attempt to run f() and push the result onto q when *q is not full, until/unless *c is false.</p>
+<p>Note: values produced but not enqueued, due to c having been concurrently set false during production, are discarded. </p>
+
+</div>
+</div>
 <a class="anchor" id="abd1e837d687d83944d964271a9d18033"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1025,92 +957,6 @@ Variables</h2></td></tr>
   </table>
   </dd>
 </dl>
-
-</div>
-</div>
-<a class="anchor" id="a81b0c0ac267261253c1e9ef162b2d294"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">react </td>
-          <td>(</td>
-          <td class="paramtype">b&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">f&#160;</td>
-          <td class="paramname">&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>react is like watch, but with only new value passed to watcher. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">b</td><td>box to watch </td></tr>
-    <tr><td class="paramname">f</td><td>function that will be invoked with the new value in box </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="ac19d8d5f7e2f89b43c2ae95fa7075cba"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;T&gt; snap </td>
-          <td>(</td>
-          <td class="paramtype">x:*&#160;</td>
-          <td class="paramname"><em>T</em></td><td>)</td>
-          <td> -&gt;  T</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Snapshot the value held in a box. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>box </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A snapshot of of the value in the box. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="a095d311030e4ce59fff57e83ec65f791"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;Ts:[*]&gt; snaps </td>
-          <td>(</td>
-          <td class="paramtype">x:&#160;</td>
-          <td class="paramname"><em>Tup</em>Ts|Box</td><td>)</td>
-          <td> -&gt;  <a class="el" href="lang_8m.html#a1c03e5bb5c1d823007e9e056effdf87a">Tup</a>(Ts)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Return a tuple of the values held in a tuple of boxes. </p>
-<p>Atomic, so box reads all take place at the same moment in program time. I.e., this function is equivalent to performing individual gets on each box within a transaction and returning a tuple of the results. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>tuple of boxes </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>tuple of values held in the boxes </dd></dl>
 
 </div>
 </div>
@@ -1322,236 +1168,6 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="aa2c8acd69efb2741c7c011274f1185c2"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;A,B&gt; transfer </td>
-          <td>(</td>
-          <td class="paramtype">x:*&#160;</td>
-          <td class="paramname"><em>B</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">y:A-&gt;&#160;</td>
-          <td class="paramname"><em>B</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">z:*&#160;</td>
-          <td class="paramname"><em>A</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> -&gt; ()</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Within a transaction, runs the function on the input box and writes the result to the output box. </p>
-<p>If the function doesn't attempt any box operations requiring relationships outside those already established for reading arguments and writing the result, then it is guaranteed to run without retrying.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>input box </td></tr>
-    <tr><td class="paramname">y</td><td>function </td></tr>
-    <tr><td class="paramname">z</td><td>output box </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="abe0094c2681fa1ee0af6539bd1e8d7de"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;Outs:[*], Ins:[*]&gt; transfers </td>
-          <td>(</td>
-          <td class="paramtype">x:&#160;</td>
-          <td class="paramname"><em>Tup</em>Outs|Box, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">y:&#160;</td>
-          <td class="paramname">Tup(Ins) -&gt; Tup(Outs), </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">z:&#160;</td>
-          <td class="paramname"><em>Tup</em>Ins|Box&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> -&gt; ()</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Within a transaction, runs the function on the input boxes and writes the result to the output boxes. </p>
-<p>If the function doesn't attempt any box operations requiring relationships outside those already established for reading arguments and writing the result, then it is guaranteed to run without retrying.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>tuple of input boxes </td></tr>
-    <tr><td class="paramname">y</td><td>function </td></tr>
-    <tr><td class="paramname">z</td><td>tuple of output boxes </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="a7430afc71912338d57d170ff5203e564"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;T,X&gt; unwatch </td>
-          <td>(</td>
-          <td class="paramtype">x:*&#160;</td>
-          <td class="paramname"><em>T</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">y:(T, T) -&gt;&#160;</td>
-          <td class="paramname"><em>X</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> -&gt;  *T</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Remove a watcher function from a box. </p>
-<p>Function equality is identity, so you need to pass the watcher function itself. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>box being watched </td></tr>
-    <tr><td class="paramname">y</td><td>function that was returned from <a class="el" href="">-&gt; X) -&gt; ((T, T) -&gt; X)</a>. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>box </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="afa7aa9c8b9cd95416600126d0160c35b"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;T&gt; update </td>
-          <td>(</td>
-          <td class="paramtype">x:*&#160;</td>
-          <td class="paramname"><em>T</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">y:T-&gt;&#160;</td>
-          <td class="paramname"><em>T</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> -&gt; ()</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Update a box with the result of a function that takes box's current value as input. </p>
-<p>Wraps itself in a transaction if none is currently running.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>box to be updated </td></tr>
-    <tr><td class="paramname">y</td><td>function that produces the new value for the box </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="a353d04a78faabce8e48463a626548b56"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;T:[*]&gt; updates </td>
-          <td>(</td>
-          <td class="paramtype">x:&#160;</td>
-          <td class="paramname"><em>Tup</em>T|Box, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">y:&#160;</td>
-          <td class="paramname">Tup(T) -&gt; Tup(T)&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> -&gt; ()</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Update a tuple of boxes with the result of a function that takes tuple of values as input, returns new tuple as output. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>tuple of boxes to be updated </td></tr>
-    <tr><td class="paramname">y</td><td>function that produces a new tuple of values for the boxes </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a class="anchor" id="a46f50331b66fb45a81a13d3f156be330"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">intrinsic&lt;T,X&gt; watch </td>
-          <td>(</td>
-          <td class="paramtype">x:*&#160;</td>
-          <td class="paramname"><em>T</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">y:(T, T) -&gt;&#160;</td>
-          <td class="paramname"><em>X</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> -&gt; ((T, T) -&gt; X)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Add a watcher to a box, return watcher. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>box to be watched </td></tr>
-    <tr><td class="paramname">y</td><td>function to be executed when the box value changes </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>a watcher function </dd></dl>
-
-</div>
-</div>
 <a class="anchor" id="a1cb614719815bd45038b6e1f3b5d044d"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1640,18 +1256,6 @@ Variables</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Variable Documentation</h2>
-<a class="anchor" id="a2d369581f2ef32199ee209d88c63282a"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">import* from list</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="af232164c05b21a4f526d7c54ee21967a"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1730,7 +1334,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="dir_fe414d616bd0c4668e6515f48824338f.html">script</a></li><li class="navelem"><a class="el" href="dir_27fed6fb62859f95799fbbcb665c9364.html">lib</a></li><li class="navelem"><a class="el" href="mutate_8m.html">mutate.m</a></li>
-    <li class="footer">Generated on Fri May 3 2013 07:38:15 for Mesh by
+    <li class="footer">Generated on Wed May 22 2013 10:05:21 for Mesh by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>
