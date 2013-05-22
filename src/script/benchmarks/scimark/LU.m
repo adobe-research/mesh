@@ -19,7 +19,7 @@ num_flops(N) {
 // TODO: this is implemented using a recursive algorithm, which will
 // end up popping the stack with a big enough array.  We should 
 // try this iteratively.
-factor(M:Int, N:Int, A:[[Double]]) -> ([[Double]], [Int]) {
+factor_recursive(M:Int, N:Int, A:[[Double]]) -> ([[Double]], [Int]) {
     guard(M == 1 || { N == 1 }, (A, [0] ), { 
         // Find the row with the largest abs max value in the first column.  
         col0 = A | first;
@@ -64,3 +64,47 @@ factor(M:Int, N:Int, A:[[Double]]) -> ([[Double]], [Int]) {
     })
 };
 
+
+// Perform the factorization in place using boxes.  
+factor_iterative(M:Int, N:Int, A:[[Double]]) -> ([[Double]], [Int]) {
+    R = A | { box($0 | { box($0) }) };
+    CT = min(M,N);
+
+    getvalue(i,j) { get(get(R[i])[j]); };
+    putvalue(i,j, x) { put(get(R[i])[j], x); };
+
+    calc(i, j) {
+        (_, __, v) = cycle(
+            { r,c,_ => r >= 0 && { c >= 0 } }, 
+            ( i-1, j-1, getvalue(i, j) ), 
+            { r,c,v => ( r-1, c-1, v -. (getvalue(r, j) *. getvalue(i, c)) ) });
+        guard(i <= j, v, { v /. getvalue(j, j) })
+    };
+
+    pivot(r) {
+        (_,  p, __) = cyclen(CT - r, ( -1.0, r, 0 ), 
+            { max_value, max_index, i =>
+              value = getvalue(r + i, r);
+              if (value >. max_value, 
+                  { (value, r + i, i + 1 ) },
+                  { (max_value, max_index, i + 1 ) })
+                
+            });
+        tmprow = *(R[r]);
+        R[r] := *(R[p]);
+        R[p] := tmprow;
+
+        p
+    };
+
+    pivots = count(CT) | { r => 
+        p = pivot(r);
+        count(N) | { c => putvalue(r, c, calc(r, c)); };
+        p
+    };
+
+    ( R | { get($0) } | { $0 | get }, pivots )
+};
+
+// change this to iterative to try that out.  Iterative version is approx. 3 x slower at the moment
+factor = factor_recursive;
