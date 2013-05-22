@@ -71,9 +71,9 @@ res = [
 ];
 
 // print out results
-print();
+printstr("");
 print("SciMark 2.0a");
-print();
+printstr("");
 print("Composite Score: " + f2s(favg(res)));
 if (res[0] == 0.0, {
     print("FFT: ERROR, INVALID NUMERICAL RESULT!")
@@ -89,3 +89,4 @@ if (res[4] == 0.0, {
 }, {
     print("LU (" + i2s(LU_size) + "x" + i2s(LU_size) + "): " + f2s(res[4]))
 });
+printstr("");
