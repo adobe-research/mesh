@@ -19,7 +19,7 @@ import java.util.Set;
 
 /**
  * Return sublist of unique items from list.
- * Like {@link Distinct}, but not order preserving.
+ * Like {@link _distinct}, but not order preserving.
  *
  * @author Basil Hosmer
  */

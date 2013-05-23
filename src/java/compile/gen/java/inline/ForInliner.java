@@ -19,7 +19,7 @@ import runtime.rep.list.ListValue;
 import java.util.List;
 
 /**
- * Try inlining calls to {@link runtime.intrinsic.For}.
+ * Try inlining calls to {@link runtime.intrinsic._for}.
  *
  * @author Basil Hosmer
  */
@@ -38,7 +38,6 @@ public class ForInliner implements Inliner
         final Term countArg = InlinerUtils.derefToIntrinsicApply(indexArg, _count.INSTANCE, fmt);
 
         final Term bodyArg = args.get(1);
-        final LambdaTerm bodyLambda = InlinerUtils.derefToLambda(bodyArg);
 
         if (countArg == null)
         {
@@ -48,6 +47,7 @@ public class ForInliner implements Inliner
         }
 
         final String countExpr = fmt.formatTermAs(countArg, int.class);
+        final LambdaTerm bodyLambda = InlinerUtils.derefToLambda(bodyArg);
 
         if (bodyLambda == null)
         {
