@@ -1,57 +1,57 @@
-$load test/apply.m
+$load test.apply
 $clear
 
 // TODO uncomment once await/awaits are clean
-//$load test/await.m
+//$load test.await
 //$clear
-//$load test/awaits.m
+//$load test.awaits
 //$clear
 
-$load test/cbuf.m
+$load test.cbuf
 $clear
 
 // TODO uncomment or remove permanently
-//$load test/circwatch.m
+//$load test.circwatch
 //$clear
 
-$load test/decompa.m
+$load test.decompa
 $clear
-$load test/inlineparams.m
+$load test.inlineparams
 $clear
-$load test/livelock.m
+$load test.livelock
 $clear
-$load test/msort.m
+$load test.msort
 $clear
 
 // TODO test currently causes a fatal error (by design)
-// $load test/nesting.m
+// $load test/nesting
 // $clear
 
-$load test/newtype.m
+$load test.newtype
 $clear
-$load test/pc.m
+$load test.pc
 $clear
-$load test/rle.m
+$load test.rle
 $clear
-$load test/qsort.m
+$load test.qsort
 $clear
-$load test/regress.m
+$load test.regress
 $clear
-$load test/starvation.m
+$load test.starvation
 $clear
-$load test/starvation2.m
+$load test.starvation2
 $clear
-$load test/tagpair.m
+$load test.tagpair
 $clear
-$load test/test_intrinsics.m
+$load test.test_intrinsics
 $clear
-$load test/test_library.m
+$load test.test_library
 $clear
-$load test/tranfuncs.m
+$load test.tranfuncs
 $clear
-$load test/transtress.m
+$load test.transtress
 $clear
-$load test/type_anno.m
+$load test.type_anno
 $clear
-$load test/test_imports.m
+$load test.test_imports
 $quit
