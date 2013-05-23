@@ -138,9 +138,9 @@ public final class ImportResolver extends ImportExportResolverBase
      */
     private Module performLoad(final Loc loc, final String moduleName)
     {
-        final String pathFragment = NameUtils.module2file(moduleName);
-
-        final File modulePath = getModulePath(loc, pathFragment);
+        final String currentModulePath = getModule().getLoc().getPath();
+        final File modulePath = getModulePath(
+            loc, moduleName, currentModulePath);
         if (modulePath == null)
         {
             Session.error(loc, "Could not load module ''{0}''", moduleName);
@@ -182,21 +182,29 @@ public final class ImportResolver extends ImportExportResolverBase
         }
     }
 
+    public static boolean moduleExists(final String moduleName)
+    {
+        return getModulePath(Loc.INTRINSIC, moduleName, null) != null;
+    }
+
     /**
      * Attempt to build a valid full module path from a path fragment,
      * using the importing module's path and the current search path
      * as context.
      */
-    private File getModulePath(final Loc loc, final String pathFragment)
+    private static File getModulePath(final Loc loc, final String moduleName, 
+        final String currentPath)
     {
         File modulePath = null;
+        final String pathFragment = NameUtils.module2file(moduleName);
 
-        final String currentModulePath = getModule().getLoc().getPath();
-        final File currentModuleFile = new File(currentModulePath);
-        if (currentModuleFile.isFile())
-        {
-            final String rootPath = currentModuleFile.getParent();
-            modulePath = findModuleInPath(loc, rootPath, pathFragment);
+        if (currentPath != null) {
+            final File currentModuleFile = new File(currentPath);
+            if (currentModuleFile.isFile())
+            {
+                final String rootPath = currentModuleFile.getParent();
+                modulePath = findModuleInPath(loc, rootPath, pathFragment);
+            }
         }
 
         if (modulePath == null)

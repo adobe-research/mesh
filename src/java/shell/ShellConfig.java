@@ -13,6 +13,7 @@ package shell;
 import compile.Session;
 import compile.Loc;
 import compile.term.ImportStatement;
+import compile.analyze.ImportResolver;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,7 +61,12 @@ public final class ShellConfig
         final ImportStatement stmt = ShellScriptManager.parseImportStatement(
                 Loc.INTRINSIC, "import " + spec);
         if (stmt != null)
-            imports.add(stmt);
+        {
+            if (!ImportResolver.moduleExists(stmt.getFrom())) 
+                Session.error("Can not find module ''{0}''", stmt.getFrom());
+            else
+                imports.add(stmt);
+        }
     }
 
     public void clearImplicitImport(final String spec)
