@@ -181,17 +181,12 @@ public class Module extends AbstractScope
         return EMPTY_PARAM_MAP;
     }
 
-    public ValueBinding findUnqualBinding(final String name)
-    {
-        return findBinding(name, false);
-    }
-
     public ValueBinding findValueBinding(final String qname)
     {
-        return findBinding(qname, true);
+        return findValueBinding(qname, true);
     }
 
-    private ValueBinding findBinding(
+    public ValueBinding findValueBinding(
         final String qname, final boolean qualifiedOk)
     {
         final ValueBinding vb = getValueBinding(qname);
@@ -215,6 +210,11 @@ public class Module extends AbstractScope
 
     public TypeDef findType(final String qname)
     {
+        return findType(qname, true);
+    }
+
+    public TypeDef findType(final String qname, final boolean qualifiedOk)
+    {
         final TypeDef td = getTypeDef(qname);
         
         if (td != null) 
@@ -222,9 +222,12 @@ public class Module extends AbstractScope
 
         for (final Import imp : imports) 
         {
-            final TypeDef type = imp.findTypeDef(qname);
-            if (type != null) 
-                return type;
+            if (imp.getQualifier() == null || qualifiedOk)
+            {
+                final TypeDef type = imp.findTypeDef(qname);
+                if (type != null) 
+                    return type;
+            }
         }
         return null;
     }

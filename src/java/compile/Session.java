@@ -62,7 +62,6 @@ public final class Session
     private String lastMessage;
 
     private List<String> searchPath;
-    private List<String> implicitImports;
 
     // TODO remove when we go to two-phase pipeline
     private ArrayDeque<String> moduleStack;
@@ -81,7 +80,6 @@ public final class Session
         this.pushedErrorCount = 0;
 
         this.searchPath = new ArrayList<String>();
-        this.implicitImports = new ArrayList<String>();
 
         this.moduleStack = new ArrayDeque<String>();
         this.inImplicitImport = false;
@@ -166,18 +164,6 @@ public final class Session
     {
         final Session session = getThreadLocal();
         return session.searchPath;
-    }
-
-    public static void addImplicitImport(final String script)
-    {
-        final Session session = getThreadLocal();
-        session.implicitImports.add(script);
-    }
-
-    public static List<String> getImplicitImports()
-    {
-        final Session session = getThreadLocal();
-        return session.implicitImports;
     }
 
     public static void pushCurrentModule(final String name)

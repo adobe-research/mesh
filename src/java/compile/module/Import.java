@@ -73,7 +73,7 @@ public class Import
         if (base != null) 
         {
             if (module.isExported(base)) 
-                return module.findUnqualBinding(base);
+                return module.findValueBinding(base, false);
         }
         return null;
     }
@@ -84,7 +84,7 @@ public class Import
         if (base != null)
         {
             if (module.isExported(base)) 
-                return module.getTypeDef(base);
+                return module.findType(base, false);
         }
         return null;
     }

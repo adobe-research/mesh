@@ -43,6 +43,11 @@ public final class ImportStatement implements Statement
         this.into = into;
     }
 
+    public static ImportStatement allUnqualified(final Loc loc, final String module) 
+    {
+        return new ImportStatement(loc, null, module, null);
+    }
+
     public String getFrom() { return from; }
     public String getInto() { return into; }
     public List<String> getSymbols() { return symbols; }
@@ -54,30 +59,27 @@ public final class ImportStatement implements Statement
         return syms == null || (syms.size() == 1 && syms.get(0).equals("*"));
     }
 
-    // Statement
-
-    public String dump()
+    private void dumpContent(final StringBuilder sb)
     {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("import ");
-
-        if (symbols != null && symbols.isEmpty())
-            sb.append("()");
-        else if (isWildcard(symbols)) 
-            sb.append("*");
-        else
+        if (!isWildcard())
         {
-            assert symbols != null : "Else is a wildcard";
-            String sep = "";
-            for (final String sym : symbols)
+            if (symbols != null && symbols.isEmpty())
+                sb.append("()");
+            else
             {
-                sb.append(sep);
-                sb.append(sym);
-                sep = ",";
+                assert symbols != null : "Else is a wildcard";
+                String sep = "";
+                for (final String sym : symbols)
+                {
+                    sb.append(sep);
+                    sb.append(sym);
+                    sep = ",";
+                }
             }
+
+            sb.append(" from ");
         }
 
-        sb.append(" from ");
         sb.append(from);
 
         if (into != null) {
@@ -89,10 +91,24 @@ public final class ImportStatement implements Statement
                 sb.append(into);
             }
         }
-        return sb.toString();
     }
 
+    public String dumpAbbrev()
+    {
+        final StringBuilder sb = new StringBuilder();
+        dumpContent(sb);
+        return sb.toString();
+    }
+    
     // Statement
+
+    public String dump() 
+    {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("import ");
+        dumpContent(sb);
+        return sb.toString();
+    }
 
     public final boolean isBinding()
     {
