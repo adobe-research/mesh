@@ -11,7 +11,7 @@ import Constants qualified;
 import * from Random;
 import * from Kernel;
 
-export ();
+//export ();
 
 /* Benchmark 5 kernels with individual Mflops.
  "results[0]" has the average Mflop rate.

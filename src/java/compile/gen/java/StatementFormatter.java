@@ -525,8 +525,8 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     /**
      * Helper - formats a binding name as a reference expression -
      * qualifies globals defined outside the scope from which the
-     * reference is being made. (We only need to qualify globals
-     * because any out-of-scope lambdas will have been captured
+     * reference is being made. (We only need to qualify globals--
+     * any out-of-scope lambdas will have been captured
      * in a closure.)
      * Note: package local, used by class generators.
      */
@@ -551,14 +551,13 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
             // But it might not be there, e.g. if we're generating a lambda
             // class before its defining module class.
-            String nameRef = moduleClassDef != null ?
-                bindingUnit.getModuleClassDef().getName() :
-                ModuleClassGenerator.qualifiedModuleClassName(bindingModule);
+            final String moduleNameRef =
+                (moduleClassDef != null ?
+                    bindingUnit.getModuleClassDef().getName() :
+                    ModuleClassGenerator.qualifiedModuleClassName(bindingModule))
+                + "." + Constants.INSTANCE;
 
-            // TODO: for intrinsic lets, skip this and inline
-            nameRef += "." + Constants.INSTANCE;
-
-            return nameRef + "." + formatName(binding.getName());
+            return moduleNameRef + "." + formatName(binding.getName());
         }
         else
         {

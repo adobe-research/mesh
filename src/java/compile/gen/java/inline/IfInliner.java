@@ -19,7 +19,7 @@ import compile.type.Type;
 import java.util.List;
 
 /**
- * Try inlining calls to {@link runtime.intrinsic.If}.
+ * Try inlining calls to {@link runtime.intrinsic._if}.
  *
  * @author Basil Hosmer
  */

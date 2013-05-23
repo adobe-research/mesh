@@ -56,8 +56,13 @@ public class TermInliner
         INTRINSICS.put(_for.class.getName(), new ForInliner());
         INTRINSICS.put(_guard.class.getName(), new GuardInliner());
         INTRINSICS.put(_if.class.getName(), new IfInliner());
+        INTRINSICS.put(_map.class.getName(), new MapInliner());
         INTRINSICS.put(_when.class.getName(), new WhenInliner());
         INTRINSICS.put(_while.class.getName(), new WhileInliner());
+
+        // lists
+        INTRINSICS.put(_size.class.getName(), new SizeInliner());
+        INTRINSICS.put(_zip.class.getName(), new ZipInliner());
 
         // logic
         INTRINSICS.put(_not.class.getName(), new NotInliner());
@@ -121,7 +126,9 @@ public class TermInliner
         if (!ENABLED)
             return null;
 
-        // if arg type is a tuple, arg term must be a tuple literal
+        // if arg type is a tuple, arg term must be a tuple literal.
+        // (we only try inlining multi-arg call sites if their args
+        // are scattered)
         final Term arg = apply.getArg();
         if (Types.isTup(arg.getType()) && !(arg instanceof TupleTerm))
             return null;

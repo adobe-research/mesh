@@ -45,27 +45,35 @@ public final class _zip extends IntrinsicLambda
 
         // fast implementation of common case (pair of lists)
         if (wid == 2)
-            return zip2((ListValue)lists.get(0), (ListValue)lists.get(1));
+            return invoke2((ListValue)lists.get(0), (ListValue)lists.get(1));
 
         // variable-width cases
 
         int size = 0;
+        boolean even = true;
         for (int i = 0; i < wid; i++)
         {
             final int listsize = ((ListValue)lists.get(i)).size();
 
+            // note early bailout
             if (listsize == 0)
                 return PersistentList.EMPTY;
 
             if (size < listsize)
+            {
                 size = listsize;
+                even = false;
+            }
         }
 
         final PersistentList result = PersistentList.alloc(size);
 
         final Iterator<?>[] iters = new Iterator<?>[wid];
         for (int j = 0; j < wid; j++)
-            iters[j] = Iterators.cycle((ListValue)lists.get(j));
+        {
+            final ListValue list = (ListValue)lists.get(j);
+            iters[j] = even ? list.iterator() : Iterators.cycle(list);
+        }
 
         for (int i = 0; i < size; i++)
         {
@@ -82,9 +90,8 @@ public final class _zip extends IntrinsicLambda
 
     /**
      * Optimized version for list pairs.
-     * TODO call this directly from CG where possible
      */
-    public static ListValue zip2(final ListValue listx, final ListValue listy)
+    public static ListValue invoke2(final ListValue listx, final ListValue listy)
     {
         final int xsize = listx.size();
         final int ysize = listy.size();
@@ -92,10 +99,21 @@ public final class _zip extends IntrinsicLambda
         if (xsize == 0 || ysize == 0)
             return PersistentList.EMPTY;
 
-        final Iterator<?> xiter = Iterators.cycle(listx);
-        final Iterator<?> yiter = Iterators.cycle(listy);
+        final Iterator<?> xiter, yiter;
+        final int size;
+        if (xsize == ysize)
+        {
+            xiter = listx.iterator();
+            yiter = listy.iterator();
+            size = xsize;
+        }
+        else
+        {
+            xiter = Iterators.cycle(listx);
+            yiter = Iterators.cycle(listy);
+            size = Math.max(xsize, ysize);
+        }
 
-        final int size = Math.max(xsize, ysize);
         final PersistentList listxy = PersistentList.alloc(size);
 
         for (int i = 0; i < size; i++)

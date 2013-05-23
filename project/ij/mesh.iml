@@ -46,7 +46,9 @@
           <root url="jar://$MODULE_DIR$/../../lib/guava-11.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="file://$USER_HOME$/libsrc/guava-libraries/guava/src" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">

@@ -199,7 +199,7 @@ public class InlinerUtils
         {
             final ValueBinding binding = ((RefTerm)term).getBinding();
             if (binding.isLet() && !((LetBinding) binding).isIntrinsic())
-                return derefToLambda(((LetBinding)binding).getValue());
+                return derefToLambda(binding.getValue());
         }
 
         return null;
@@ -217,7 +217,8 @@ public class InlinerUtils
             final ApplyTerm apply = (ApplyTerm)term;
             final Term base = apply.getBase();
 
-            return derefToIntrinsic(base, intrinsic, fmt) != null ? apply.getArg() : null;
+            return derefToIntrinsic(base, intrinsic, fmt) != null ?
+                apply.getArg() : null;
         }
 
         return null;
@@ -237,7 +238,7 @@ public class InlinerUtils
                 final LetBinding let = (LetBinding)binding;
                 if (let.isIntrinsic())
                 {
-                    InvokeInfo info = fmt.getInvokeInfo(term);
+                    final InvokeInfo info = fmt.getInvokeInfo(term);
                     final String intrName = intrinsic.getClass().getName();
                     return info.className.equals(intrName) ? let : null;
                 }
