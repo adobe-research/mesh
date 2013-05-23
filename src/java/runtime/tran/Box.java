@@ -59,7 +59,7 @@ public final class Box
     /**
      * Set of watcher functions to be notified on value changes.
      * {@link #addWatcher} and {@link #removeWatcher} will be called
-     * concurrently by e.g. {@link runtime.intrinsic.tran.Watch},
+     * concurrently by e.g. {@link runtime.intrinsic.tran._watch},
      * {@link Waiter#await}
      */
     private AtomicReference<PersistentMap> watchers;
