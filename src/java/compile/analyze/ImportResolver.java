@@ -10,9 +10,7 @@
  */
 package compile.analyze;
 
-import compile.Loc;
-import compile.Session;
-import compile.ScriptCompiler;
+import compile.*;
 import compile.module.*;
 import compile.term.*;
 
@@ -140,7 +138,7 @@ public final class ImportResolver extends ImportExportResolverBase
      */
     private Module performLoad(final Loc loc, final String moduleName)
     {
-        final String pathFragment = moduleNameToPathFragment(moduleName);
+        final String pathFragment = NameUtils.module2file(moduleName);
 
         final File modulePath = getModulePath(loc, pathFragment);
         if (modulePath == null)
@@ -244,10 +242,5 @@ public final class ImportResolver extends ImportExportResolverBase
         }
 
         return reader;
-    }
-
-    private static String moduleNameToPathFragment(final String name) 
-    {
-        return name.replace('.', File.separatorChar) + ".m";
     }
 }

@@ -10,6 +10,8 @@
  */
 package compile;
 
+import java.io.File;
+
 /**
  * Name-related string utilities
  *
@@ -133,5 +135,19 @@ public final class NameUtils
     private static boolean isNameFollowChar(final char ch)
     {
         return isNameFirstChar(ch) || Character.isDigit(ch);
+    }
+
+    public static String module2file(final String name) 
+    {
+        return name.replace('.', File.separatorChar) + ".m";
+    }
+
+    @SuppressWarnings({"UnusedDeclaration"})
+    public static String file2module(final String name) 
+    {
+        final String module = name.replace(File.separatorChar, '.');
+        if (name.endsWith(".m")) 
+            return module.substring(0, module.length() - 2);
+        return module;
     }
 }
