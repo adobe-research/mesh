@@ -10,14 +10,13 @@
  */
 package runtime.tran;
 
-import com.google.common.collect.Sets;
 import runtime.Logging;
 import runtime.rep.lambda.Lambda;
 import runtime.rep.Tuple;
 import runtime.ConfigUtils;
 
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -69,6 +68,19 @@ final class Transaction
     private static final int RETRY_PAUSE_MILLIS =
         ConfigUtils.parseIntProp(Transaction.class.getName() + ".RETRY_PAUSE_MILLIS", 10);
 
+    /**
+     * Chunk size for growing updated arrays
+     */
+    private static final int UPDATED_CHUNK_SIZE =
+        ConfigUtils.parseIntProp(Transaction.class.getName() + ".UPDATED_CHUNK_SIZE", 8);
+
+    /**
+     * Chunk size for growing pinned array
+     */
+    private static final int PINNED_CHUNK_SIZE =
+        ConfigUtils.parseIntProp(Transaction.class.getName() + ".PINNED_CHUNK_SIZE", 8);
+
+
     //
     // instance
     //
@@ -96,16 +108,25 @@ final class Transaction
     Attempt attempt = null;
 
     /**
-     * Map of in-transaction box updates.
-     * Null values indicate ownership without update.
+     * Arrays of in-transaction box updates.
+     * Note that here we're designing for most transactions
+     * to update a small number of boxes. This seems true so
+     * far, emprically, but we do have a warning in place.
+     * See {@link #addUpdate(Box, Object)}.
      */
-    private final IdentityHashMap<Box, Object> updates =
-        new IdentityHashMap<Box, Object>();
+    private int updatedCount = 0;
+    private Box[] updated = new Box[UPDATED_CHUNK_SIZE];
+    private Object[] updates = new Object[UPDATED_CHUNK_SIZE];
 
     /**
-     * Identity set of in-transaction pinned boxes.
+     * Array of in-transaction pinned boxes.
+     * Note that here we're designing for most transactions
+     * to pin a small number of boxes. This seems true so
+     * far, emprically, but we do have a warning in place.
+     * See {@link #addPinned(Box)}.
      */
-    private final Set<Box> pinned = Sets.newIdentityHashSet();
+    private int pinnedCount = 0;
+    private Box[] pinned = new Box[PINNED_CHUNK_SIZE];
 
     //
     // TransactionManager API
@@ -248,8 +269,8 @@ final class Transaction
                 // main action depends on combination of arguments (box, f, val)
                 result =
                     box == null ? f.apply(Tuple.UNIT) :
-                    f != null ? update(box, f) :
-                    put(box, val);
+                        f != null ? update(box, f) :
+                            put(box, val);
 
                 // commit box updates and collect change events
                 events = commit();
@@ -275,7 +296,7 @@ final class Transaction
                 releasePinned();
 
                 // clear update map
-                updates.clear();
+                clearUpdates();
 
                 // if we were bumped as a queued owner between our throw and now,
                 // clear attempt state
@@ -354,45 +375,42 @@ final class Transaction
      */
     private ArrayList<ChangeEvent> commit()
     {
-        final ArrayList<Box> locked = new ArrayList<Box>();
+        final int n = updatedCount;
 
-        for (final Box box : updates.keySet())
-        {
-            box.acquireWriteLock();
-            locked.add(box);
-        }
-
-        if (locked.isEmpty())
+        if (n == 0)
             return null;
+
+        for (int i = 0; i < n; i++)
+            updated[i].acquireWriteLock();
 
         final long commitTick = getTick();
 
         ArrayList<ChangeEvent> events = null;
 
-        for (final Box box : locked)
+        for (int i = 0; i < n; i++)
         {
-            final Object newValue = updates.get(box);
+            final Box box = updated[i];
 
-            if (newValue != null)
+            final Object newValue = updates[i];
+            assert newValue != null;
+
+            final Object oldValue = box.getCurrentValue();
+
+            final Set<Object> watchers = box.getWatchers();
+
+            box.commit(newValue, commitTick);
+
+            if (watchers != null)
             {
-                final Object oldValue = box.getCurrentValue();
+                if (events == null)
+                    events = new ArrayList<ChangeEvent>();
 
-                final Set<Object> watchers = box.getWatchers();
-
-                box.commit(newValue, commitTick);
-
-                if (watchers != null)
-                {
-                    if (events == null)
-                        events = new ArrayList<ChangeEvent>();
-
-                    events.add(new ChangeEvent(watchers, oldValue, newValue));
-                }
+                events.add(new ChangeEvent(watchers, oldValue, newValue));
             }
         }
 
-        for (int j = locked.size() - 1; j >= 0; j--)
-            locked.get(j).releaseWriteLock();
+        for (int j = n - 1; j >= 0; j--)
+            updated[j].releaseWriteLock();
 
         return events;
     }
@@ -403,10 +421,16 @@ final class Transaction
      */
     private void releasePinned()
     {
-        for (final Box box : pinned)
-            box.releaseReadLock();
+        for (int i = 0; i < pinnedCount; i++)
+        {
+            final Box b = pinned[i];
 
-        pinned.clear();
+            // NOTE: in-tran release of pinned box leaves a hole
+            if (b != null)
+                b.releaseReadLock();
+        }
+
+        clearPinned();
     }
 
     /**
@@ -427,8 +451,7 @@ final class Transaction
     }
 
     /**
-     * Run watche
-     * r functions collected during commit.
+     * Run watcher functions collected during commit.
      * Watchers are currently run on the transaction's
      * thread.
      * TODO formalize whether that's a guarantee or not.
@@ -437,6 +460,133 @@ final class Transaction
     {
         for (final ChangeEvent event : events)
             event.fire();
+    }
+
+    /**
+     * Find a given box in the array of in-transaction updates.
+     * Return array index, or current count if not found.
+     */
+    private int findUpdated(final Box box)
+    {
+        final int n = updatedCount;
+
+        for (int i = 0; i < n; i++)
+            if (updated[i] == box)
+                return i;
+
+        return n;
+    }
+
+    /**
+     * Return true if given box has been updated in this transaction.
+     */
+    private boolean isUpdated(final Box box)
+    {
+        return findUpdated(box) < updatedCount;
+    }
+
+    /**
+     * Add a box and value to the in-transaction updates arrays.
+     * If box has a prior in-transaction value, it is overwritten.
+     * Otherwise the box/value pair is added to the array pair.
+     * Arrays are grown if at capacity.
+     */
+    private void addUpdate(final Box box, final Object val)
+    {
+        final int i = findUpdated(box);
+
+        if (i < updatedCount)
+        {
+            updates[i] = val;
+            return;
+        }
+
+        if (updatedCount == updated.length)
+        {
+            final Box[] newUpdated = new Box[updatedCount + UPDATED_CHUNK_SIZE];
+            System.arraycopy(updated, 0, newUpdated, 0, updatedCount);
+            updated = newUpdated;
+
+            final Object[] newUpdates = new Object[updatedCount + UPDATED_CHUNK_SIZE];
+            System.arraycopy(updates, 0, newUpdates, 0, updatedCount);
+            updates = newUpdates;
+        }
+
+        updated[updatedCount] = box;
+        updates[updatedCount] = val;
+        updatedCount++;
+    }
+
+    /**
+     * Clear in-transaction update arrays
+     */
+    private void clearUpdates()
+    {
+        updatedCount = 0;
+        Arrays.fill(updates, null);
+        Arrays.fill(updated, null);
+    }
+
+    /**
+     * Return true if given box has been pinned in this transaction.
+     */
+    private boolean isPinned(final Box box)
+    {
+        final int n = pinnedCount;
+
+        for (int i = 0; i < n; i++)
+            if (pinned[i] == box)
+                return true;
+
+        return false;
+    }
+
+    /**
+     * Add given box to pinned array.
+     * CAUTION: does not check whether box has already been pinned.
+     * Caller must guard with call to {@link #isPinned}.
+     */
+    private void addPinned(final Box box)
+    {
+        if (pinnedCount == pinned.length)
+        {
+            final Box[] newPinned = new Box[pinnedCount + PINNED_CHUNK_SIZE];
+            System.arraycopy(pinned, 0, newPinned, 0, pinnedCount);
+            pinned = newPinned;
+        }
+
+        pinned[pinnedCount++] = box;
+    }
+
+    /**
+     * Remove given box from pinned array and return true, if box
+     * was pinned. Otherwise, return false. Note that removal leaves
+     * a gap, which must be checked for when iterating over this
+     * array.
+     */
+    private boolean removePinned(final Box box)
+    {
+        final int n = pinnedCount;
+
+        for (int i = 0; i < n; i++)
+        {
+            if (pinned[i] == box)
+            {
+                pinned[i] = null;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Clear array of in-transaction pinned boxes
+     */
+    private void clearPinned()
+    {
+        Arrays.fill(pinned, null);
+        pinnedCount = 0;
     }
 
     //
@@ -451,9 +601,9 @@ final class Transaction
     Object get(final Box box)
     {
         // return in-transaction value, if we have updated the box
-        final Object updated = updates.get(box);
-        if (updated != null)
-            return updated;
+        final int i = findUpdated(box);
+        if (i < updatedCount)
+            return updates[i];
 
         // otherwise return value as of transaction start, if available
         final Object value = box.getValueAt(attemptStart);
@@ -495,7 +645,7 @@ final class Transaction
      */
     void pin(final Box box)
     {
-        if (pinned.contains(box) || updates.containsKey(box))
+        if (isPinned(box) || isUpdated(box))
             return;
 
         box.acquireReadLock();
@@ -530,7 +680,7 @@ final class Transaction
             if (owner == null)
             {
                 // keep box read lock, add to pinned set
-                pinned.add(box);
+                addPinned(box);
                 unlock = false;
             }
             else if (owner != attempt)
@@ -581,11 +731,11 @@ final class Transaction
      */
     void own(final Box box)
     {
-        if (updates.containsKey(box))
+        if (isUpdated(box))
             return;
 
         // must release our own read lock if we'd pinned the box previously
-        if (pinned.remove(box))
+        if (removePinned(box))
             box.releaseReadLock();
 
         // Note: in this region we're vulnerable to a pinned box getting swiped.
@@ -660,7 +810,7 @@ final class Transaction
     Object put(final Box box, final Object val)
     {
         own(box);
-        updates.put(box, val);
+        addUpdate(box, val);
 
         return val;
     }
@@ -686,7 +836,7 @@ final class Transaction
         own(box);
 
         final Object newval = f.apply(get(box));
-        updates.put(box, newval);
+        addUpdate(box, newval);
 
         return newval;
     }
@@ -711,7 +861,7 @@ final class Transaction
         final Tuple newvals = (Tuple)f.apply(Tuple.from(vals));
 
         for (int i = 0; i < size; i++)
-            updates.put((Box)boxes.get(i), newvals.get(i));
+            addUpdate((Box)boxes.get(i), newvals.get(i));
 
         return newvals;
     }
@@ -728,7 +878,7 @@ final class Transaction
 
         final Object val = f.apply(get(read));
 
-        updates.put(write, val);
+        addUpdate(write, val);
 
         return val;
     }
@@ -762,7 +912,7 @@ final class Transaction
 
         // scatter function outputs to boxes
         for (int i = 0; i < nw; i++)
-            updates.put((Box)writes.get(i), newvals.get(i));
+            addUpdate((Box)writes.get(i), newvals.get(i));
 
         return writes;
     }
