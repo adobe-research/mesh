@@ -23,10 +23,10 @@
 */
 
 import * from std;
-export Stopwatch;
+export StopWatch;
 
 
-Stopwatch() {
+StopWatch() {
 
     members = box(#running: false, #last_time: 0.0, #total: 0.0);
 
