@@ -55,7 +55,7 @@ public final class Main
         this.shellConfig = shellConfig;
         this.fileServices = fileServices;
         this.shellScriptManager = new ShellScriptManager();
-        this.console = Console.create(shellConfig, shellScriptManager, 
+        this.console = Console.create(shellConfig, shellScriptManager,
             fileServices, shellConfig.getCommandFiles());
     }
 
@@ -317,12 +317,14 @@ public final class Main
         "$i / $import           modify the default import list for the shell",
         "                       '?' | 'list': prints the current set of imports.",
         "                       '-' | 'clear' <spec>: deletes import at position <spec>",
-        "                                             or which uniquely matches prefix <spec>", 
+        "                                             or which uniquely matches prefix <spec>",
         "                       '+' | 'add' <spec>: Creates a new import",
         "",
-        "$l / $load <filename>  load and run a script file. <filename> path can be",
-        "                       absolute, relative to cwd, or relative to a path",
-        "                       specified on the command line with",
+        "$l / $load <module>    load and run a script file. A file pathname is created by",
+        "                       replacing dot with the file separator and appending a",
+        "                       .m extension.  If such a file is found in the path it",
+        "                       is loaded and executed.  The search path is the cwd and",
+        "                       what is specified on the command line with ",
         "                       -path <path1>;<path2>;...",
         "",
         "$m / $messages         toggle compilation debug messages",
@@ -336,7 +338,10 @@ public final class Main
         "                       <num> for the unit that number of steps into the past,",
         "                       or * for all",
         "",
-        "$v / $vars [!]         print variable bindings (! to include intrinsics)",
+        "$v / $vars [? | <ns>*] print variable bindings. ? prints available namespaces.",
+        "                       If a namespace is present in the list, it's contents are",
+        "                       printed (namespace '.' shows the last modules's ",
+        "                       locals only).",
         "",
         "$w / $write            write binaries to <cwd>/ws, or to path specified",
         "                       on the command line with -writepath",
@@ -431,30 +436,30 @@ public final class Main
     /**
      * Add, list, or remove a import to be used for every (following) shell module
      */
-    private void cmdImport(final String[] words) 
+    private void cmdImport(final String[] words)
     {
-        if (words.length == 1 || words.length == 2 && 
+        if (words.length == 1 || words.length == 2 &&
             (words[1].equals("?") || words[1].equals("list")))
         {
             shellConfig.listImplicitImports();
         }
-        else if (words.length > 2 && 
+        else if (words.length > 2 &&
                  (words[1].equals("-") || words[1].equals("clear")))
         {
-            final List<String> specPart = 
+            final List<String> specPart =
                 Arrays.asList(words).subList(2, words.length);
             final String spec = StringUtils.join(specPart, " ");
             shellConfig.clearImplicitImport(spec);
         }
-        else if (words.length > 2 && 
+        else if (words.length > 2 &&
                  (words[1].equals("+") || words[1].equals("add")))
         {
-            final List<String> specPart = 
+            final List<String> specPart =
                 Arrays.asList(words).subList(2, words.length);
             final String spec = StringUtils.join(specPart, " ");
             shellConfig.addImplicitImport(spec);
-        } 
-        else 
+        }
+        else
         {
             Session.error("Could not fathom the import command (see $help)");
         }
@@ -591,7 +596,7 @@ public final class Main
             // DEV ONLY: on failed compile, this gives last generated source
             dumpUnit(UnitBuilder.LastUnit, false);
         }
-        else if (words[1].equals("!")) 
+        else if (words[1].equals("!"))
         {
             // Dumps all units and imports recursively
             dumpAllUnits(UnitBuilder.LastUnit);
@@ -655,7 +660,7 @@ public final class Main
         {
             dumpAllUnits(imported, alreadyDumped);
         }
-        if (!alreadyDumped.contains(unit.getModule().getName())) 
+        if (!alreadyDumped.contains(unit.getModule().getName()))
         {
             dumpUnit(unit, true);
             alreadyDumped.add(unit.getModule().getName());
@@ -672,22 +677,22 @@ public final class Main
     {
         final List<Unit> history = shellScriptManager.getUnitHistory();
 
-        if (history.size() == 0) 
+        if (history.size() == 0)
             return;
 
         final Module module = history.get(0).getModule();
 
         final Set<String> names = getAllBindings(module);
 
-        if (words.length == 2 && words[1].equals("?")) 
+        if (words.length == 2 && words[1].equals("?"))
         {
             for (final String ns : module.getNamespaces())
                 System.out.println(ns);
         }
-        else 
+        else
         {
             final Map<String, LetBinding> bindings = new TreeMap<String, LetBinding>();
-            if (words.length == 1) 
+            if (words.length == 1)
             {
                 for (final String name : names)
                 {
@@ -698,15 +703,22 @@ public final class Main
             }
             else
             {
-                for (int i = 1; i < words.length; ++i) 
+                for (int i = 1; i < words.length; ++i)
                 {
-                    for (final String name : names)
+                    if (words[i].equals("."))
                     {
-                        final ValueBinding vb = module.findValueBinding(name);
-                        if (vb != null && vb.isLet() &&
-                            name.startsWith(words[i] + "."))
-                            bindings.put(name, (LetBinding)vb);
+                        for (final String name : module.getLetNames())
+                            bindings.put(name,
+                               (LetBinding)module.getValueBinding(name));
                     }
+                    else
+                        for (final String name : names)
+                        {
+                            final ValueBinding vb = module.findValueBinding(name);
+                            if (vb != null && vb.isLet() &&
+                                    name.startsWith(words[i] + "."))
+                                bindings.put(name, (LetBinding)vb);
+                        }
                 }
             }
 
