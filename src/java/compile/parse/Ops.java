@@ -62,6 +62,10 @@ public class Ops
     final static String FMOD_SYM = "%.";
     final static String FEXP_SYM = "^.";
 
+    final static String SHR_SYM = ">>";
+    final static String USHR_SYM = ">>>";
+    final static String SHL_SYM = "<<";
+
     final static String PIPE_SYM = "|";
     final static String PPIPE_SYM = "|:";
 
@@ -118,6 +122,10 @@ public class Ops
         BINOP_INFO.put(FGE_SYM, new BinopInfo(50, Assoc.Left, _fge.INSTANCE.getName()));
         BINOP_INFO.put(FLE_SYM, new BinopInfo(50, Assoc.Left, _fle.INSTANCE.getName()));
         BINOP_INFO.put(FLT_SYM, new BinopInfo(50, Assoc.Left, _flt.INSTANCE.getName()));
+
+        BINOP_INFO.put(SHR_SYM, new BinopInfo(55, Assoc.Left, _shiftr.INSTANCE.getName()));
+        BINOP_INFO.put(USHR_SYM, new BinopInfo(55, Assoc.Left, _ushiftr.INSTANCE.getName()));
+        BINOP_INFO.put(SHL_SYM, new BinopInfo(55, Assoc.Left, _shiftl.INSTANCE.getName()));
 
         BINOP_INFO.put(PLUS_SYM, new BinopInfo(60, Assoc.Left, _plus.INSTANCE.getName()));
         BINOP_INFO.put(MINUS_SYM, new BinopInfo(60, Assoc.Left, _minus.INSTANCE.getName()));
