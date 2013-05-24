@@ -1061,20 +1061,11 @@ log(b, n)
 };
 
 /**
- * Natural log of 2. Used in log2(), don't know how useful it is otherwise
- * TODO private
- */
-LN2 = ln(2.0);
-
-/**
- * Log base 2.
- * #param n floating-point number
+ * Integer log base 2.
+ * #param n an integer
  * @return the log of n base 2
  */
-log2(n)
-{
-    ln(n) /. LN2
-};
+intrinsic log2(n:Int) -> Int;
 
 /**
  * round.
@@ -1131,7 +1122,6 @@ intrinsic tan(x:Double) -> Double;
 
 //
 // bitwise ops
-// TODO shifts
 //
 
 /**
@@ -1149,6 +1139,38 @@ intrinsic band(x:Int, y:Int) -> Int;
  * @return logical OR of each bit in x and y
  */
 intrinsic bor(x:Int, y:Int) -> Int;
+
+/**
+ * Bitwise XOR
+ * @param x
+ * @param y
+ * @return logical exclusive OR of each bit in x and y
+ */
+intrinsic bxor(x:Int, y:Int) -> Int;
+
+/**
+ * Bit shift right with sign extension
+ * @param v
+ * @param amt
+ * @return v shifted right by amt with sign extension
+ */
+intrinsic shiftr(v:Int, amt:Int) -> Int;
+
+/**
+ * Bit shift right with zero fill
+ * @param v
+ * @param amt
+ * @return v shifted right by amt, filled with 0
+ */
+intrinsic ushiftr(v:Int, amt:Int) -> Int;
+
+/**
+ * Bit shift left with zero fill
+ * @param v
+ * @param amt
+ * @return v shifted left by amt, filled with 0
+ */
+intrinsic shiftl(v:Int, amt:Int) -> Int;
 
 // ------------------------------------------------------------------
 
