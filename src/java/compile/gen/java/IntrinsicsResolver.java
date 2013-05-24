@@ -10,6 +10,7 @@
  */
 package compile.gen.java;
 
+import runtime.IntrinsicTypeRecorder;
 import runtime.rep.lambda.IntrinsicLambda;
 import compile.Pair;
 import compile.Session;
@@ -21,7 +22,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 /**
- * Find intrinsics in the classpath and verify that thier runtime signatures match 
+ * Find intrinsics in the classpath and verify that thier runtime signatures match
  * the source-declared signatures.
  *
  * @author Keith McGuigan
@@ -36,9 +37,9 @@ public final class IntrinsicsResolver
     /**
      * Memoized list of bindings which have been verified
      */
-    private static final Map<LetBinding,IntrinsicLambda> verifiedIntrinsics = 
+    private static final Map<LetBinding,IntrinsicLambda> verifiedIntrinsics =
         new HashMap<LetBinding,IntrinsicLambda>();
-    
+
     // TODO: use module name as key into package configuration mapping
     private static final String[] intrinsicPackages = new String[] {
         "runtime.intrinsic",
@@ -56,18 +57,18 @@ public final class IntrinsicsResolver
     }
 
 
-    public IntrinsicLambda resolve(final LetBinding let) 
+    public IntrinsicLambda resolve(final LetBinding let)
     {
-        IntrinsicLambda resolved = verifiedIntrinsics.get(let);
+        final IntrinsicLambda resolved = verifiedIntrinsics.get(let);
 
         if (resolved != null)
             return resolved;
 
         final String name = let.getName();
 
-        for (final String pkg : intrinsicPackages) 
+        for (final String pkg : intrinsicPackages)
         {
-            try 
+            try
             {
                 final String clsName = pkg + "._" + name;
                 final Class<?> intrClass = Class.forName(clsName);
@@ -78,7 +79,7 @@ public final class IntrinsicsResolver
                     if (intrObj != null && intrObj instanceof IntrinsicLambda)
                     {
                         final IntrinsicLambda lambda = (IntrinsicLambda)intrObj;
-                        if (verifyIntrinsicType(let, lambda)) 
+                        if (verifyIntrinsicType(let, lambda))
                         {
                             verifiedIntrinsics.put(let, lambda);
                             return lambda;
@@ -86,9 +87,9 @@ public final class IntrinsicsResolver
                     }
                 }
             }
-            catch (ClassNotFoundException cnfe) {}
-            catch (NoSuchFieldException nsfe) {}
-            catch (IllegalAccessException iae) {}
+            catch (ClassNotFoundException ignored) {}
+            catch (NoSuchFieldException ignored) {}
+            catch (IllegalAccessException ignored) {}
         }
         return null;
     }
@@ -105,15 +106,24 @@ public final class IntrinsicsResolver
             return intr.getClass().getName() + "." + Constants.INSTANCE;
         else
         {
-            Session.error("Cannot find implementation for intrinsic ''{0}'' with type ''{1}''", 
+            Session.error("Cannot find implementation for intrinsic ''{0}'' with type ''{1}''",
                     let.getName(), let.getType().dump());
             return null;
         }
     }
 
+    public String formatAsRHSAndRecord(final LetBinding let)
+    {
+        final String rhs = formatAsRHS(let);
+        if (rhs != null)
+            return IntrinsicTypeRecorder.class.getName() +
+                ".record(" + rhs + ", \"" + let.getType().dump() + "\")";
+        return null;
+    }
+
     private boolean verifyIntrinsicType(final LetBinding let, final IntrinsicLambda lambda)
     {
-        if (Session.isDebug()) 
+        if (Session.isDebug())
             Session.debug("Verifying proper form of intrinsic: ''{0}''", let.getName());
 
         final List<Class<?> > parameters = getParameterTypes(let.getType());
@@ -125,26 +135,26 @@ public final class IntrinsicsResolver
             return false;
         }
 
-        final Class<?>[] paramspec = parameters.toArray(new Class<?>[0]);
-        try 
+        final Class<?>[] paramspec = parameters.toArray(new Class<?>[parameters.size()]);
+        try
         {
             final Method method = lambda.getClass().getMethod(Constants.INVOKE, paramspec);
-            if (method.getReturnType() == returnType) 
+            if (method.getReturnType() == returnType)
                 return true;
         }
-        catch (NoSuchMethodException nsme) {}
+        catch (NoSuchMethodException ignored) {}
 
-        Session.error("intrinsic implementation ''{0}'' is incompatible with prototype ''{1}''", 
+        Session.error("intrinsic implementation ''{0}'' is incompatible with prototype ''{1}''",
             lambda.getClass(), let.getType().dump());
         return false;
     }
 
     /**
-     * Returns the function type as a (Return,Parameters) pair.  If the input type is not 
-     * a function type (or is not in the form we expect for functions), then this will 
+     * Returns the function type as a (Return,Parameters) pair.  If the input type is not
+     * a function type (or is not in the form we expect for functions), then this will
      * return null.
      */
-    private Pair<Type,Type> getFunctionTypes(final Type function) 
+    private Pair<Type,Type> getFunctionTypes(final Type function)
     {
         if (Types.isAppOf(function, Types.FUN))
         {
@@ -152,7 +162,7 @@ public final class IntrinsicsResolver
             if (arg instanceof TypeTuple)
             {
                 final List<Type> tuple = ((TypeTuple)arg).getMembers();
-                if (tuple.size() == 2) 
+                if (tuple.size() == 2)
                     return new Pair<Type,Type>(tuple.get(0), tuple.get(1));
             }
         }
@@ -162,7 +172,7 @@ public final class IntrinsicsResolver
     /**
      * Grab the return type out of function type, and convert to Java type
      */
-    private Class<?> getReturnType(final Type function) 
+    private Class<?> getReturnType(final Type function)
     {
         final Pair<Type,Type> pair = getFunctionTypes(function);
         if (pair != null)
@@ -174,7 +184,7 @@ public final class IntrinsicsResolver
     /**
      * Checks parameter type to see if it is a tuple (multiple parameters)
      */
-    private static TypeList asTypeList(final Type type) 
+    private static TypeList asTypeList(final Type type)
     {
         if (Types.isTup(type))
         {
@@ -187,8 +197,8 @@ public final class IntrinsicsResolver
     }
 
     /**
-     * Grab the parameters type out of function type, and convert to 
-     * list of Java types. 
+     * Grab the parameters type out of function type, and convert to
+     * list of Java types.
      */
     private List<Class<?> > getParameterTypes(final Type function)
     {
@@ -198,7 +208,7 @@ public final class IntrinsicsResolver
             final List<Class<?> > params = new ArrayList<Class<?> >();
             final TypeList list = asTypeList(pair.left);
 
-            if (list != null) 
+            if (list != null)
             {
                 for (final Type item : list.getItems())
                     params.add(typeMapper.map(item));

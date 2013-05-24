@@ -10,6 +10,8 @@
  */
 package runtime.rep.lambda;
 
+import runtime.IntrinsicTypeRecorder;
+
 /**
  * Extends {@link Lambda} with attributes used
  * to hook up intrinsics.
@@ -28,6 +30,10 @@ public abstract class IntrinsicLambda implements Lambda
      */
     public String toString()
     {
-        return "{ <intrinsic> }";
+        final String typerep = IntrinsicTypeRecorder.retrieve(this);
+        if (typerep == null)
+            return "{ <intrinsic> }";
+        else
+            return "{ " + typerep + " => <intrinsic> }";
     }
 }
