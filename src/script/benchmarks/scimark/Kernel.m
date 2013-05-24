@@ -90,7 +90,7 @@ measureSparseMatmult(N, nz, mintime, R) {
     val = repeat(anz, R);
 
     rows = count(N+1) @* nr;
-    cols = flatten(count(N) | { r => 
+    cols = flatten(count(N) | { r =>
         step = iif(r / nr < 1, 1, r / nr); // take at least unit steps
         count(nr) @* step
     });

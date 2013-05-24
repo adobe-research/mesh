@@ -28,24 +28,31 @@ public final class ChainedLists implements ListValue
      */
     public static ListValue create(final ListValue lists)
     {
-        if (lists.size() == 2)
+        final int nlists = lists.size();
+
+        // early trap avoids computation,
+        if (nlists == 2)
             return ChainedListPair.create(
                 (ListValue)lists.get(0), (ListValue)lists.get(1));
 
         int size = 0;
+        boolean isreg = true;
 
         int necount = 0;
         int nefirst = -1;
 
-        final int bases[] = new int[lists.size() + 1];
+        final int bases[] = new int[nlists + 1];
+        final int stride;
         {
             int i = 0;
+            int lastsize = 0;
 
             for (final Object list : lists)
             {
                 bases[i] = size;
 
-                final int nextbase = size + ((ListValue)list).size();
+                final int cursize = ((ListValue)list).size();
+                final int nextbase = size + cursize;
 
                 if (nextbase > size)
                 {
@@ -54,6 +61,11 @@ public final class ChainedLists implements ListValue
                     if (nefirst == -1)
                         nefirst = i;
 
+                    if (i == 0)
+                        lastsize = cursize;
+                    else if (cursize != lastsize)
+                        isreg = false;
+
                     size = nextbase;
                 }
 
@@ -61,6 +73,8 @@ public final class ChainedLists implements ListValue
             }
 
             bases[i] = size;
+
+            stride = isreg ? lastsize : -1;
         }
 
         switch (necount)
@@ -73,9 +87,12 @@ public final class ChainedLists implements ListValue
 
             default:
             {
-                if (necount == lists.size())
+                if (necount == nlists)
                 {
-                    return new ChainedLists(lists, bases);
+                    // note: we took care of the pair case up top
+                    return isreg ? new MatrixList(lists, stride) :
+                        new ChainedLists(lists, bases);
+
                 }
                 else
                 {
@@ -102,7 +119,12 @@ public final class ChainedLists implements ListValue
 
                     nebases[li] = bases[i];
 
-                    return new ChainedLists(nelists, nebases);
+                    return
+                        necount == 2 ?
+                            ChainedListPair.create(
+                                (ListValue)nelists.get(0), (ListValue)nelists.get(1)) :
+                        isreg ? new MatrixList(nelists, stride) :
+                        new ChainedLists(nelists, nebases);
                 }
             }
         }
@@ -120,7 +142,7 @@ public final class ChainedLists implements ListValue
     {
         this.lists = lists;
         this.bases = bases;
-        size = bases[lists.size()];
+        this.size = bases[lists.size()];
     }
 
     public int size()
