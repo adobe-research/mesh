@@ -42,8 +42,8 @@ PI = 3.14159265;
 
 // This is implemented as in-place replacement in an array of boxes.
 // TODO: This infinite loops when passed an array size that is not a power of 2.
-transform_internal_array_of_boxes(data:[Double], direction:Int) -> [Double] {
-//transform_internal(data:[Double], direction:Int) -> [Double] {
+//transform_internal_array_of_boxes(data:[Double], direction:Int) -> [Double] {
+transform_internal(data:[Double], direction:Int) -> [Double] {
     N = size(data);
     n = N/2;
 
@@ -115,7 +115,7 @@ transform_internal_boxed_array(data:[Double], direction:Int) -> [Double] {
     n = N/2;
 
     guard(n == 1 || { N == 0 }, data, {
-        logn = int_log2(n);
+        logn = log2(n);
         DB = box(bitreverse(data));
 
         cyclen(( 0, 1 ), logn, { bit, dual =>
@@ -183,13 +183,13 @@ transform_internal_boxed_array(data:[Double], direction:Int) -> [Double] {
 
 // functional version
 // TODO: This infinite loops when passed an array size that is not a power of 2.
-//transform_internal_functional(data:[Double], direction:Int) -> [Double] {
-transform_internal(data:[Double], direction:Int) -> [Double] {
+transform_internal_functional(data:[Double], direction:Int) -> [Double] {
+//transform_internal(data:[Double], direction:Int) -> [Double] {
     N = size(data);
     n = N/2;
 
     guard(n == 1 || { N == 0 }, data, {
-        logn = int_log2(n);
+        logn = log2(n);
 
         cyclen((bitreverse(data), 0, 1), logn, { D, bit, dual =>
             w_real = 1.0;
