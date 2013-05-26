@@ -145,7 +145,15 @@ public final class BindingCollector extends ModuleVisitor<Object>
         }
 
         // visit binding rhs
-        return super.visit(let);
+        final Object result = super.visit(let);
+
+        // if our RHS is a lambda, we stash the binding name for use in CG
+        // ...this is just for readability in our current primitive debug env
+        final Term value = let.getValue();
+        if (value instanceof LambdaTerm)
+            ((LambdaTerm)value).setBindingName(name);
+
+        return result;
     }
 
     /**

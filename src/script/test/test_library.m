@@ -89,7 +89,7 @@ assert_equals({ true }, { contains([3,4,5], 4) });
 assert_equals({ false }, { contains(["cat", "dog", "fish"], "mouse") });
 assert_equals({ true }, { contains(["cat", "dog", "fish"], "fish") });
 
-// converge = { func, init => diff = { x, y => and(ne(x, y), { ne(y, init) }) }; next = { x, y => (y, func(y)) }; cycle(diff, (init, func(init)), next).0 }
+// converge = { func, init => diff = { x, y => and(ne(x, y), { ne(y, init) }) }; next = { x, y => (y, func(y)) }; cycle((init, diff, func(init)), next).0 }
 assert_equals({ 9 }, { converge({inc($0) % 10}, 0) });
 
 // counts = { list => inckey = { map, key => mapset(map, key, plus(1, mapgetd(map, key, 0))) }; loop:reduce(inckey, [:], list) }
@@ -180,7 +180,7 @@ assert_equals({ true }, { finrange(2.0, 2.0, 1.0) });
 assert_equals({ false }, { finrange(1.0, 2.0, 1.0) });
 assert_equals({ false }, { finrange(3.0, 2.0, 1.0) });
 
-// first_where = { pred, vals => n = list:size(vals); cycle({ i => and(lt(i, n), { not(pred(vals[i])) }) }, 0, inc) }
+// first_where = { pred, vals => n = list:size(vals); cycle(0, { i => and(lt(i, n), { not(pred(vals[i])) }) }, inc) }
 assert_equals({ 4 }, { first_where({ 3 < $0 }, [0,1,2,3,4,5]) });
 
 // fmax = { x, y => iif(fge(x, y), x, y) }
@@ -441,7 +441,7 @@ assert_equals({ [2, 3, 4] }, { scan_while({$0 < 4}, 1, (+), [1,1,1,1,1]) });
 assert_equals({ "b" }, { snd(("a","b")) });
 assert_equals({ 2 }, { snd((1,2)) });
 
-// sort = { lst, cmp => merge = { a, b => asize = list:size(a); bsize = list:size(b); _43_9 = loop:cycle({ m, i, j => and(lt(i, asize), { lt(j, bsize) }) }, ([], 0, 0), { m, i, j => lang:if(le(cmp(a[i], b[j]), 0), { (list:append(m, a[i]), plus(i, 1), j) }, { (list:append(m, b[j]), i, plus(j, 1)) }) }); merged = _43_9.0; asuf = _43_9.1; bsuf = _43_9.2; plus(plus(merged, list:drop(asuf, a)), list:drop(bsuf, b)) }; subsort = { lst, njobs => lsize = list:size(lst); lang:guard(le(lsize, 1), lst, { half = div(lsize, 2); subn = div(njobs, 2); args = [(list:take(half, lst), subn), (list:drop(half, lst), subn)]; subs = if(gt(njobs, 1), { pmap(args, subsort) }, { map(args, subsort) }); merge(subs[0], subs[1]) }) }; subsort(lst, availprocs()) }
+// sort = { lst, cmp => merge = { a, b => asize = list:size(a); bsize = list:size(b); _43_9 = loop:cycle(([], 0, 0), { m, i, j => and(lt(i, asize), { lt(j, bsize) }) }, { m, i, j => lang:if(le(cmp(a[i], b[j]), 0), { (list:append(m, a[i]), plus(i, 1), j) }, { (list:append(m, b[j]), i, plus(j, 1)) }) }); merged = _43_9.0; asuf = _43_9.1; bsuf = _43_9.2; plus(plus(merged, list:drop(asuf, a)), list:drop(bsuf, b)) }; subsort = { lst, njobs => lsize = list:size(lst); lang:guard(le(lsize, 1), lst, { half = div(lsize, 2); subn = div(njobs, 2); args = [(list:take(half, lst), subn), (list:drop(half, lst), subn)]; subs = if(gt(njobs, 1), { pmap(args, subsort) }, { map(args, subsort) }); merge(subs[0], subs[1]) }) }; subsort(lst, availprocs()) }
 assert_equals({ [0, 1, 2, 3, 4, 6] }, { sort([4,1,2,3,6,0], (-)) });
 assert_equals({ [6, 4, 3, 2, 1, 0] }, { sort([4,1,2,3,6,0], minus $ neg) });
 
@@ -509,14 +509,14 @@ assert_equals({ (2, 3) }, {
                             });
 
 
-// tconverge = { func, init => diff = { accum, x, y => and(ne(x, y), { ne(y, init) }) }; next = { accum, x, y => (list:append(accum, y), y, func(y)) }; cycle(diff, ([init], init, func(init)), next).0 }
+// tconverge = { func, init => diff = { accum, x, y => and(ne(x, y), { ne(y, init) }) }; next = { accum, x, y => (list:append(accum, y), y, func(y)) }; cycle(([init], diff, init, func(init)), next).0 }
 assert_equals({ [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] }, { tconverge({inc($0) % 10}, 0) });
 
-// trace = { p, v, f => cycle(compose(last, p), [v], { $0_43_26 => append($0_43_26, f(last($0_43_26))) }) }
-assert_equals({ [0, 1, 2, 3, 4] }, { trace({ $0 < 4 }, 0, inc) });
+// trace = { p, v, f => cycle([v], compose(last, p), { $0_43_26 => append($0_43_26, f(last($0_43_26))) }) }
+assert_equals({ [0, 1, 2, 3, 4] }, { trace(0, { $0 < 4 }, inc) });
 
-// tracen = { n, v, f => cyclen(n, [v], { $0_57_20 => append($0_57_20, f(last($0_57_20))) }) }
-assert_equals({ [0, 1, 2, 3, 4] }, { tracen(4, 0, inc) });
+// tracen = { n, v, f => cyclen([v], n, { $0_57_20 => append($0_57_20, f(last($0_57_20))) }) }
+assert_equals({ [0, 1, 2, 3, 4] }, { tracen(0, 4, inc) });
 
 // twin = { v => (v, v) }
 assert_equals({ (1, 1) }, { twin(1) });

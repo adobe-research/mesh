@@ -7,7 +7,7 @@ num_flops(M, N, num_iterations) {
 };
 
 execute(M, N, omega, G, num_iterations) {
-    cyclen(num_iterations, G, { g =>
+    cyclen(G, num_iterations, { g =>
         [ g[0] ] + 
         range(1,M-2) | { i =>
             [ g[i][0] ] + 

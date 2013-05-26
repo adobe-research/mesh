@@ -33,10 +33,10 @@ public final class _cyclen extends IntrinsicLambda
     public Object apply(final Object arg)
     {
         final Tuple args = (Tuple)arg;
-        return invoke((Integer)args.get(0), args.get(1), (Lambda)args.get(2));
+        return invoke(args.get(0), (Integer)args.get(1), (Lambda)args.get(2));
     }
 
-    public static Object invoke(final int n, final Object init, final Lambda f)
+    public static Object invoke(final Object init, final int n, final Lambda f)
     {
         Object result = init;
 

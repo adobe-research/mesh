@@ -37,7 +37,7 @@ randomgen(seed:Int) -> (() -> Double)
             ) 
     };
 
-    seeds = tracen(17, (jseed, jseed % m2, jseed / m2), initseeds) | 
+    seeds = tracen((jseed, jseed % m2, jseed / m2), 17, initseeds) |
             { _, j0, j1 => j0 + m2 * j1 };
 
     m = rest(seeds); // tracen includes the initial value as first element 

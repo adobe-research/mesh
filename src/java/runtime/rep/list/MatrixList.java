@@ -17,41 +17,27 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * Pair of lists representing a single list.
+ * Sequence of regular-length lists representing a single list.
  *
  * @author Basil Hosmer
  */
-public final class ChainedListPair implements ListValue
+public final class MatrixList implements ListValue
 {
-    /**
-     * flattened list from list pair
-     */
-    public static ListValue create(final ListValue llist, final ListValue rlist)
-    {
-        return llist.size() == 0 ? rlist :
-            rlist.size() == 0 ? llist :
-            new ChainedListPair(llist, rlist);
-    }
-
     //
     // instance
     //
 
-    private final ListValue llist, rlist;
-    private final int lsize, rsize;
+    private final ListValue lists;
     private final int size;
+    private final int stride;
 
-    private ChainedListPair(final ListValue llist, final ListValue rlist)
+    public MatrixList(final ListValue lists, final int stride)
     {
-//        System.out.println("ChainedListPair(" +
-//            llist.getClass().getSimpleName() + ":" + llist.size() + ", " +
-//            rlist.getClass().getSimpleName() + ":" + rlist.size() + ")");
+        this.lists = lists;
+        this.size = lists.size() * stride;
+        this.stride = stride;
 
-        this.llist = llist;
-        this.rlist = rlist;
-        this.lsize = llist.size();
-        this.rsize = rlist.size();
-        this.size = this.lsize + this.rsize;
+        assert stride > 0;
     }
 
     public int size()
@@ -64,18 +50,26 @@ public final class ChainedListPair implements ListValue
         if (index < 0 || index >= size)
             throw new IndexOutOfBoundsException();
 
-        return index < lsize ? llist.get(index) : rlist.get(index - lsize);
+        return ((ListValue)lists.get(index / stride)).get(index % stride);
     }
 
     public int find(final Object value)
     {
-        final int lfind = llist.find(value);
-        return lfind < lsize ? lfind : lsize + rlist.find(value);
+        int base = 0;
+        for (final Object item : lists)
+        {
+            final ListValue list = (ListValue)item;
+            final int i = list.find(value);
+            if (i < stride)
+                return base + i;
+            base += stride;
+        }
+        return base;
     }
 
     public ListValue append(final Object value)
     {
-        return new ChainedListPair(llist, rlist.append(value));
+        return ChainedListPair.create(this, new SingletonList(value));
     }
 
     public ListValue update(final int index, final Object value)
@@ -83,37 +77,58 @@ public final class ChainedListPair implements ListValue
         if (index < 0 || index >= size)
             throw new IndexOutOfBoundsException();
 
-        return index < lsize ?
-            new ChainedListPair(llist.update(index, value), rlist) :
-            new ChainedListPair(llist, rlist.update(index - lsize, value));
+        final int li = index / stride;
+        final ListValue list = (ListValue)lists.get(li);
+
+        return new MatrixList(
+            lists.update(li, list.update(index % stride, value)), stride);
     }
 
     public ListValue subList(final int from, final int to)
     {
-        return to <= lsize ? Sublist.create(llist, from, to) :
-            from >= lsize ? Sublist.create(rlist, from - lsize, to - lsize) :
-            Sublist.create(this, from, to);
+        return Sublist.create(this, from, to);
     }
 
     public ListValue apply(final Lambda f)
     {
-        return new ChainedListPair(llist.apply(f), rlist.apply(f));
+        final PersistentList result = PersistentList.alloc(size);
+
+        int i = 0;
+        for (final Object list : lists)
+            for (final Object item : (ListValue)list)
+                result.updateUnsafe(i++, f.apply(item));
+
+        return result;
     }
 
     public void run(final Lambda f)
     {
-        llist.run(f);
-        rlist.run(f);
+        for (final Object list : lists)
+            ((ListValue)list).run(f);
     }
 
     public ListValue select(final ListValue base)
     {
-        return new ChainedListPair(llist.select(base), rlist.select(base));
+        final PersistentList result = PersistentList.alloc(size);
+
+        int i = 0;
+        for (final Object list : lists)
+            for (final Object item : (ListValue)list)
+                result.updateUnsafe(i++, base.get((Integer)item));
+
+        return result;
     }
 
     public ListValue select(final MapValue map)
     {
-        return new ChainedListPair(llist.select(map), rlist.select(map));
+        final PersistentList result = PersistentList.alloc(size);
+
+        int i = 0;
+        for (final Object list : lists)
+            for (final Object item : (ListValue)list)
+                result.updateUnsafe(i++, map.get(item));
+
+        return result;
     }
 
     // Iterable
@@ -125,14 +140,17 @@ public final class ChainedListPair implements ListValue
 
     public Iterator<Object> iterator(final int from, final int to)
     {
+        final int li = from / stride;
+
         return new Iterator<Object>()
         {
-            int i = from;
+            final Iterator<?> listIter = lists.iterator(li, lists.size());
 
-            // note: odd i == lsize case avoids redundant alloc in next()
-            Iterator<?> iter = i < lsize ? llist.iterator(i, lsize) :
-                i > lsize ? rlist.iterator(i - lsize, rsize) :
-                    null;
+            int i = from;
+            int j = from % stride;
+
+            Iterator<?> itemIter =
+                ((ListValue)listIter.next()).iterator(j, stride);
 
             public final boolean hasNext()
             {
@@ -144,12 +162,16 @@ public final class ChainedListPair implements ListValue
                 if (i == to)
                     throw new NoSuchElementException();
 
-                if (i == lsize)
-                    iter = rlist.iterator();
+                if (j == stride)
+                {
+                    itemIter = ((ListValue)listIter.next()).iterator();
+                    j = 0;
+                }
 
                 i++;
+                j++;
 
-                return iter.next();
+                return itemIter.next();
             }
 
             public final void remove()

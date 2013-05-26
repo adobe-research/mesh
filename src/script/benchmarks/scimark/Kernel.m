@@ -15,7 +15,7 @@ export measureFFT,measureSOR,measureMonteCarlo,
 
 iterate_until(mintime, benchmark) -> (Int,Double) {
     Q = StopWatch();
-    cycles = cycle( { _ => Q.read() <. mintime }, 1, 
+    cycles = cycle( 1, { _ => Q.read() <. mintime },
         { c =>
           Q.start();
           benchmark(c);
@@ -27,7 +27,7 @@ iterate_until(mintime, benchmark) -> (Int,Double) {
 
 repeat_until(mintime, benchmark) -> (Int, Double) {
     iterate_until(mintime, { c =>
-       cyclen(c, (), benchmark) 
+       cyclen((), c, benchmark)
     })
 };
 
@@ -90,7 +90,7 @@ measureSparseMatmult(N, nz, mintime, R) {
     val = repeat(anz, R);
 
     rows = count(N+1) @* nr;
-    cols = flatten(count(N) | { r => 
+    cols = flatten(count(N) | { r =>
         step = iif(r / nr < 1, 1, r / nr); // take at least unit steps
         count(nr) @* step
     });

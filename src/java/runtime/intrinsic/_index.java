@@ -10,20 +10,19 @@
  */
 package runtime.intrinsic;
 
-import runtime.rep.list.IntRange;
 import runtime.rep.lambda.IntrinsicLambda;
+import runtime.rep.list.IntRange;
 import runtime.rep.list.ListValue;
 
 /**
- * count(n) returns a list of ints [0, ..., n - 1].
- * Absolute value is taken when n < 0
+ * index(list) returns a list of ints [0, ..., size(list) - 1]
  *
  * @author Basil Hosmer
  */
-public final class _count extends IntrinsicLambda
+public final class _index extends IntrinsicLambda
 {
-    public static final _count INSTANCE = new _count(); 
-    public static final String NAME = "count";
+    public static final _index INSTANCE = new _index();
+    public static final String NAME = "index";
 
     public String getName()
     {
@@ -32,11 +31,11 @@ public final class _count extends IntrinsicLambda
 
     public Object apply(final Object arg)
     {
-        return invoke((Integer)arg);
+        return invoke((ListValue)arg);
     }
 
-    public static ListValue invoke(final int n)
+    public static ListValue invoke(final ListValue list)
     {
-        return IntRange.create(0, n >= 0 ? n : Math.abs(n));
+        return IntRange.create(0, list.size());
     }
 }

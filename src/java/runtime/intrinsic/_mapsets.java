@@ -46,7 +46,8 @@ public final class _mapsets extends IntrinsicLambda
     {
         MapValue result = map;
 
-        final Iterator<?> valiter = Iterators.cycle(vals);
+        final Iterator<?> valiter = vals.size() >= keys.size() ?
+            vals.iterator() : Iterators.cycle(vals);
 
         for (final Object key : keys)
             result = result.assoc(key, valiter.next());

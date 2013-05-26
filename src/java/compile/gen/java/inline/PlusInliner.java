@@ -23,7 +23,7 @@ import runtime.rep.map.MapValue;
 import java.util.List;
 
 /**
- * Try inlining calls to {@link runtime.intrinsic.Plus}.
+ * Try inlining calls to {@link runtime.intrinsic._plus}.
  *
  * @author Basil Hosmer
  */

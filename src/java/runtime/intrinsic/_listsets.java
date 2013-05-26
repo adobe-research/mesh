@@ -45,7 +45,8 @@ public final class _listsets extends IntrinsicLambda
     {
         ListValue result = list;
 
-        final Iterator<?> valiter = Iterators.cycle(vals);
+        final Iterator<?> valiter = vals.size() >= indexes.size() ?
+            vals.iterator() : Iterators.cycle(vals);
 
         for (final Object index : indexes)
             result = result.update((Integer)index, valiter.next());

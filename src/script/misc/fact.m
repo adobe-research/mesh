@@ -18,7 +18,7 @@ fact1(n) {
 // iterate
 fact2(n) {
     next(i, j) { (i + 1, i * j) };
-    cyclen(n, (1, 1), next).1
+    cyclen((1, 1), n, next).1
 };
 
 print(fact0(n), fact1(n), fact2(n));

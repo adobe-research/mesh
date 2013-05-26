@@ -62,7 +62,7 @@ if (args.length > 0)
 
 R = randomgen(Constants.RANDOM_SEED);
 
-res = [ 
+res = [
     measureFFT(FFT_size, min_time, R),
     measureSOR(SOR_size, min_time, R),
     measureMonteCarlo(min_time, R),

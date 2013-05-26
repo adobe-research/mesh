@@ -13,7 +13,7 @@ b = box(0);
 running = box(2);
 
 trana() {
-    cycle({ i => get(cont) }, 0, { i =>
+    cycle(0, { i => get(cont) }, { i =>
         do {
             //print("a...");
             update(a, inc);
@@ -27,7 +27,7 @@ trana() {
 };
 
 tranb() {
-    cycle({i=>get(cont)}, 0, {i=>
+    cycle(0, {i => get(cont)}, {i =>
         do {
             //print("    b...");
             update(b, inc);

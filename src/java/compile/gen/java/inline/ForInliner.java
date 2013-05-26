@@ -13,6 +13,7 @@ package compile.gen.java.inline;
 import compile.gen.java.StatementFormatter;
 import compile.term.*;
 import runtime.intrinsic._count;
+import runtime.intrinsic._index;
 import runtime.rep.lambda.Lambda;
 import runtime.rep.list.ListValue;
 
@@ -34,19 +35,64 @@ public class ForInliner implements Inliner
 
         final List<Term> args = ((TupleTerm)apply.getArg()).getItems();
 
-        final Term indexArg = args.get(0);
-        final Term countArg = InlinerUtils.derefToIntrinsicApply(indexArg, _count.INSTANCE, fmt);
-
+        final Term iterArg = args.get(0);
         final Term bodyArg = args.get(1);
 
-        if (countArg == null)
+        // To inline down to a for loop, we need to know a) that iterArg is
+        // a list of contiguous integers, b) we need to be able to express
+        // the list's initial and final values, and c) we need to know the
+        // sign of their difference, to establish loop direction.
+        // 1. index(list) is an int list from 0 to size(list), always ok
+        // 2. count(n) is an int list from 0 to the absolute value of n, so
+        // we know loop direction but need to inline the logic that ensures it.
+        // Other possible candidates are range(i, n) and fromto(s, e), but
+        // in these cases one or both arguments must be compile-time constant
+        // to determine loop direction. May be worth doing them but at some
+        // point but they're clearly less important than the ones we're doing now.
+
+        final String startIndexExpr;
+        final String endIndexExpr;
+
+        final Term indexArg =
+            InlinerUtils.derefToIntrinsicApply(iterArg, _index.INSTANCE, fmt);
+
+        if (indexArg != null)
         {
-            final String indexes = fmt.formatTermAs(indexArg, ListValue.class);
+            startIndexExpr = "0";
+            endIndexExpr = fmt.formatTermAs(indexArg, ListValue.class) + ".size()";
+        }
+        else
+        {
+            final Term countArg =
+                InlinerUtils.derefToIntrinsicApply(iterArg, _count.INSTANCE, fmt);
+
+            if (countArg != null)
+            {
+                startIndexExpr = "0";
+                if (countArg instanceof IntLiteral)
+                {
+                    endIndexExpr = "" + Math.abs(((IntLiteral)countArg).getValue());
+                }
+                else
+                {
+                    endIndexExpr = Math.class.getName() + ".abs(" +
+                        fmt.formatTermAs(countArg, int.class) + ")";
+                }
+            }
+            else
+            {
+                startIndexExpr = null;
+                endIndexExpr = null;
+            }
+        }
+
+        if (startIndexExpr == null)
+        {
+            final String indexes = fmt.formatTermAs(iterArg, ListValue.class);
             final String body = fmt.formatTermAs(bodyArg, Lambda.class);
             return "(" + indexes + ").run(" + body + ")";
         }
 
-        final String countExpr = fmt.formatTermAs(countArg, int.class);
         final LambdaTerm bodyLambda = InlinerUtils.derefToLambda(bodyArg);
 
         if (bodyLambda == null)
@@ -54,9 +100,9 @@ public class ForInliner implements Inliner
             final String body = fmt.formatTermAs(bodyArg, bodyArg.getType());
 
             return "{ " +
-                "final int $n = " + countExpr + "; " +
+                "final int $n = " + endIndexExpr + "; " +
                 "final " + Lambda.class.getName() + " $f = " + body + "; " +
-                "for(int $i = 0; $i < $n; $i++) " +
+                "for(int $i = " + startIndexExpr + "; $i < $n; $i++) " +
                 "{ $f.apply(Integer.valueOf($i)); } }";
         }
         else
@@ -66,8 +112,8 @@ public class ForInliner implements Inliner
 
             final String body = InlinerUtils.formatBlockStmts(fmt, bodyArg, false);
 
-            return "{ final int $n = " + countExpr + "; " +
-                "for(int $i = 0; $i < $n; $i++) " +
+            return "{ final int $n = " + endIndexExpr + "; " +
+                "for(int $i = " + startIndexExpr + "; $i < $n; $i++) " +
                 "{ final int " + bodyParam + " = $i; " + body + "; } }";
         }
     }

@@ -50,7 +50,8 @@ public final class _group extends IntrinsicLambda
 
         final PersistentMap result = PersistentMap.fresh();
 
-        final Iterator<?> keyiter = Iterators.cycle(keys);
+        final Iterator<?> keyiter = keys.size() >= vals.size() ?
+            keys.iterator() : Iterators.cycle(keys);
 
         for (final Object val : vals)
         {

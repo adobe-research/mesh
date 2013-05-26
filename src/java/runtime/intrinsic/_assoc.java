@@ -50,7 +50,8 @@ public final class _assoc extends IntrinsicLambda
 
         final PersistentMap result = PersistentMap.fresh();
 
-        final Iterator<?> valiter = Iterators.cycle(vals);
+        final Iterator<?> valiter = vals.size() >= keys.size() ?
+            vals.iterator() : Iterators.cycle(vals);
 
         for (final Object key : keys)
             result.assocUnsafe(key, valiter.next());

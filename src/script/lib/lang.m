@@ -94,7 +94,7 @@ intrinsic <T> if(c : Bool, y : () -> T, z : () -> T) -> T;
 <T> ifelse(cases : [(() -> Bool, () -> T)], default : () -> T) -> T
 {
     n = size(cases);
-    c = cycle({ i => i < n && { !cases[i].0() } }, 0, inc);
+    c = cycle(0, { i => i < n && { !cases[i].0() } }, inc);
     if(c == n, default, cases[c].1)
 };
 
@@ -155,7 +155,7 @@ converge(func, init)
 {
 	diff(x, y) { x != y && { y != init } };
 	next(x, y) { (y, func(y)) };
-	cycle(diff, (init, func(init)), next).0
+	cycle((init, func(init)), diff, next).0
 };
 
 /**
@@ -170,18 +170,18 @@ converge(func, init)
  *        be fed back into the function if guard predicate is still true.
  * @return Value of v when predicate is false.
  */
-intrinsic <T> cycle(p : T -> Bool, v : T, f : T -> T) -> T;
+intrinsic <T> cycle(v : T, p : T -> Bool, f : T -> T) -> T;
 
 /**
  * Iterate on a function n times.
  *
- * @param n Limit of how many times f function will be called.
  * @param v Initial value of v that will be passed to the f lambda.
+ * @param n Limit of how many times f function will be called.
  * @param f Function that accepts passed in value T and returns the next value T that will
  *        be fed back into the function as long as upper limit has not been reached.
  * @return Value of v after the given number of iterations.
  */
-intrinsic <T> cyclen(n : Int, v : T, f : T -> T) -> T;
+intrinsic <T> cyclen(v : T, n : Int, f : T -> T) -> T;
 
 /**
  * Starting with an initial value, "evolve" a new one by calling a
@@ -334,35 +334,33 @@ tconverge(func, init)
 {
     diff(accum, x, y) { x != y && { y != init } };
     next(accum, x, y) { (append(accum, y), y, func(y)) };
-	  cycle(diff, ([init], init, func(init)), next).0
+	  cycle(([init], init, func(init)), diff, next).0
 };
 
 /**
  * Traced version of {@link #cycle}:
- * <code>last(trace(p, v, f)) == cycle(p, v, f)</code>.
- * iteration, beginning with initial value v.
- * @param p predicate function
+ * <code>last(trace(v, p, f)) == cycle(v, p, f)</code>.
  * @param v initial value
+ * @param p predicate function
  * @param f iterator function
  * @return list of results from each iteration, beginning with initial value v.
  */
-trace(p, v, f)
+trace(v, p, f)
 {
-    cycle(last $ p, [v], { append($0, f(last($0))) })
+    cycle([v], last $ p, { append($0, f(last($0))) })
 };
 
 /**
  * Traced version of {@link #cyclen}:
- * <code>last(tracen(n, v, f)) == cyclen(n, v, f)</code>.
- * iteration, beginning with initial value v.
- * @param n number of iterations
+ * <code>last(tracen(v, n, f)) == cyclen(v, n, f)</code>.
  * @param v initial value
+ * @param n number of iterations
  * @param f iterator function
  * @return list of results from each iteration, beginning with initial value v.
  */
-tracen(n, v, f)
+tracen(v, n, f)
 {
-    cyclen(n, [v], { append($0, f(last($0))) })
+    cyclen([v], n, { append($0, f(last($0))) })
 };
 
 /**
@@ -1454,10 +1452,11 @@ intrinsic <T> append(x:[T], y:T) -> [T];
 contains(list, item) { find(list, item) < size(list) };
 
 /**
- * @param x Number of items in the list
- * @return A list of Ints [0, ..., n - 1]
+ * @param n natural number to count to. If a negative Int is passed,
+ *      its absolute value will be used.
+ * @return list of Ints [0, ..., n - 1]
  */
-intrinsic count(x:Int) -> [Int];
+intrinsic count(n : Int) -> [Int];
 
 /**
  * Cut the given list into sublist, at the given indexes.
@@ -1556,14 +1555,16 @@ enlist(v) { [v] };
  * If a length of zero is passed, an empty list is returned. If a length
  * greater than the length of the list is passed, the result is the same
  * as when a length equal to the length of the list is passed, i.e. a
- * singleton collection containing the entire list as a sublist.
+ * singleton collection containing the entire list as a sublist. If
+ * a negative length is passed, its absolute value is taken.
  * @param list list of items
- * @param n desired sublist length
+ * @param len desired sublist length
  * @return list of equal-length sublists (last might be ragged)
  */
-filet(list, n)
+filet(list, len)
 {
     s = size(list);
+    n = guard(len >= 0, len, { -len });
     slices = divz(s, n) + sign(modz(s, n));
     cut(list, count(slices) @* n)
 };
@@ -1601,7 +1602,7 @@ intrinsic <T> first(x:[T]) -> T;
 first_where(pred, vals)
 {
     n = size(vals);
-    cycle({ i => i < n && { !pred(vals[i]) } }, 0, inc)
+    cycle(0, { i => i < n && { !pred(vals[i]) } }, inc)
 };
 
 /**
@@ -1625,33 +1626,33 @@ intrinsic fromto(x:Int, y:Int) -> [Int];
  * returns a map from keys to collections of values.
  * Note that we roll over the key list.
  *
- * @param x list of keys
- * @param y list of values
+ * @param keys list of keys
+ * @param vals list of values
  * @return A map from keys to collections of values.
  */
-intrinsic <K, V> group(x : [K], y : [V]) -> [K : [V]];
+intrinsic <K, V> group(keys : [K], vals : [V]) -> [K : [V]];
 
 /**
+ * Create a list of indexes: index(list) == count(size(list)).
  * @param list
  * @return a list of the indexes of a list.
- * same as size $ count
  */
-index(list) { count(size(list)) };
+intrinsic <T> index(list : [T]) -> [Int];
 
 /**
  * Determine of value is a valid list index.
- * @param x int value
- * @param y list of values
- * @return true if x is a valid index of y, otherwise false.
+ * @param i int value
+ * @param list list of values
+ * @return true if i is a valid index of list, otherwise false.
  */
-intrinsic <T> isindex(x:Int, y:[T]) -> Bool;
+intrinsic <T> isindex(i : Int, list : [T]) -> Bool;
 
 /**
  * TODO: empty list throws
- * @param x List
+ * @param list List
  * @return Last element of non-empty list.
  */
-intrinsic <T> last(x:[T]) -> T;
+intrinsic <T> last(list : [T]) -> T;
 
 /**
  * list concatenation
