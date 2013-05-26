@@ -526,13 +526,13 @@ assert_equals({ [6, 8, 8, 10] }, { apply(mapz, (([5, 6], [1,2,3,4]) , (+))) });
 //////////////////////////////////////////////////
 // cond : (T, V.., R => (Sum(Assoc(T, V)), Rec(Assoc(T, (v => v -> R) @ V))) -> R) = <intrinsic>
 
-// cycle : (T => (T -> Bool, T, T -> T) -> T) = <intrinsic>
-assert_equals({ 4 }, { cycle({ $0 < 4 }, 0, inc) });
-assert_equals({ 4 }, { apply(cycle, ({ $0 < 4 }, 0, inc)) });
+// cycle : (T => (T, T -> Bool, T -> T) -> T) = <intrinsic>
+assert_equals({ 4 }, { cycle(0, { $0 < 4 }, inc) });
+assert_equals({ 4 }, { apply(cycle, (0, { $0 < 4 }, inc)) });
 
-// cyclen : (T => (Int, T, T -> T) -> T) = <intrinsic>
-assert_equals({ 4 }, { cyclen(4, 0, inc) });
-assert_equals({ 4 }, { apply(cyclen, (4, 0, inc)) });
+// cyclen : (T => (T, Int, T -> T) -> T) = <intrinsic>
+assert_equals({ 4 }, { cyclen(0, 4, inc) });
+assert_equals({ 4 }, { apply(cyclen, (0, 4, inc)) });
 
 // evolve_while : (A, B => (A -> Bool, A, (A, B) -> A, [B]) -> A) = <intrinsic>
 assert_equals({ 4 }, { evolve_while({$0 < 4}, 1, (+), [1,1,1,1,1]) });

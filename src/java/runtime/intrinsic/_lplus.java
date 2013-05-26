@@ -10,13 +10,18 @@
  */
 package runtime.intrinsic;
 
+import runtime.rep.PersistentConstants;
 import runtime.rep.list.ChainedListPair;
 import runtime.rep.lambda.IntrinsicLambda;
+import runtime.rep.list.ChainedLists;
 import runtime.rep.list.ListValue;
 import runtime.rep.Tuple;
+import runtime.rep.list.PersistentList;
+
+import java.util.Iterator;
 
 /**
- * long plus
+ * list concatenation
  *
  * @author Basil Hosmer
  */
@@ -38,6 +43,8 @@ public final class _lplus extends IntrinsicLambda
 
     public static ListValue invoke(final ListValue llist, final ListValue rlist)
     {
-        return ChainedListPair.create(llist, rlist);
+        return rlist.size() == 1 ?
+            llist.append(rlist.get(0)) :
+            ChainedListPair.create(llist, rlist);
     }
 }

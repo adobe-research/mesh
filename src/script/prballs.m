@@ -457,7 +457,7 @@ newbatch(pos, n)
 startturntask()
 {
     spawn {
-        cycle({t => *calctasks > 0 && prisopen}, nanotime(), turn)
+        cycle(nanotime(), {_ => *calctasks > 0 && prisopen}, turn)
     }
 };
 
@@ -722,11 +722,7 @@ drawinfo(pbox:*Player)
         pv = playervel(pbox);
         drawdot(f) { prellipse(p.pos.0 + f *. pv.0, p.pos.1 + f *. pv.1, 6.0, 6.0)};
         m = sqrt(mag(pv)) *. 200.0;
-
-        cycle({ $0 <. m }, 0.0, { f =>
-            drawdot(f);
-            f + 20.0
-        })
+        cycle(0.0, { $0 <. m }, { drawdot($0); $0 + 20.0 })
     });
 };
 

@@ -12,6 +12,7 @@ package compile.gen.java;
 
 import compile.Session;
 import compile.module.Module;
+import compile.module.Scope;
 import compile.term.LambdaTerm;
 import runtime.rep.lambda.Lambda;
 
@@ -164,9 +165,31 @@ public class Unit
 
         if (className == null)
         {
+            String name;
+
+            if (lambdaTerm.hasBindingName())
+            {
+                name = "_" + lambdaTerm.getBindingName();
+            }
+            else
+            {
+                name = Lambda.class.getSimpleName() + newLambdaClassNames.size();
+
+                // Note: store synthetic name for use in child lambdas
+                lambdaTerm.setBindingName(name);
+            }
+
+            Scope parentScope = lambdaTerm.getParentScope();
+            while (parentScope instanceof LambdaTerm)
+            {
+                // Note: parent is guaranteed to have a binding name, see below
+                name = "_" + ((LambdaTerm)parentScope).getBindingName() + "$" + name;
+                parentScope = parentScope.getParentScope();
+            }
+
             // goes in module package
-            final String simpleClassName = Lambda.class.getSimpleName() + newLambdaClassNames.size();
-            className = ModuleClassGenerator.qualifyModuleClassName(module, simpleClassName);
+            className = ModuleClassGenerator.qualifyModuleClassName(module, name);
+
             newLambdaClassNames.put(lambdaTerm, className);
         }
 

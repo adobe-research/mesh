@@ -15,7 +15,7 @@ export measureFFT,measureSOR,measureMonteCarlo,
 
 iterate_until(mintime, benchmark) -> (Int,Double) {
     Q = Stopwatch();
-    cycles = cycle( { _ => Q.read() <. mintime }, 1, 
+    cycles = cycle( 1, { _ => Q.read() <. mintime },
         { c =>
           Q.start();
           benchmark(c);
@@ -27,7 +27,7 @@ iterate_until(mintime, benchmark) -> (Int,Double) {
 
 repeat_until(mintime, benchmark) -> (Int, Double) {
     iterate_until(mintime, { c =>
-       cyclen(c, (), benchmark) 
+       cyclen((), c, benchmark)
     })
 };
 

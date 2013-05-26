@@ -4,12 +4,12 @@ import std;
 
 // recurse
 fib0(n) {
-    std.guard(n < 2, n, { fib0(n - 1) + fib0(n - 2) })
+    guard(n < 2, n, { fib0(n - 1) + fib0(n - 2) })
 };
 
 // iterate
 fib1(n) {
-    std.cyclen(n, (0, 1), { ($1, $0 + $1) }).0
+    cyclen((0, 1), n, { ($1, $0 + $1) }).0
 };
 
 n = 25;

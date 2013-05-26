@@ -13,8 +13,7 @@ package compile.gen.java.inline;
 import compile.gen.java.StatementFormatter;
 import compile.term.*;
 import runtime.intrinsic._count;
-import runtime.intrinsic._fromto;
-import runtime.intrinsic._range;
+import runtime.intrinsic._index;
 import runtime.rep.lambda.Lambda;
 import runtime.rep.list.ListValue;
 
@@ -36,58 +35,60 @@ public class ForInliner implements Inliner
 
         final List<Term> args = ((TupleTerm)apply.getArg()).getItems();
 
-        final Term indexArg = args.get(0);
+        final Term iterArg = args.get(0);
         final Term bodyArg = args.get(1);
 
+        // To inline down to a for loop, we need to know a) that iterArg is
+        // a list of contiguous integers, b) we need to be able to express
+        // the list's initial and final values, and c) we need to know the
+        // sign of their difference, to establish loop direction.
+        // 1. index(list) is an int list from 0 to size(list), always ok
+        // 2. count(n) is an int list from 0 to the absolute value of n, so
+        // we know loop direction but need to inline the logic that ensures it.
+        // Other possible candidates are range(i, n) and fromto(s, e), but
+        // in these cases one or both arguments must be compile-time constant
+        // to determine loop direction. May be worth doing them but at some
+        // point but they're clearly less important than the ones we're doing now.
 
         final String startIndexExpr;
         final String endIndexExpr;
 
-        final Term countArg =
-            InlinerUtils.derefToIntrinsicApply(indexArg, _count.INSTANCE, fmt);
+        final Term indexArg =
+            InlinerUtils.derefToIntrinsicApply(iterArg, _index.INSTANCE, fmt);
 
-        if (countArg != null)
+        if (indexArg != null)
         {
             startIndexExpr = "0";
-            endIndexExpr = fmt.formatTermAs(countArg, int.class);
+            endIndexExpr = fmt.formatTermAs(indexArg, ListValue.class) + ".size()";
         }
         else
         {
-            final Term rangeArg =
-                InlinerUtils.derefToIntrinsicApply(indexArg, _range.INSTANCE, fmt);
+            final Term countArg =
+                InlinerUtils.derefToIntrinsicApply(iterArg, _count.INSTANCE, fmt);
 
-            if (rangeArg != null && rangeArg instanceof TupleTerm)
+            if (countArg != null)
             {
-                final List<Term> rangeArgs = ((TupleTerm)rangeArg).getItems();
-                startIndexExpr = fmt.formatTermAs(rangeArgs.get(0), int.class);
-
-                final String extentExpr = fmt.formatTermAs(rangeArgs.get(1), int.class);
-                endIndexExpr = "((" + startIndexExpr + ") + (" + extentExpr + "))";
-            }
-            else
-            {
-                final Term fromtoArg =
-                    InlinerUtils.derefToIntrinsicApply(indexArg, _fromto.INSTANCE, fmt);
-
-                if (fromtoArg != null && fromtoArg instanceof TupleTerm)
+                startIndexExpr = "0";
+                if (countArg instanceof IntLiteral)
                 {
-                    final List<Term> fromtoArgs = ((TupleTerm)fromtoArg).getItems();
-                    startIndexExpr = fmt.formatTermAs(fromtoArgs.get(0), int.class);
-
-                    final String toIndexExpr = fmt.formatTermAs(fromtoArgs.get(1), int.class);
-                    endIndexExpr = "((" + toIndexExpr + ") + 1)";
+                    endIndexExpr = "" + Math.abs(((IntLiteral)countArg).getValue());
                 }
                 else
                 {
-                    startIndexExpr = null;
-                    endIndexExpr = null;
+                    endIndexExpr = Math.class.getName() + ".abs(" +
+                        fmt.formatTermAs(countArg, int.class) + ")";
                 }
+            }
+            else
+            {
+                startIndexExpr = null;
+                endIndexExpr = null;
             }
         }
 
         if (startIndexExpr == null)
         {
-            final String indexes = fmt.formatTermAs(indexArg, ListValue.class);
+            final String indexes = fmt.formatTermAs(iterArg, ListValue.class);
             final String body = fmt.formatTermAs(bodyArg, Lambda.class);
             return "(" + indexes + ").run(" + body + ")";
         }

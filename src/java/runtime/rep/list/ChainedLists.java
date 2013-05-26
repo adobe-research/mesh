@@ -30,7 +30,7 @@ public final class ChainedLists implements ListValue
     {
         final int nlists = lists.size();
 
-        // early trap avoids computation,
+        // early trap avoids computation for pair case
         if (nlists == 2)
             return ChainedListPair.create(
                 (ListValue)lists.get(0), (ListValue)lists.get(1));
@@ -123,8 +123,8 @@ public final class ChainedLists implements ListValue
                         necount == 2 ?
                             ChainedListPair.create(
                                 (ListValue)nelists.get(0), (ListValue)nelists.get(1)) :
-                        isreg ? new MatrixList(nelists, stride) :
-                        new ChainedLists(nelists, nebases);
+                            isreg ? new MatrixList(nelists, stride) :
+                                new ChainedLists(nelists, nebases);
                 }
             }
         }
@@ -290,14 +290,14 @@ public final class ChainedLists implements ListValue
 
             int i = from;
 
-            public boolean hasNext()
+            public final boolean hasNext()
             {
                 return i < to;
             }
 
-            public Object next()
+            public final Object next()
             {
-                if (!hasNext())
+                if (i == to)
                     throw new NoSuchElementException();
 
                 if (!itemIter.hasNext())
@@ -308,7 +308,7 @@ public final class ChainedLists implements ListValue
                 return itemIter.next();
             }
 
-            public void remove()
+            public final void remove()
             {
                 throw new UnsupportedOperationException();
             }

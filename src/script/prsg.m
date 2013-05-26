@@ -227,7 +227,7 @@ animate() {
             filter(shifted, {b:Bump => b.xoff >=. i2f(-BUFSIZE)})
         };
 
-        cycle({_ => true}, (BUFSIZE, repeat(NSERIES, initbumps)), { off, bumplists:[[Bump]] =>
+        cycle((BUFSIZE, repeat(NSERIES, initbumps)), {_ => true}, { off, bumplists:[[Bump]] =>
 
             sleep(PAUSE);
 

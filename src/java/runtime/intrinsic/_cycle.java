@@ -38,10 +38,10 @@ public final class _cycle extends IntrinsicLambda
     public Object apply(final Object arg)
     {
         final Tuple args = (Tuple)arg;
-        return invoke((Lambda)args.get(0), args.get(1), (Lambda)args.get(2));
+        return invoke(args.get(0), (Lambda)args.get(1), (Lambda)args.get(2));
     }
 
-    public static Object invoke(final Lambda pred, final Object initial, final Lambda f)
+    public static Object invoke(final Object initial, final Lambda pred, final Lambda f)
     {
         Object result = initial;
 

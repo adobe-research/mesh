@@ -45,7 +45,7 @@ integrate(num_samples)
 
     R = Random.randomgen(SEED);
 
-    under = cyclen(num_samples, 0, {
+    under = cyclen(0, num_samples, {
             x = run(R);
             y = run(R);
 

@@ -50,6 +50,12 @@ public final class LambdaTerm extends AbstractScope implements Term
     private Scope parentScope;
 
     /**
+     * Optional name to associate with this lambda, e.g. collected from
+     * binding which defines it, if there is one
+     */
+    private String bindingName;
+
+    /**
      * Lambda constructor.
      * Note that {@link #typeParamDecls} has explicitly declared type params;
      * inlines are added during resolution.
@@ -186,6 +192,21 @@ public final class LambdaTerm extends AbstractScope implements Term
     public UnboundTerm getResultStatement()
     {
         return (UnboundTerm)body.get(body.size() - 1);
+    }
+
+    public String getBindingName()
+    {
+        return bindingName;
+    }
+
+    public void setBindingName(final String bindingName)
+    {
+        this.bindingName = bindingName;
+    }
+
+    public boolean hasBindingName()
+    {
+        return bindingName != null;
     }
 
     // Term

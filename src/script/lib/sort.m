@@ -85,8 +85,8 @@ sort(lst, cmp)
     {
         (asize, bsize) = (size(a), size(b));
         (merged, asuf, bsuf) = cycle(
-            { m, i, j => i < asize && {j < bsize} },
             ([], 0, 0),
+            { m, i, j => i < asize && {j < bsize} },
             { m, i, j =>
                 if(cmp(a[i], b[j]) <= 0,
                     { (append(m, a[i]), i + 1, j) },

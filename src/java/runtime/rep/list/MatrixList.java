@@ -152,12 +152,12 @@ public final class MatrixList implements ListValue
             Iterator<?> itemIter =
                 ((ListValue)listIter.next()).iterator(j, stride);
 
-            public boolean hasNext()
+            public final boolean hasNext()
             {
                 return i < to;
             }
 
-            public Object next()
+            public final Object next()
             {
                 if (i == to)
                     throw new NoSuchElementException();
@@ -174,7 +174,7 @@ public final class MatrixList implements ListValue
                 return itemIter.next();
             }
 
-            public void remove()
+            public final void remove()
             {
                 throw new UnsupportedOperationException();
             }

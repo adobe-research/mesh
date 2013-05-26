@@ -38,15 +38,20 @@ public final class ChainedListPair implements ListValue
     //
 
     private final ListValue llist, rlist;
-    private final int lsize;
+    private final int lsize, rsize;
     private final int size;
 
     private ChainedListPair(final ListValue llist, final ListValue rlist)
     {
+//        System.out.println("ChainedListPair(" +
+//            llist.getClass().getSimpleName() + ":" + llist.size() + ", " +
+//            rlist.getClass().getSimpleName() + ":" + rlist.size() + ")");
+
         this.llist = llist;
         this.rlist = rlist;
         this.lsize = llist.size();
-        this.size = this.lsize + rlist.size();
+        this.rsize = rlist.size();
+        this.size = this.lsize + this.rsize;
     }
 
     public int size()
@@ -123,18 +128,20 @@ public final class ChainedListPair implements ListValue
         return new Iterator<Object>()
         {
             int i = from;
-            Iterator<?> iter = i < lsize ?
-                llist.iterator(i, llist.size()) :
-                rlist.iterator(i - lsize, rlist.size());
 
-            public boolean hasNext()
+            // note: odd i == lsize case avoids redundant alloc in next()
+            Iterator<?> iter = i < lsize ? llist.iterator(i, lsize) :
+                i > lsize ? rlist.iterator(i - lsize, rsize) :
+                    null;
+
+            public final boolean hasNext()
             {
                 return i < to;
             }
 
-            public Object next()
+            public final Object next()
             {
-                if (!hasNext())
+                if (i == to)
                     throw new NoSuchElementException();
 
                 if (i == lsize)
@@ -145,7 +152,7 @@ public final class ChainedListPair implements ListValue
                 return iter.next();
             }
 
-            public void remove()
+            public final void remove()
             {
                 throw new UnsupportedOperationException();
             }

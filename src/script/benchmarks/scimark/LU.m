@@ -75,14 +75,14 @@ factor_iterative(M:Int, N:Int, A:[[Double]]) -> ([[Double]], [Int]) {
 
     calc(i, j) {
         (_, __, v) = cycle(
-            { r,c,_ => r >= 0 && { c >= 0 } }, 
-            ( i-1, j-1, getvalue(i, j) ), 
+            ( i-1, j-1, getvalue(i, j) ),
+            { r,c,_ => r >= 0 && { c >= 0 } },
             { r,c,v => ( r-1, c-1, v -. (getvalue(r, j) *. getvalue(i, c)) ) });
         guard(i <= j, v, { v /. getvalue(j, j) })
     };
 
     pivot(r) {
-        (_,  p, __) = cyclen(CT - r, ( -1.0, r, 0 ), 
+        (_,  p, __) = cyclen(( -1.0, r, 0 ), CT - r,
             { max_value, max_index, i =>
               value = getvalue(r + i, r);
               if (value >. max_value, 

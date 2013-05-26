@@ -12,7 +12,7 @@
 */
 
 import * from std;
-export num_flops, transform, inverse, test;
+//export num_flops, transform, inverse, test;
 
 num_flops(N:Int) -> Double {
     Nd = i2f(N);
@@ -29,7 +29,7 @@ int_log2(n) {
 bitreverse(data:[Double]) -> [Double] {
     // Create a Gold-Rader reversal mapping
     n = size(data) / 2;
-    ( _, __, rmap ) = cyclen(n - 2, (0, 0, count(n)), { i, j, m =>
+    ( _, __, rmap ) = cyclen((0, 0, count(n)), n - 2, { i, j, m =>
         k = n / 2;
         // swap entries in map (maybe)
         mapping = if(i < j, 
@@ -37,7 +37,7 @@ bitreverse(data:[Double]) -> [Double] {
             { m });
 
         // Calculate next j
-        ( nk, nj ) = cycle({ $0 <= $1 }, ( k, j ), { ( $0 / 2, $1 - $0 ) });
+        ( nk, nj ) = cycle(( k, j ), { $0 <= $1 }, { ( $0 / 2, $1 - $0 ) });
         ( i + 1, nj + nk, mapping )
     });
 
@@ -46,19 +46,20 @@ bitreverse(data:[Double]) -> [Double] {
     index(data) | { data[rmap[$0 / 2] * 2 + ($0 % 2)] }
 };
 
-// TODO: This is implemented as in-place replacement in an array of boxes.
-// Might want to consider a non-mutating algorithm. 
+PI = 3.14159265;
+
+// This is implemented as in-place replacement in an array of boxes.
 // TODO: This infinite loops when passed an array size that is not a power of 2.
-transform_internal(data:[Double], direction:Int) -> [Double] {
+transform_internal_array_of_boxes(data:[Double], direction:Int) -> [Double] {
+//transform_internal(data:[Double], direction:Int) -> [Double] {
     N = size(data);
     n = N/2;
-    PI = 3.14159265;
-    
+
     guard(n == 1 || { N == 0 }, data, {
         logn = int_log2(n);
         D = bitreverse(data) | box;
 
-        cyclen(logn, ( 0, 1 ), { bit, dual =>
+        cyclen(( 0, 1 ), logn, { bit, dual =>
             w_real = 1.0;
             w_imag = 0.0;
 
@@ -67,7 +68,7 @@ transform_internal(data:[Double], direction:Int) -> [Double] {
             t = sin(theta /. 2.0);
             s2 = 2.0 *. t *. t;
 
-            cycle({ $0 < n }, 0, { b => 
+            cycle(0, { $0 < n }, { b =>
                 i = 2*b;
                 j = 2*(b + dual);
 
@@ -82,17 +83,17 @@ transform_internal(data:[Double], direction:Int) -> [Double] {
                 b + (2 * dual)
             });
 
-            cyclen(dual - 1, ( 1, w_real, w_imag ),
-                { a, curr_real, curr_imag  => 
-                    // Trignometric recurrence for w^(i * theta) 
+            cyclen(( 1, w_real, w_imag ), dual - 1,
+                { a, curr_real, curr_imag  =>
+                    // Trignometric recurrence for w^(i * theta)
                     wreal = curr_real -. s *. curr_imag -. s2 *. curr_real;
                     wimag = curr_imag + s *. curr_real -. s2 *. curr_imag;
 
-                    cycle( { $0 < n }, 0, { b =>  
+                    cycle(0, { $0 < n }, { b =>
                         i = 2 * (b + a);
                         j = 2 * (b + a + dual);
 
-                        
+
                         z1_real = *D[j];
                         z1_imag = *D[j + 1];
 
@@ -111,6 +112,152 @@ transform_internal(data:[Double], direction:Int) -> [Double] {
             ( bit + 1, dual * 2 )
         });
         D | get
+    })
+};
+
+// This is implemented as in-place replacement in a boxed array.
+// TODO: This infinite loops when passed an array size that is not a power of 2.
+transform_internal_boxed_array(data:[Double], direction:Int) -> [Double] {
+//transform_internal(data:[Double], direction:Int) -> [Double] {
+    N = size(data);
+    n = N/2;
+
+    guard(n == 1 || { N == 0 }, data, {
+        logn = int_log2(n);
+        DB = box(bitreverse(data));
+
+        cyclen(( 0, 1 ), logn, { bit, dual =>
+            w_real = 1.0;
+            w_imag = 0.0;
+
+            theta = 2.0 *. i2f(direction) *. PI /. (2.0 *. i2f(dual));
+            s = sin(theta);
+            t = sin(theta /. 2.0);
+            s2 = 2.0 *. t *. t;
+
+            cycle(0, { $0 < n }, { b =>
+                i = 2*b;
+                j = 2*(b + dual);
+
+                D = *DB;
+
+                wd_real = D[j];
+                wd_imag = D[j+1];
+
+                DB := listsets(D, [j, j+1, i, i+1], [
+                    D[i] -. wd_real,
+                    D[i+1] -. wd_imag,
+                    D[i] + wd_real,
+                    D[i+1] + wd_imag
+                ]);
+
+                b + (2 * dual)
+            });
+
+            cyclen(( 1, w_real, w_imag ), dual - 1,
+                { a, curr_real, curr_imag  =>
+                    // Trignometric recurrence for w^(i * theta)
+                    wreal = curr_real -. s *. curr_imag -. s2 *. curr_real;
+                    wimag = curr_imag + s *. curr_real -. s2 *. curr_imag;
+
+                    cycle( 0, { $0 < n }, { b =>
+                        i = 2 * (b + a);
+                        j = 2 * (b + a + dual);
+
+                        D = *DB;
+
+                        z1_real = D[j];
+                        z1_imag = D[j + 1];
+
+                        wd_real = wreal *. z1_real -. wimag *. z1_imag;
+                        wd_imag = wreal *. z1_imag + wimag *. z1_real;
+
+                        DB := listsets(D, [j, j+1, i, i+1], [
+                            D[i] -. wd_real,
+                            D[i+1] -. wd_imag,
+                            D[i] + wd_real,
+                            D[i+1] + wd_imag
+                        ]);
+
+                        b + (2 * dual)
+                    });
+                    ( a + 1, wreal, wimag ) });
+
+            ( bit + 1, dual * 2 )
+        });
+        *DB
+    })
+};
+
+// functional version
+// TODO: This infinite loops when passed an array size that is not a power of 2.
+//transform_internal_functional(data:[Double], direction:Int) -> [Double] {
+transform_internal(data:[Double], direction:Int) -> [Double] {
+    N = size(data);
+    n = N/2;
+
+    guard(n == 1 || { N == 0 }, data, {
+        logn = int_log2(n);
+
+        cyclen((bitreverse(data), 0, 1), logn, { D, bit, dual =>
+            w_real = 1.0;
+            w_imag = 0.0;
+
+            theta = 2.0 *. i2f(direction) *. PI /. (2.0 *. i2f(dual));
+            s = sin(theta);
+            t = sin(theta /. 2.0);
+            s2 = 2.0 *. t *. t;
+
+            D1 = cycle((D, 0), { $1 < n }, { D, b =>
+                i = 2*b;
+                j = 2*(b + dual);
+
+                wd_real = D[j];
+                wd_imag = D[j+1];
+
+                (
+                    listsets(D, [j, j+1, i, i+1], [
+                        D[i] -. wd_real,
+                        D[i+1] -. wd_imag,
+                        D[i] + wd_real,
+                        D[i+1] + wd_imag
+                    ]),
+                    b + (2 * dual)
+                )
+            }).0;
+
+            D2 = cyclen((D1, 1, w_real, w_imag), dual - 1,
+                { D, a, curr_real, curr_imag  =>
+                    // Trignometric recurrence for w^(i * theta)
+                    wreal = curr_real -. s *. curr_imag -. s2 *. curr_real;
+                    wimag = curr_imag + s *. curr_real -. s2 *. curr_imag;
+
+                    D3 = cycle( (D, 0), { $1 < n }, { D, b =>
+                        i = 2 * (b + a);
+                        j = 2 * (b + a + dual);
+
+                        z1_real = D[j];
+                        z1_imag = D[j + 1];
+
+                        wd_real = wreal *. z1_real -. wimag *. z1_imag;
+                        wd_imag = wreal *. z1_imag + wimag *. z1_real;
+
+                        (
+                            listsets(D, [j, j+1, i, i+1], [
+                                D[i] -. wd_real,
+                                D[i+1] -. wd_imag,
+                                D[i] + wd_real,
+                                D[i+1] + wd_imag
+                            ]),
+                            b + (2 * dual)
+                        )
+                    }).0;
+
+                    ( D3, a + 1, wreal, wimag ) }
+                ).0;
+
+            ( D2, bit + 1, dual * 2 )
+        }).0
     })
 };
 
