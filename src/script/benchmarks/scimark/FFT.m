@@ -15,15 +15,7 @@ import * from std;
 //export num_flops, transform, inverse, test;
 
 num_flops(N:Int) -> Double {
-    Nd = i2f(N);
-    logN = ln(Nd) /. ln(2.0);
-
-    (5.0 *. Nd -. 2.0) *. logN + 2.0 *. (Nd + 1.0)
-};
-
-// TODO: this is ugly -- fix this when we have shift or integer log2 ops!
-int_log2(n) {
-    f2i(ln(i2f(n)) /. ln(2.0))
+    i2f((5 * N - 2) * log2(N) + 2 * (N + 1))
 };
 
 bitreverse(data:[Double]) -> [Double] {
@@ -56,7 +48,7 @@ transform_internal_array_of_boxes(data:[Double], direction:Int) -> [Double] {
     n = N/2;
 
     guard(n == 1 || { N == 0 }, data, {
-        logn = int_log2(n);
+        logn = log2(n);
         D = bitreverse(data) | box;
 
         cyclen(( 0, 1 ), logn, { bit, dual =>

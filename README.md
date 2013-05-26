@@ -37,7 +37,7 @@ The Mesh scripts found in the src/script directory are mostly demos, and can
 be run from the shell, for example as follows:
 
     $ ./bin/shell
-    > $load prballs.m
+    > $load prballs
 
 To get a list of commands in the shell run "$help"
 

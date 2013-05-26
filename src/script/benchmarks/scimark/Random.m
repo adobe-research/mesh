@@ -14,8 +14,8 @@ randomgen(seed:Int) -> (() -> Double)
     members = box(#i:0, #j:0, #m:[0]);
 
     // constants
-    m1 = pow(2, 30) + (pow(2, 30) - 1);
-    m2 = pow(2, 16);
+    m1 = (1 << 30) + ((1 << 30) - 1);
+    m2 = 1 << 16;
     dm1 = 1.0 /. i2f(m1);
 
     // Initialize members (i, j, m)

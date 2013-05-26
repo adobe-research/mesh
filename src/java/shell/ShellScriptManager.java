@@ -16,7 +16,9 @@ import compile.Session;
 import compile.gen.java.*;
 import compile.module.Module;
 import compile.module.ModuleDictionary;
+import compile.parse.RatsScriptParser;
 import compile.term.LambdaTerm;
+import compile.term.ImportStatement;
 import compile.term.Statement;
 import compile.term.TypeDef;
 import compile.term.ValueStatement;
@@ -81,24 +83,25 @@ public final class ShellScriptManager
     }
 
     /**
-     *
+     * Imports that occur at init time and after every $clear
      */
     private void preloadShellScripts(final List<String> scriptLoads)
     {
         if (scriptLoads.size() > 0)
         {
-            final StringBuilder sb = new StringBuilder();
+            final List<ImportStatement> imports = 
+                new ArrayList<ImportStatement>(scriptLoads.size());
             for (final String script : scriptLoads)
             {
-                sb.append("import * from ");
-                sb.append(script);
-                sb.append(";\n");
+                imports.add(
+                    ImportStatement.allUnqualified(Loc.INTRINSIC, script));
 
                 if (Session.isDebug())
                     Session.debug(Loc.INTRINSIC, "Preloading " + script + "...");
             }
 
-            runScript(Loc.INTRINSIC, new StringReader(sb.toString()), Session.isDebug(), false);
+            runScript(Loc.INTRINSIC, new StringReader(""), 
+                      imports, Session.isDebug(), false);
         }
     }
 
@@ -117,9 +120,11 @@ public final class ShellScriptManager
      * Compile, save and run passed script text. See {@link #compileScriptUnit}, {@link #loadScriptUnit}.
      */
     public boolean runScript(final Loc loc, final Reader reader,
-        final boolean debug, final boolean print)
+        final List<ImportStatement> imports, final boolean debug, final boolean print)
     {
-        final Unit unit = compileScriptUnit(loc, reader, debug, print);
+        final List<ImportStatement> unitImports = addPastUnitImport(imports);
+        
+        final Unit unit = compileScriptUnit(loc, reader, unitImports, debug, print);
 
         if (unit != null)
         {
@@ -142,27 +147,52 @@ public final class ShellScriptManager
      * values and types defined in any previous scripts built by this method.
      */
     private Unit compileScriptUnit(final Loc loc, final Reader reader,
-        final boolean debug, final boolean print)
+        final List<ImportStatement> imports, final boolean debug, final boolean print)
     {
         // disambiguate module name with counter
         final String moduleName = "Shell" + seq;
-        final List<Module> implicitImports = getPastUnitImportList();
 
         // compile script module unit
         return ScriptCompiler.compileScript(
-            loc, reader, moduleName, implicitImports, unitDictionary, debug, print);
+            loc, reader, moduleName, imports, unitDictionary, debug, print);
+    }
+
+    /**
+     * Parse a statement and return it
+     */
+    public static ImportStatement parseImportStatement(
+        final Loc loc, final String text) 
+    {
+        final List<Statement> statements = 
+            RatsScriptParser.parseScript(new StringReader(text), loc);
+        if (statements != null && statements.size() == 1 && 
+            statements.get(0) instanceof ImportStatement)
+        {
+            return (ImportStatement)statements.get(0);
+        }
+        return null;
     }
 
     /**
      * We only need to import the most recently created past unit,
      * since it will import its predecessor, and so on.
      */
-    @SuppressWarnings("unchecked")
-    private List<Module> getPastUnitImportList()
+    private List<ImportStatement> addPastUnitImport(
+        final List<ImportStatement> imports)
     {
         final Unit lastUnit = getPastUnit(0);
-        return lastUnit != null ? Arrays.asList(lastUnit.getModule()) :
-            Arrays.<Module>asList();
+        if (lastUnit != null) 
+        {
+            final List<ImportStatement> unitImports = 
+                new ArrayList<ImportStatement>(imports.size() + 1);
+            unitImports.addAll(imports);
+
+            final String name = lastUnit.getModule().getName();
+            unitImports.add(ImportStatement.allUnqualified(
+                Loc.INTRINSIC, name));
+            return unitImports;
+        }
+        return imports;
     }
 
     /**
@@ -378,13 +408,16 @@ public final class ShellScriptManager
      * then statements. (I.e., the two are separated, no longer interleaved in decl order.)
      * Return a map from statement dumps to type dumps.
      */
-    public Map<String, String> printExprTypes(final Loc loc, final Reader reader)
+    public Map<String, String> printExprTypes(final Loc loc, final Reader reader, 
+            final List<ImportStatement> imports)
     {
         final Map<String, String> dumps = new LinkedHashMap<String, String>();
 
+        final List<ImportStatement> unitImports = addPastUnitImport(imports);
+
         final ModuleDictionary dict = unitDictionary.getModuleDictionary();
-        final Module module = ScriptCompiler
-            .analyzeScript(loc, reader, "TypeCheck", getPastUnitImportList(), dict);
+        final Module module = ScriptCompiler.analyzeScript(
+                loc, reader, "TypeCheck", unitImports, dict);
 
         if (module != null)
         {

@@ -35,6 +35,11 @@ public class ScriptCompiler
 {
     public static final String INTRINSICS = "intrinsics";
 
+    private static final List<String> compilerImports = new ArrayList<String>();
+    static {
+        compilerImports.add("lang");
+    }
+
     /**
      * Build a {@link compile.gen.java.Unit} from a script
      * (a list of top-level statements) obtained from a reader,
@@ -49,7 +54,7 @@ public class ScriptCompiler
      * @param loc        base loc for program text and module
      * @param reader          program text source
      * @param moduleName      module name
-     * @param implicitImports list of implicit imports.
+     * @param imports list of implicit imports.
      * @param dict            must contain units for any modules imported by program text,
      *                        as well as implicit imports
      * @param debug           debug mode for compiled code
@@ -59,7 +64,7 @@ public class ScriptCompiler
     public static Unit compileScript(final Loc loc,
                                      final Reader reader,
                                      final String moduleName,
-                                     final List<Module> implicitImports,
+                                     final List<ImportStatement> imports,
                                      final UnitDictionary dict,
                                      final boolean debug,
                                      final boolean print)
@@ -69,7 +74,7 @@ public class ScriptCompiler
             RatsScriptParser.parseScript(reader, loc);
 
         return statements == null ? null :
-            compileModule(loc, moduleName, implicitImports, statements, dict, debug);
+            compileModule(loc, moduleName, imports, statements, dict, debug);
     }
 
     /**
@@ -78,13 +83,13 @@ public class ScriptCompiler
      */
     public static Module analyzeScript(final Loc loc, final Reader reader,
                                        final String moduleName,
-                                       final List<Module> implicitImports,
+                                       final List<ImportStatement> imports,
                                        final ModuleDictionary dict)
     {
         final List<Statement> statements = RatsScriptParser.parseScript(reader, loc);
 
         return statements == null ? null :
-            buildModule(loc, moduleName, implicitImports, statements, dict);
+            buildModule(loc, moduleName, imports, statements, dict);
     }
 
     /**
@@ -94,13 +99,13 @@ public class ScriptCompiler
      */
     private static Unit compileModule(final Loc loc,
                                       final String moduleName,
-                                      final List<Module> implicitImports,
+                                      final List<ImportStatement> imports,
                                       final List<Statement> statements,
                                       final UnitDictionary unitDictionary,
                                       final boolean debug)
     {
         final Module module = buildModule(
-           loc, moduleName, implicitImports, statements,
+           loc, moduleName, imports, statements,
            unitDictionary.getModuleDictionary());
 
         return module == null ? null :
@@ -114,11 +119,13 @@ public class ScriptCompiler
         final Loc loc, final Reader reader, final String moduleName,
         final ModuleDictionary dict)
     {
+        final List<ImportStatement> imports = 
+            Collections.<ImportStatement>emptyList();
         final List<Statement> statements =
             RatsScriptParser.parseScript(reader, loc);
 
-        return statements == null ? null :
-            buildModule(loc, moduleName, Collections.<Module>emptyList(), statements, dict);
+        return statements == null ? null : buildModule(
+            loc, moduleName, imports, statements, dict);
     }
 
     /**
@@ -135,7 +142,7 @@ public class ScriptCompiler
      */
     private static Module buildModule(final Loc loc,
                                       final String moduleName,
-                                      final List<Module> implicitImports,
+                                      final List<ImportStatement> imports,
                                       final List<Statement> statements,
                                       final ModuleDictionary dict)
     {
@@ -149,7 +156,7 @@ public class ScriptCompiler
             return null;
         }
 
-        final boolean isImplicitImport = Session.getImplicitImports().contains(moduleName);
+        final boolean isImplicitImport = compilerImports.contains(moduleName);
         final boolean isImplicitImportChild = Session.isInImplicitImport();
         final boolean isImplicitImportRoot = isImplicitImport && !isImplicitImportChild;
 
@@ -158,14 +165,10 @@ public class ScriptCompiler
 
         // add compiler-implicit imports--see comment header
         final List<Statement> statementsWithPreloads = Session.isInImplicitImport() ?
-            statements : addImplicitImports(statements);
+            statements : addImplicitImports(imports, statements);
 
         // create new module with passed loc, name, and parsed term list; import intrinsics
         final Module module = new Module(loc, moduleName, statementsWithPreloads, dict);
-
-        // add (other) implicit imports -- see comment header
-        for (final Module implicitImport : implicitImports)
-            module.addImport(new Import(implicitImport, null, WhiteList.open()));
 
         // add the newly created module to the passed dictionary
         dict.add(module);
@@ -183,17 +186,21 @@ public class ScriptCompiler
     /**
      *
      */
-    private static List<Statement> addImplicitImports(final List<Statement> statements)
+    private static List<Statement> addImplicitImports(
+        final List<ImportStatement> imports, 
+        final List<Statement> statements)
     {
         assert !Session.isInImplicitImport();
 
         final List<Statement> prepended = new ArrayList<Statement>();
 
-        for (final String implicitImport : Session.getImplicitImports())
+        for (final String implicitImport : compilerImports)
             prepended.add(
                 new ImportStatement(Loc.INTRINSIC, null, implicitImport, null));
 
+        prepended.addAll(imports);
         prepended.addAll(statements);
+
         return prepended;
     }
 }

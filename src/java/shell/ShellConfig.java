@@ -11,6 +11,9 @@
 package shell;
 
 import compile.Session;
+import compile.Loc;
+import compile.term.ImportStatement;
+import compile.analyze.ImportResolver;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +27,8 @@ import java.util.List;
 public final class ShellConfig
 {
     private final List<String> scriptPath = new ArrayList<String>();
-    private final List<String> imports = new ArrayList<String>();
+    private final List<ImportStatement> imports = 
+        new ArrayList<ImportStatement>();
     private final List<String> loads = new ArrayList<String>();
     private final List<String> commandFiles = new ArrayList<String>();
     private String writePath;
@@ -40,9 +44,60 @@ public final class ShellConfig
     }
 
     // These get implicitly imported into every module
-    public List<String> getImports()
+    public List<ImportStatement> getImports()
     {
         return imports;
+    }
+
+    public void listImplicitImports()
+    {
+        System.out.println("Auto-imports: ");
+        for (int i = 0; i < imports.size(); ++i) 
+            System.out.println("(" + i + ")\t" + imports.get(i).dumpAbbrev());
+    }
+
+    public void addImplicitImport(final String spec)
+    {
+        final ImportStatement stmt = ShellScriptManager.parseImportStatement(
+                Loc.INTRINSIC, "import " + spec);
+        if (stmt != null)
+        {
+            if (!ImportResolver.moduleExists(stmt.getFrom())) 
+                Session.error("Can not find module ''{0}''", stmt.getFrom());
+            else
+                imports.add(stmt);
+        }
+    }
+
+    public void clearImplicitImport(final String spec)
+    {
+        try 
+        {
+            final int position = Integer.parseInt(spec);
+            if (position >= 0 && position < imports.size())
+                imports.remove(position);
+            else
+                Session.error("No import at index {0}", position);
+        }
+        catch (NumberFormatException nfe) 
+        {
+            int matches = 0;
+            int match_position = -1;
+            for (int i = 0; i < imports.size(); ++i) 
+            {
+                if (imports.get(i).dumpAbbrev().startsWith(spec)) 
+                {
+                    ++matches;
+                    match_position = i;
+                }
+            }
+            if (matches == 1) 
+                imports.remove(match_position);
+            else if (matches == 0) 
+                Session.error("No import matches ''{0}''", spec);
+            else // matches > 1
+                Session.error("Ambiguous import specification ''{0}''", spec);
+        }
     }
 
     // Loads get loaded as an implicit first module in the shell, when it starts or
@@ -172,7 +227,7 @@ public final class ShellConfig
                     {
                         for (final String script : Arrays.asList(args[i + 1].split(";")))
                         {
-                            Session.addImplicitImport(script);
+                            addImplicitImport(script);
                         }
                         i = i + 1;
                     }

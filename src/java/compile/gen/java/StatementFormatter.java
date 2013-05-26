@@ -459,7 +459,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         final String rhs;
         if (let.isIntrinsic()) 
         {
-            rhs = intrinsicsResolver.formatAsRHS(let);
+            rhs = intrinsicsResolver.formatAsRHSAndRecord(let);
         }
         else
         {

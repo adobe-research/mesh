@@ -84,6 +84,14 @@ public class TermInliner
         INTRINSICS.put(_neg.class.getName(), new NegInliner());
         INTRINSICS.put(_pow.class.getName(), new PowInliner());
 
+        // int bitops
+        INTRINSICS.put(_band.class.getName(), new BandInliner());
+        INTRINSICS.put(_bor.class.getName(), new BorInliner());
+        INTRINSICS.put(_bxor.class.getName(), new BxorInliner());
+        INTRINSICS.put(_shiftr.class.getName(), new ShiftrInliner());
+        INTRINSICS.put(_ushiftr.class.getName(), new UshiftrInliner());
+        INTRINSICS.put(_shiftl.class.getName(), new ShiftlInliner());
+
         // int relops
         INTRINSICS.put(_gt.class.getName(), new GTInliner());
         INTRINSICS.put(_ge.class.getName(), new GEInliner());

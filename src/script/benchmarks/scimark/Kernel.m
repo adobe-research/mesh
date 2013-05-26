@@ -8,13 +8,13 @@ import SparseCompRow qualified;
 import LU qualified;
 
 import Constants qualified;
-import Stopwatch;
+import StopWatch;
 
 export measureFFT,measureSOR,measureMonteCarlo,
        measureSparseMatmult,measureLU;
 
 iterate_until(mintime, benchmark) -> (Int,Double) {
-    Q = Stopwatch();
+    Q = StopWatch();
     cycles = cycle( 1, { _ => Q.read() <. mintime },
         { c =>
           Q.start();

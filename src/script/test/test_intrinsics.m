@@ -140,6 +140,13 @@ assert_equals({ -1 }, { apply(neg, 1) });
 assert_equals({ 16 }, { pow(2, 4) });
 assert_equals({ 16 }, { apply(pow, (2, 4)) });
 
+// log2 : (Int) -> Int = <intrinsic>
+assert_equals({ 8 }, { log2(256) });
+assert_equals({ 7 }, { log2(255) });
+assert_equals({ 0 }, { log2(1) });
+assert_equals({ 0 }, { log2(-1) });
+assert_equals({ 30 }, { log2(0x40000000) });
+
 // sign : Int -> Int = <intrinsic>
 assert_equals({ 0 }, { sign(0) });
 assert_equals({ -1 }, { sign(-2) });
@@ -156,6 +163,26 @@ assert_equals({ 1 }, { apply(band, (5, 3)) });
 // bor : (Int, Int) -> Int = <intrinsic>
 assert_equals({ 7 }, { bor(5, 3) });
 assert_equals({ 7 }, { apply(bor, (5, 3)) });
+
+// bxor : (Int, Int) -> Int = <intrinsic>
+assert_equals({ 6 }, { bxor(12, 10) });
+assert_equals({ 6 }, { apply(bxor, (12, 10)) });
+
+// shiftl : (Int, Int) -> Int = <intrinsic>
+assert_equals({ 40 }, { shiftl(5, 3) });
+assert_equals({ 40 }, { apply(shiftl, (5, 3)) });
+
+// shiftr : (Int, Int) -> Int = <intrinsic>
+assert_equals({ 64 }, { shiftr(256, 2) });
+assert_equals({ 64 }, { apply(shiftr, (256, 2)) });
+assert_equals({ -1 }, { shiftr(l2i(0x80000000), 31) });
+assert_equals({ -1 }, { apply(shiftr, (l2i(0x80000000), 31)) });
+
+// ushiftr : (Int, Int) -> Int = <intrinsic>
+assert_equals({ 64 }, { ushiftr(256, 2) });
+assert_equals({ 64 }, { apply(ushiftr, (256, 2)) });
+assert_equals({ 1 }, { ushiftr(l2i(0x80000000), 31) });
+assert_equals({ 1 }, { apply(ushiftr, (l2i(0x80000000), 31)) });
 
 //////////////////////////////////////////////////
 // long arith ops
