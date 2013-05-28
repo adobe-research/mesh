@@ -10,12 +10,10 @@
  */
 package compile.gen.java;
 
-import runtime.IntrinsicTypeRecorder;
-import runtime.rep.lambda.IntrinsicLambda;
-import compile.Pair;
-import compile.Session;
+import compile.*;
 import compile.term.LetBinding;
 import compile.type.*;
+import runtime.rep.lambda.IntrinsicLambda;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -27,18 +25,21 @@ import java.util.*;
  *
  * @author Keith McGuigan
  */
-public final class IntrinsicsResolver
+public final class JavaIntrinsicsResolver extends IntrinsicsResolver
 {
-    /**
-     * our type formatter
-     */
-    private final TypeMapper typeMapper;
+    public static IntrinsicsResolver.Factory factory =
+        new IntrinsicsResolver.Factory()
+        {
+            public IntrinsicsResolver create()
+            {
+                return new JavaIntrinsicsResolver();
+            }
+        };
 
     /**
      * Memoized list of bindings which have been verified
      */
-    private static final Map<LetBinding,IntrinsicLambda> verifiedIntrinsics =
-        new HashMap<LetBinding,IntrinsicLambda>();
+    private final Map<LetBinding,IntrinsicLambda> verifiedIntrinsics;
 
     // TODO: use module name as key into package configuration mapping
     private static final String[] intrinsicPackages = new String[] {
@@ -51,13 +52,13 @@ public final class IntrinsicsResolver
         "runtime.intrinsic.test"
     };
 
-    public IntrinsicsResolver()
+    public JavaIntrinsicsResolver()
     {
-        this.typeMapper = new TypeMapper();
+        this.verifiedIntrinsics = new HashMap<LetBinding,IntrinsicLambda>();
     }
 
-
     public IntrinsicLambda resolve(final LetBinding let)
+        throws IntrinsicsResolver.ResolutionError
     {
         final IntrinsicLambda resolved = verifiedIntrinsics.get(let);
 
@@ -79,11 +80,9 @@ public final class IntrinsicsResolver
                     if (intrObj != null && intrObj instanceof IntrinsicLambda)
                     {
                         final IntrinsicLambda lambda = (IntrinsicLambda)intrObj;
-                        if (verifyIntrinsicType(let, lambda))
-                        {
-                            verifiedIntrinsics.put(let, lambda);
-                            return lambda;
-                        }
+                        verifyIntrinsicType(let, lambda);
+                        verifiedIntrinsics.put(let, lambda);
+                        return lambda;
                     }
                 }
             }
@@ -91,37 +90,14 @@ public final class IntrinsicsResolver
             catch (NoSuchFieldException ignored) {}
             catch (IllegalAccessException ignored) {}
         }
-        return null;
+
+        throw new IntrinsicsResolver.ResolutionError(
+            "Cannot find implementation for intrinsic " + let.getName() +
+            " with type " + let.getType().dump());
     }
 
-    /**
-     * Here we access special knowledge about how to go from an intrinsic
-     * let binding in the current scope, to a compatible value in the
-     * underlying Java environment
-     */
-    public String formatAsRHS(final LetBinding let)
-    {
-        final IntrinsicLambda intr = resolve(let);
-        if (intr != null)
-            return intr.getClass().getName() + "." + Constants.INSTANCE;
-        else
-        {
-            Session.error("Cannot find implementation for intrinsic ''{0}'' with type ''{1}''",
-                    let.getName(), let.getType().dump());
-            return null;
-        }
-    }
-
-    public String formatAsRHSAndRecord(final LetBinding let)
-    {
-        final String rhs = formatAsRHS(let);
-        if (rhs != null)
-            return IntrinsicTypeRecorder.class.getName() +
-                ".record(" + rhs + ", \"" + let.getType().dump() + "\")";
-        return null;
-    }
-
-    private boolean verifyIntrinsicType(final LetBinding let, final IntrinsicLambda lambda)
+    private void verifyIntrinsicType(final LetBinding let, final IntrinsicLambda lambda)
+        throws IntrinsicsResolver.ResolutionError
     {
         if (Session.isDebug())
             Session.debug("Verifying proper form of intrinsic: ''{0}''", let.getName());
@@ -131,8 +107,8 @@ public final class IntrinsicsResolver
 
         if (parameters == null || returnType == null)
         {
-            Session.error("Invalid intrinsic implementation ''{0}''", lambda.getClass());
-            return false;
+            throw new IntrinsicsResolver.ResolutionError(
+                "Invalid intrinsic implementation " + lambda.getClass());
         }
 
         final Class<?>[] paramspec = parameters.toArray(new Class<?>[parameters.size()]);
@@ -140,13 +116,13 @@ public final class IntrinsicsResolver
         {
             final Method method = lambda.getClass().getMethod(Constants.INVOKE, paramspec);
             if (method.getReturnType() == returnType)
-                return true;
+                return;
         }
         catch (NoSuchMethodException ignored) {}
 
-        Session.error("intrinsic implementation ''{0}'' is incompatible with prototype ''{1}''",
-            lambda.getClass(), let.getType().dump());
-        return false;
+        throw new IntrinsicsResolver.ResolutionError("intrinsic implementation " +
+            lambda.getClass() + " is incompatible with prototype " +
+            let.getType().dump());
     }
 
     /**
@@ -176,7 +152,7 @@ public final class IntrinsicsResolver
     {
         final Pair<Type,Type> pair = getFunctionTypes(function);
         if (pair != null)
-            return typeMapper.map(pair.right);
+            return (new TypeMapper()).map(pair.right);
 
         return null;
     }
@@ -202,6 +178,7 @@ public final class IntrinsicsResolver
      */
     private List<Class<?> > getParameterTypes(final Type function)
     {
+        final TypeMapper typeMapper = new TypeMapper();
         final Pair<Type,Type> pair = getFunctionTypes(function);
         if (pair != null)
         {
