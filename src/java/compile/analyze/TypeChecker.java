@@ -261,6 +261,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                 Session.error(let.getLoc(),
                     "declared intrinsic {0} does not have a fully-specified type.", let.getName());
             }
+            getModule().resolveIntrinsic(let);
         }
 
         if (let.hasDeclaredType())
