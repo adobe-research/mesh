@@ -45,12 +45,12 @@ integrate(num_samples)
 
     R = Random.randomgen(SEED);
 
-    under = cyclen(0, num_samples, {
-            x = run(R);
-            y = run(R);
+    under = cyclen(0, num_samples, { n =>
+        x = R();
+        y = R();
 
-            guard((x *. x) +. (y *. y) >. 1.0, $0, { inc($$0) })
-            });
+        guard((x *. x) +. (y *. y) >. 1.0, n, { inc(n) })
+    });
 
     i2f(under) /. i2f(num_samples) *. 4.0
 };

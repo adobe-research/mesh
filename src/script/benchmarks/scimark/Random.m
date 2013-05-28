@@ -7,57 +7,55 @@
 import * from std;
 export .;
 
-// Creates and returns a new pseudo-random number generator 
+// constants
+M1 = (1 << 30) + ((1 << 30) - 1);
+M2 = 1 << 16;
+DM1 = 1.0 /. i2f(M1);
+
+K0 = 9069 % M2;
+K1 = 9069 / M2;
+
+// Creates and returns a new pseudo-random number generator
 // If 'seed' is 0, then the generator is seeded using the current time (in millis)
-randomgen(seed:Int) -> (() -> Double)
+randomgen(seed : Int) -> () -> Double
 {
-    members = box(#i:0, #j:0, #m:[0]);
-
-    // constants
-    m1 = (1 << 30) + ((1 << 30) - 1);
-    m2 = 1 << 16;
-    dm1 = 1.0 /. i2f(m1);
-
     // Initialize members (i, j, m)
-    k0 = 9069 % m2;
-    k1 = 9069 / m2;
-
     actualseed = guard(seed != 0, seed, { l2i(millitime()) }); 
 
     makeodd = { guard($0 % 2 != 0, $0, { dec($$0) }) };
-    jseed = (min $ makeodd)(abs(actualseed), m1);
+    jseed = (min $ makeodd)(abs(actualseed), M1);
 
     initseeds = { 
         js, j0, j1 => 
-            nextjseed = j0 * k0; 
+            nextjseed = j0 * K0; 
             ( 
                 nextjseed, 
-                nextjseed % m2, 
-                (nextjseed / m2 + j0 * k1 + j1 * k0) % (m2 / 2)
+                nextjseed % M2, 
+                (nextjseed / M2 + j0 * K1 + j1 * K0) % (M2 / 2)
             ) 
     };
 
-    seeds = tracen((jseed, jseed % m2, jseed / m2), 17, initseeds) |
-            { _, j0, j1 => j0 + m2 * j1 };
+    seeds = tracen((jseed, jseed % M2, jseed / M2), 17, initseeds) |
+            { _, j0, j1 => j0 + M2 * j1 };
 
-    m = rest(seeds); // tracen includes the initial value as first element 
+    m = rest(seeds); // tracen includes the initial value as first element
 
-    members := (#i:4, #j:16, #m:m);
+    state = box(4, 16, m);
 
-    // private utils
-    makepositive = { guard($0 >= 0, $0, { $$0 + m1 }) };
-    decwrap = { guard($0 == 0, 16, { dec($$0) }) };
+    {
+        // private utils
+        makepositive(n) { guard(n >= 0, n, { n + M1 }) };
+        decwrap(n) { guard(n == 0, 16, { dec(n) }) };
 
-    { 
-        this = *members;
+        (i, j, m) = *state;
 
-        k = makepositive(this.m[this.i] - this.m[this.j]);
+        k = makepositive(m[i] - m[j]);
 
-        members := (#i: decwrap(this.i), 
-                    #j: decwrap(this.j), 
-                    #m: listset(this.m, this.j, k));
+        state := (decwrap(i),
+                    decwrap(j),
+                    listset(m, j, k));
 
-        dm1 *. i2f(k)
+        DM1 *. i2f(k)
     }
 };
 
