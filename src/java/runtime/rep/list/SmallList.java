@@ -14,7 +14,6 @@ import runtime.rep.lambda.Lambda;
 import runtime.rep.map.MapValue;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * Representation class for persistent lists with
@@ -27,6 +26,7 @@ import java.util.NoSuchElementException;
 final class SmallList extends PersistentList
 {
     private final Object[] data;
+    private final int size;
 
     /**
      * allocates but doesn't initialize data array
@@ -34,7 +34,8 @@ final class SmallList extends PersistentList
     SmallList(final int size)
     {
         assert size <= NODE_SIZE;
-        this.data = (Object[])BigList.allocData(size, 1);
+        this.data = BigList.allocData(size, 1);
+        this.size = size;
     }
 
     /**
@@ -43,7 +44,8 @@ final class SmallList extends PersistentList
     SmallList(final Iterator<?> iter, final int size)
     {
         assert size <= NODE_SIZE;
-        this.data = (Object[])BigList.initData(size, 1, iter);
+        this.data = BigList.initData(size, 1, iter);
+        this.size = size;
     }
 
     /**
@@ -51,36 +53,32 @@ final class SmallList extends PersistentList
      */
     SmallList(final Object... data)
     {
-        assert data.length <= NODE_SIZE;
         this.data = data;
+        this.size = data.length;
+        assert size <= NODE_SIZE;
     }
 
     public int size()
     {
-        return data.length;
+        return size;
     }
 
     public Object get(final int index)
     {
-        if (index < 0 || index >= size())
-            throw new IndexOutOfBoundsException("index = " + index + ", size = " + size());
-
         return data[index];
     }
 
     public int find(final Object value)
     {
-        for (int i = 0; i < data.length; i++)
+        for (int i = 0; i < size; i++)
             if (data[i].equals(value))
                 return i;
 
-        return data.length;
+        return size;
     }
 
     public PersistentList append(final Object value)
     {
-        final int size = data.length;
-
         if (size == NODE_SIZE)
         {
             return new BigList(NODE_SIZE + 1,
@@ -131,7 +129,6 @@ final class SmallList extends PersistentList
 
     private Object[] applyData(final Lambda f)
     {
-        final int size = data.length;
         final Object[] result = new Object[size];
         for (int i = 0; i < size; i++)
             result[i] = f.apply(data[i]);
@@ -145,14 +142,12 @@ final class SmallList extends PersistentList
 
     private void runData(final Lambda f)
     {
-        final int size = data.length;
         for (int i = 0; i < size; i++)
             f.apply(data[i]);
     }
 
     public PersistentList select(final ListValue list)
     {
-        final int size = data.length;
         final Object[] result = new Object[size];
         for (int i = 0; i < size; i++)
             result[i] = list.get((Integer)data[i]);
@@ -162,7 +157,6 @@ final class SmallList extends PersistentList
 
     public PersistentList select(final MapValue map)
     {
-        final int size = data.length;
         final Object[] result = new Object[size];
         for (int i = 0; i < size; i++)
             result[i] = map.get(data[i]);
@@ -174,7 +168,7 @@ final class SmallList extends PersistentList
 
     public Iterator<Object> iterator(final int from, final int to)
     {
-        assert from >= 0 && to <= data.length;
+        assert from >= 0 && to <= size;
 
         return new Iterator<Object>()
         {
@@ -187,9 +181,6 @@ final class SmallList extends PersistentList
 
             public Object next()
             {
-                if (!hasNext())
-                    throw new NoSuchElementException();
-
                 return data[i++];
             }
 

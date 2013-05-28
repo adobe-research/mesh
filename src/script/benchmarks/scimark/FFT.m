@@ -42,8 +42,8 @@ PI = 3.14159265;
 
 // This is implemented as in-place replacement in an array of boxes.
 // TODO: This infinite loops when passed an array size that is not a power of 2.
-//transform_internal_array_of_boxes(data:[Double], direction:Int) -> [Double] {
-transform_internal(data:[Double], direction:Int) -> [Double] {
+transform_internal_array_of_boxes(data:[Double], direction:Int) -> [Double] {
+//transform_internal(data:[Double], direction:Int) -> [Double] {
     N = size(data);
     n = N/2;
 
@@ -183,8 +183,8 @@ transform_internal_boxed_array(data:[Double], direction:Int) -> [Double] {
 
 // functional version
 // TODO: This infinite loops when passed an array size that is not a power of 2.
-transform_internal_functional(data:[Double], direction:Int) -> [Double] {
-//transform_internal(data:[Double], direction:Int) -> [Double] {
+//transform_internal_functional(data:[Double], direction:Int) -> [Double] {
+transform_internal(data:[Double], direction:Int) -> [Double] {
     N = size(data);
     n = N/2;
 

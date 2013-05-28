@@ -44,7 +44,7 @@ public final class BigList extends PersistentList
     /**
      * List contents.
      */
-    private final Object data;
+    private final Object[] data;
 
     /**
      * allocates but doesn't initialize data tree
@@ -66,7 +66,7 @@ public final class BigList extends PersistentList
     /**
      * package-local for access from other list impls
      */
-    BigList(final int size, final Object data)
+    BigList(final int size, final Object[] data)
     {
         assert size > NODE_SIZE;
 
@@ -86,7 +86,12 @@ public final class BigList extends PersistentList
         if (index < 0 || index >= size)
             throw new IndexOutOfBoundsException("index = " + index + ", size = " + size);
 
-        return ((Object[])nodeForIndex(index))[index & PATH_MASK];
+        Object[] node = data;
+
+        for (int shift = (height - 1) * PATH_BITS; shift > 0; shift -= PATH_BITS)
+            node = (Object[])node[(index >>> shift) & PATH_MASK];
+
+        return node[index & PATH_MASK];
     }
 
     public int find(final Object value)
@@ -125,7 +130,7 @@ public final class BigList extends PersistentList
     /**
      * append item to data tree. data must not be at capacity.
      */
-    private static Object appendData(final Object data,
+    private static Object[] appendData(final Object data,
         final int origsize,
         final int height,
         final int capacity,
@@ -195,7 +200,7 @@ public final class BigList extends PersistentList
      * index must be less than current data size (unchecked).
      * If mutate flag is true, modification is in-place.
      */
-    private static Object updateData(final Object data,
+    private static Object[] updateData(final Object data,
         final int height,
         final int index,
         final Object item,
@@ -235,7 +240,7 @@ public final class BigList extends PersistentList
      * height is passed along to avoid recalculation,
      * must be equal to {@link #height height(size)}.
      */
-    static Object allocData(final int size, final int height)
+    static Object[] allocData(final int size, final int height)
     {
         if (height == 1)
             return new Object[size];
@@ -259,7 +264,7 @@ public final class BigList extends PersistentList
     /**
      *
      */
-    static Object initData(final int size, final int height,
+    static Object[] initData(final int size, final int height,
         final Iterator<?> iter)
     {
         if (height == 1)
@@ -290,12 +295,11 @@ public final class BigList extends PersistentList
 
     public PersistentList apply(final Lambda f)
     {
-        return new BigList(size,
-            applyData(f, data, size, height));
+        return new BigList(size, applyData(f, data, size, height, capacity));
     }
 
     private static Object[] applyData(final Lambda f, final Object data,
-        final int size, final int height)
+        final int size, final int height, final int capacity)
     {
         if (size == 0)
             return null;
@@ -315,7 +319,7 @@ public final class BigList extends PersistentList
         {
             final Object[] array = (Object[])data;
 
-            final int childcap = capacity(height - 1);
+            final int childcap = capacity >> PATH_BITS;
             final int div = size / childcap;
             final int rem = size % childcap;
             final boolean ragged = rem > 0;
@@ -323,10 +327,10 @@ public final class BigList extends PersistentList
             result = new Object[div + (ragged ? 1 : 0)];
 
             for (int i = 0; i < div; i++)
-                result[i] = applyData(f, array[i], childcap, height - 1);
+                result[i] = applyData(f, array[i], childcap, height - 1, childcap);
 
             if (ragged)
-                result[div] = applyData(f, array[div], rem, height - 1);
+                result[div] = applyData(f, array[div], rem, height - 1, childcap);
         }
 
         return result;
@@ -334,11 +338,11 @@ public final class BigList extends PersistentList
 
     public void run(final Lambda f)
     {
-        runData(f, data, size, height);
+        runData(f, data, size, height, capacity);
     }
 
-    private static void runData(final Lambda f, final Object data, final int size,
-        final int height)
+    private static void runData(final Lambda f, final Object data,
+        final int size, final int height, final int capacity)
     {
         if (size == 0)
             return;
@@ -354,26 +358,26 @@ public final class BigList extends PersistentList
         {
             final Object[] array = (Object[])data;
 
-            final int childcap = capacity(height - 1);
+            final int childcap = capacity >> PATH_BITS;
             final int div = size / childcap;
             final int rem = size % childcap;
 
             for (int i = 0; i < div; i++)
-                runData(f, array[i], childcap, height - 1);
+                runData(f, array[i], childcap, height - 1, childcap);
 
             if (rem > 0)
-                runData(f, array[div], rem, height - 1);
+                runData(f, array[div], rem, height - 1, childcap);
         }
     }
 
     public BigList select(final ListValue list)
     {
         return new BigList(size,
-            selectData(list, data, size, height));
+            selectData(list, data, size, height, capacity));
     }
 
     private static Object[] selectData(final ListValue list, final Object data,
-        final int size, final int height)
+        final int size, final int height, final int capacity)
     {
         final Object[] result;
 
@@ -390,7 +394,7 @@ public final class BigList extends PersistentList
         {
             final Object[] array = (Object[])data;
 
-            final int childcap = capacity(height - 1);
+            final int childcap = capacity >> PATH_BITS;
             final int div = size / childcap;
             final int rem = size % childcap;
             final boolean ragged = rem > 0;
@@ -398,10 +402,10 @@ public final class BigList extends PersistentList
             result = new Object[div + (ragged ? 1 : 0)];
 
             for (int i = 0; i < div; i++)
-                result[i] = selectData(list, array[i], childcap, height - 1);
+                result[i] = selectData(list, array[i], childcap, height - 1, childcap);
 
             if (ragged)
-                result[div] = selectData(list, array[div], rem, height - 1);
+                result[div] = selectData(list, array[div], rem, height - 1, childcap);
         }
 
         return result;
@@ -410,11 +414,11 @@ public final class BigList extends PersistentList
     public BigList select(final MapValue map)
     {
         return new BigList(size,
-            selectData(map, data, size, height));
+            selectData(map, data, size, height, capacity));
     }
 
     private static Object[] selectData(final MapValue map, final Object data,
-        final int size, final int height)
+        final int size, final int height, final int capacity)
     {
         final Object[] result;
 
@@ -431,7 +435,7 @@ public final class BigList extends PersistentList
         {
             final Object[] array = (Object[])data;
 
-            final int childcap = capacity(height - 1);
+            final int childcap = capacity >> PATH_BITS;
             final int div = size / childcap;
             final int rem = size % childcap;
             final boolean ragged = rem > 0;
@@ -439,10 +443,10 @@ public final class BigList extends PersistentList
             result = new Object[div + (ragged ? 1 : 0)];
 
             for (int i = 0; i < div; i++)
-                result[i] = selectData(map, array[i], childcap, height - 1);
+                result[i] = selectData(map, array[i], childcap, height - 1, childcap);
 
             if (ragged)
-                result[div] = selectData(map, array[div], rem, height - 1);
+                result[div] = selectData(map, array[div], rem, height - 1, childcap);
         }
 
         return result;
@@ -458,7 +462,7 @@ public final class BigList extends PersistentList
         {
             int i = from;
             int off = i % NODE_SIZE;
-            Object node = nodeForIndex(i);
+            Object[] node = nodeForIndex(i);
 
             public boolean hasNext()
             {
@@ -467,15 +471,19 @@ public final class BigList extends PersistentList
 
             public Object next()
             {
-                if (!hasNext())
+                if (i == to)
                     throw new NoSuchElementException();
 
-                final Object value = ((Object[])node)[off];
+                if (off == NODE_SIZE)
+                {
+                    node = nodeForIndex(i);
+                    off = 0;
+                }
+
+                final Object value = node[off];
 
                 i++;
-                off = i % NODE_SIZE;
-                if (off == 0)
-                    node = nodeForIndex(i);
+                off++;
 
                 return value;
             }
@@ -490,15 +498,12 @@ public final class BigList extends PersistentList
     /**
      *
      */
-    protected final Object nodeForIndex(final int i)
+    private Object[] nodeForIndex(final int i)
     {
-        if (i == size)
-            return null;
-
-        Object node = data;
+        Object[] node = data;
 
         for (int shift = (height - 1) * PATH_BITS; shift > 0; shift -= PATH_BITS)
-            node = ((Object[])node)[(i >>> shift) & PATH_MASK];
+            node = (Object[])node[(i >>> shift) & PATH_MASK];
 
         return node;
     }

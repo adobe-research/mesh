@@ -14,7 +14,7 @@ import compile.gen.java.StatementFormatter;
 import compile.term.ApplyTerm;
 
 /**
- * Try inlining calls to {@link runtime.intrinsic.I2F}.
+ * Try inlining calls to {@link runtime.intrinsic._i2f}.
  *
  * @author Basil Hosmer
  */

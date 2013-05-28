@@ -2237,11 +2237,18 @@ cross(xs, ys)
 //
 
 /**
- * Create a box with an initial value.
+ * Create a box from an initial value.
+ * @param v value to be boxed
+ * @return boxed value
+ */
+intrinsic <T> box(v : T) -> *T;
+
+/**
+ * Create a tuple of boxes from a tuple of initial values.
  * @param x value to be boxed
  * @return boxed value
  */
-intrinsic <T> box(x : T) -> *T;
+intrinsic <Ts:[*]> boxes(vs : Tup(Ts)) -> Tup(Ts | Box);
 
 /**
  * Run a block in a transaction.
@@ -2249,16 +2256,22 @@ intrinsic <T> box(x : T) -> *T;
 intrinsic <T> do(b : () -> T) -> T;
 
 /**
- * @param x box
+ * Return the current value of a box.
+ * @param b box
  * @return value of box
  */
-intrinsic <T> get(x:*T) -> T; // unary *
+intrinsic <T> get(b : *T) -> T; // unary *
 
 /**
+ * Return a tuple of the current values of a tuple of boxes.
+ * Atomic, so box reads all take place at the same moment
+ * in program time. I.e., this function is equivalent to
+ * performing individual gets on each box within a transaction
+ * and returning a tuple of the results.
  * @param x tuple of boxes
  * @return tuple of values
  */
-intrinsic <Ts:[*]> gets(t : Tup(Ts | Box)) -> Tup(Ts);
+intrinsic <Ts:[*]> gets(bs : Tup(Ts | Box)) -> Tup(Ts);
 
 /**
  * @return true if currently in a transaction, otherwise false.
