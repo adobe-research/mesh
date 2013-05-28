@@ -140,12 +140,12 @@ assert_equals({ -1 }, { apply(neg, 1) });
 assert_equals({ 16 }, { pow(2, 4) });
 assert_equals({ 16 }, { apply(pow, (2, 4)) });
 
-// log2 : (Int) -> Int = <intrinsic>
-assert_equals({ 8 }, { log2(256) });
-assert_equals({ 7 }, { log2(255) });
-assert_equals({ 0 }, { log2(1) });
-assert_equals({ 0 }, { log2(-1) });
-assert_equals({ 30 }, { log2(0x40000000) });
+// ilog2 : (Int) -> Int = <intrinsic>
+assert_equals({ 8 }, { ilog2(256) });
+assert_equals({ 7 }, { ilog2(255) });
+assert_equals({ 0 }, { ilog2(1) });
+assert_equals({ 0 }, { ilog2(-1) });
+assert_equals({ 30 }, { ilog2(0x40000000) });
 
 // sign : Int -> Int = <intrinsic>
 assert_equals({ 0 }, { sign(0) });

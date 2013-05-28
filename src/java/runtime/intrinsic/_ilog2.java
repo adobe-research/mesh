@@ -13,14 +13,14 @@ package runtime.intrinsic;
 import runtime.rep.lambda.IntrinsicLambda;
 
 /**
- * int min()
+ * integer log base 2
  *
  * @author Keith McGuigan
  */
-public final class _log2 extends IntrinsicLambda
+public final class _ilog2 extends IntrinsicLambda
 {
-    public static final _log2 INSTANCE = new _log2(); 
-    public static final String NAME = "log2";
+    public static final _ilog2 INSTANCE = new _ilog2();
+    public static final String NAME = "ilog2";
 
     public String getName()
     {
@@ -32,22 +32,8 @@ public final class _log2 extends IntrinsicLambda
         return invoke((Integer)arg);
     }
 
-    public static int invoke(int bits)
+    public static int invoke(final int bits)
     {
-        int log = 0;
-        int tstval = 0x00010000;
-        int factor = 16;
-
-        while (factor > 0) 
-        {
-            if (bits >= tstval)
-            {
-                bits >>>= factor;
-                log += factor;
-            }
-            factor >>>= 1;
-            tstval >>>= factor;
-        }
-        return log;
+        return bits < 0 ? 0 : (31 - Integer.numberOfLeadingZeros(bits));
     }
 }

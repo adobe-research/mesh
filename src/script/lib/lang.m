@@ -1063,7 +1063,7 @@ log(b, n)
  * #param n an integer
  * @return the log of n base 2
  */
-intrinsic log2(n:Int) -> Int;
+intrinsic ilog2(n:Int) -> Int;
 
 /**
  * round.

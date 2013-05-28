@@ -15,7 +15,7 @@ import * from std;
 //export num_flops, transform, inverse, test;
 
 num_flops(N:Int) -> Double {
-    i2f((5 * N - 2) * log2(N) + 2 * (N + 1))
+    i2f((5 * N - 2) * ilog2(N) + 2 * (N + 1))
 };
 
 bitreverse(data:[Double]) -> [Double] {
@@ -48,7 +48,7 @@ transform_internal_array_of_boxes(data:[Double], direction:Int) -> [Double] {
     n = N/2;
 
     guard(n == 1 || { N == 0 }, data, {
-        logn = log2(n);
+        logn = ilog2(n);
         D = bitreverse(data) | box;
 
         cyclen(( 0, 1 ), logn, { bit, dual =>
@@ -115,7 +115,7 @@ transform_internal_boxed_array(data:[Double], direction:Int) -> [Double] {
     n = N/2;
 
     guard(n == 1 || { N == 0 }, data, {
-        logn = log2(n);
+        logn = ilog2(n);
         DB = box(bitreverse(data));
 
         cyclen(( 0, 1 ), logn, { bit, dual =>
@@ -189,7 +189,7 @@ transform_internal(data:[Double], direction:Int) -> [Double] {
     n = N/2;
 
     guard(n == 1 || { N == 0 }, data, {
-        logn = log2(n);
+        logn = ilog2(n);
 
         cyclen((bitreverse(data), 0, 1), logn, { D, bit, dual =>
             w_real = 1.0;
