@@ -50,19 +50,32 @@ public final class _mapz extends IntrinsicLambda
             return invoke2((ListValue)lists.get(0), (ListValue)lists.get(1), func);
 
         int size = 0;
-        boolean even = true;
-        for (int i = 0; i < wid; i++)
-        {
-            final int listsize = ((ListValue)lists.get(i)).size();
+        boolean ragged = false;
 
-            // note early bailout
-            if (listsize == 0)
+        if (wid > 0)
+        {
+            size = ((ListValue)lists.get(0)).size();
+
+            // early bailout--any empty component list yields empty zip
+            if (size == 0)
                 return PersistentList.EMPTY;
 
-            if (size < listsize)
+            for (int i = 1; i < wid; i++)
             {
-                size = listsize;
-                even = false;
+                final int listsize = ((ListValue)lists.get(i)).size();
+
+                // early bailout--any empty component list yields empty zip
+                if (listsize == 0)
+                    return PersistentList.EMPTY;
+
+                if (listsize != size)
+                {
+                    // ragged lists must use a slower iterator
+                    ragged = true;
+
+                    // size of zipped list is size of longest list
+                    size = Math.max(size, listsize);
+                }
             }
         }
 
@@ -72,7 +85,7 @@ public final class _mapz extends IntrinsicLambda
         for (int j = 0; j < wid; j++)
         {
             final ListValue list = (ListValue)lists.get(j);
-            iters[j] = even ? list.iterator() : Iterators.cycle(list);
+            iters[j] = ragged ? Iterators.cycle(list) : list.iterator();
         }
 
         for (int i = 0; i < size; i++)
