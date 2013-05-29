@@ -37,6 +37,6 @@ public final class _count extends IntrinsicLambda
 
     public static ListValue invoke(final int n)
     {
-        return IntRange.create(0, n >= 0 ? n : Math.abs(n));
+        return IntRange.create(0, n >= 0 ? n : -n);
     }
 }

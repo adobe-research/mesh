@@ -14,6 +14,7 @@ import compile.gen.java.StatementFormatter;
 import compile.term.*;
 import runtime.intrinsic._count;
 import runtime.intrinsic._index;
+import runtime.intrinsic._range;
 import runtime.rep.lambda.Lambda;
 import runtime.rep.list.ListValue;
 
@@ -45,10 +46,12 @@ public class ForInliner implements Inliner
         // 1. index(list) is an int list from 0 to size(list), always ok
         // 2. count(n) is an int list from 0 to the absolute value of n, so
         // we know loop direction but need to inline the logic that ensures it.
-        // Other possible candidates are range(i, n) and fromto(s, e), but
-        // in these cases one or both arguments must be compile-time constant
-        // to determine loop direction. May be worth doing them but at some
-        // point but they're clearly less important than the ones we're doing now.
+        // 3. range(start, extent) is similar to count().
+        // Other possible candidate is fromto(s, e), but in this case both arguments
+        // must be compile-time constant (or, I guess, be a compile-time constant delta
+        // off an identical baseline) to determine loop direction. May be worth doing
+        // them but at some point but they're clearly less important than the ones
+        // we're doing now.
 
         final String startIndexExpr;
         final String endIndexExpr;
@@ -75,14 +78,49 @@ public class ForInliner implements Inliner
                 }
                 else
                 {
-                    endIndexExpr = Math.class.getName() + ".abs(" +
-                        fmt.formatTermAs(countArg, int.class) + ")";
+                    final String raw = "(" + fmt.formatTermAs(countArg, int.class) + ")";
+                    endIndexExpr = "(" + raw + " >= 0 ? " + raw + " : -" + raw + ")";
                 }
             }
             else
             {
-                startIndexExpr = null;
-                endIndexExpr = null;
+                final Term rangeArg =
+                    InlinerUtils.derefToIntrinsicApply(iterArg, _range.INSTANCE, fmt);
+
+                if (rangeArg != null && rangeArg instanceof TupleTerm)
+                {
+                    final List<Term> rangeArgs = ((TupleTerm)rangeArg).getItems();
+                    final Term startArg = rangeArgs.get(0);
+                    final Term extentArg = rangeArgs.get(1);
+
+                    startIndexExpr = fmt.formatTermAs(startArg, int.class);
+
+                    if (extentArg instanceof IntLiteral)
+                    {
+                        if (startArg instanceof IntLiteral)
+                        {
+                            endIndexExpr = "" +
+                                (((IntLiteral)startArg).getValue() +
+                                Math.abs(((IntLiteral)extentArg).getValue()));
+                        }
+                        else
+                        {
+                            endIndexExpr = "((" + startIndexExpr + ") + ("  +
+                                Math.abs(((IntLiteral)extentArg).getValue()) + "))";
+                        }
+                    }
+                    else
+                    {
+                        final String raw = "(" + fmt.formatTermAs(extentArg, int.class) + ")";
+                        endIndexExpr = "((" + startIndexExpr + ") + (" +
+                            raw + " >= 0 ? " + raw + " : -" + raw + "))";
+                    }
+                }
+                else
+                {
+                    startIndexExpr = null;
+                    endIndexExpr = null;
+                }
             }
         }
 
