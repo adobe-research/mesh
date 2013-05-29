@@ -42,19 +42,16 @@ public abstract class IntrinsicsResolver
         return LOCAL.get();
     }
 
-    @SuppressWarnings("serial")
-    public static class ResolutionError extends Exception
-    {
-        // msg contains the reason why the resolution failed
-        public ResolutionError(final String msg)
-        {
-            super(msg);
-        }
-    }
-
     /**
      * Finds an intrinsic that matches the let name, and verifies that the
-     * runtime type matches the let's declared type.
+     * runtime type matches the let's declared type.  If this returns null,
+     * then getErrorMessage can be called to indicate why.
      */
-    public abstract IntrinsicLambda resolve(final LetBinding let) throws ResolutionError;
+    public abstract IntrinsicLambda resolve(final LetBinding let);
+
+    /**
+     * If the last resolve call failed, this will return an error message
+     * indicating why.  If the last resolve call succeeded, this returns null.
+     */
+    public abstract String getErrorMessage();
 }

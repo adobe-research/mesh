@@ -27,6 +27,7 @@ import java.util.*;
  */
 public final class JavaIntrinsicsResolver extends IntrinsicsResolver
 {
+
     public static IntrinsicsResolver.Factory factory =
         new IntrinsicsResolver.Factory()
         {
@@ -40,6 +41,7 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
      * Memoized list of bindings which have been verified
      */
     private final Map<LetBinding,IntrinsicLambda> verifiedIntrinsics;
+    private String lastErrorMessage;
 
     // TODO: use module name as key into package configuration mapping
     private static final String[] intrinsicPackages = new String[] {
@@ -55,15 +57,42 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
     public JavaIntrinsicsResolver()
     {
         this.verifiedIntrinsics = new HashMap<LetBinding,IntrinsicLambda>();
+        this.lastErrorMessage = null;
+    }
+
+
+    private IntrinsicLambda resolved(
+            final LetBinding let, final IntrinsicLambda lambda)
+    {
+        lastErrorMessage = null;
+        verifiedIntrinsics.put(let, lambda);
+        return lambda;
+    }
+
+    private IntrinsicLambda cached(final IntrinsicLambda lambda)
+    {
+        lastErrorMessage = null;
+        return lambda;
+    }
+
+    private IntrinsicLambda error(final String msg)
+    {
+        lastErrorMessage = msg;
+        return null;
+    }
+
+    public String getErrorMessage()
+    {
+        return lastErrorMessage;
     }
 
     public IntrinsicLambda resolve(final LetBinding let)
-        throws IntrinsicsResolver.ResolutionError
     {
-        final IntrinsicLambda resolved = verifiedIntrinsics.get(let);
+        lastErrorMessage = null;
 
-        if (resolved != null)
-            return resolved;
+        final IntrinsicLambda lambda = verifiedIntrinsics.get(let);
+        if (lambda != null)
+            return cached(lambda);
 
         final String name = let.getName();
 
@@ -79,10 +108,12 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
                     final Object intrObj = field.get(null);
                     if (intrObj != null && intrObj instanceof IntrinsicLambda)
                     {
-                        final IntrinsicLambda lambda = (IntrinsicLambda)intrObj;
-                        verifyIntrinsicType(let, lambda);
-                        verifiedIntrinsics.put(let, lambda);
-                        return lambda;
+                        final IntrinsicLambda instance = (IntrinsicLambda)intrObj;
+                        final String msg = verifyIntrinsicType(let, instance);
+                        if (msg == null)
+                            return resolved(let, instance);
+                        else
+                            return error(msg);
                     }
                 }
             }
@@ -91,13 +122,11 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
             catch (IllegalAccessException ignored) {}
         }
 
-        throw new IntrinsicsResolver.ResolutionError(
-            "Cannot find implementation for intrinsic " + let.getName() +
-            " with type " + let.getType().dump());
+        return error("Cannot find implementation for intrinsic " +
+            let.getName() + " with type " + let.getType().dump());
     }
 
-    private void verifyIntrinsicType(final LetBinding let, final IntrinsicLambda lambda)
-        throws IntrinsicsResolver.ResolutionError
+    private String verifyIntrinsicType(final LetBinding let, final IntrinsicLambda lambda)
     {
         if (Session.isDebug())
             Session.debug("Verifying proper form of intrinsic: ''{0}''", let.getName());
@@ -107,8 +136,7 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
 
         if (parameters == null || returnType == null)
         {
-            throw new IntrinsicsResolver.ResolutionError(
-                "Invalid intrinsic implementation " + lambda.getClass());
+            return "Invalid intrinsic implementation " + lambda.getClass();
         }
 
         final Class<?>[] paramspec = parameters.toArray(new Class<?>[parameters.size()]);
@@ -116,13 +144,13 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
         {
             final Method method = lambda.getClass().getMethod(Constants.INVOKE, paramspec);
             if (method.getReturnType() == returnType)
-                return;
+                return null; // success
         }
         catch (NoSuchMethodException ignored) {}
 
-        throw new IntrinsicsResolver.ResolutionError("intrinsic implementation " +
+        return "intrinsic implementation " +
             lambda.getClass() + " is incompatible with prototype " +
-            let.getType().dump());
+            let.getType().dump();
     }
 
     /**

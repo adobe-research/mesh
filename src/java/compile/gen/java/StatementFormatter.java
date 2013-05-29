@@ -587,17 +587,11 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     public String formatIntrinsicAsRHS(final LetBinding let)
     {
         final IntrinsicsResolver resolver = IntrinsicsResolver.getThreadLocal();
-        try
-        {
-            final IntrinsicLambda intrinsic = resolver.resolve(let);
-            return intrinsic.getClass().getName() + "."+ Constants.INSTANCE;
-        }
-        catch (IntrinsicsResolver.ResolutionError e)
-        {
-            Session.error(let.getLoc(), e.getMessage());
-            assert false : "Intrinsic should have been previously resolved";
-            return "";
-        }
+
+        final IntrinsicLambda intrinsic = resolver.resolve(let);
+        assert intrinsic != null : "Intrinsic should have been previously resolved";
+
+        return intrinsic.getClass().getName() + "."+ Constants.INSTANCE;
     }
 
     /**
@@ -1278,39 +1272,32 @@ public final class StatementFormatter extends BindingVisitorBase<String>
                 {
                     final IntrinsicsResolver resolver =
                         IntrinsicsResolver.getThreadLocal();
-                    try
+                    final IntrinsicLambda intrinsic = resolver.resolve(let);
+
+                    assert intrinsic != null : 
+                        "Intrinsics should have been previously resolved";
+
+                    final String lambdaClass = intrinsic.getClass().getName();
+                    final Type baseType = base.getType().deref();
+
+                    if (Types.isFun(baseType))
                     {
-                        final IntrinsicLambda intrinsic = resolver.resolve(let);
+                        final Type paramType = Types.funParam(baseType);
 
-                        final String lambdaClass = intrinsic.getClass().getName();
-                        final Type baseType = base.getType().deref();
-
-                        if (Types.isFun(baseType))
+                        if (Types.isTup(paramType) &&
+                                Types.tupMembers(paramType) instanceof TypeList)
                         {
-                            final Type paramType = Types.funParam(baseType);
-
-                            if (Types.isTup(paramType) &&
-                                    Types.tupMembers(paramType) instanceof TypeList)
-                            {
-                                // scatter calls to non-variadic multi-arg functions
-                                return new InvokeInfo(null,
-                                        InvokeInfo.InvokeMode.Scatter, lambdaClass);
-                            }
-                            else
-                            {
-                                // otherwise, intrinsic takes a single argument
-                                return new InvokeInfo(null,
-                                        InvokeInfo.InvokeMode.NoScatter, lambdaClass);
-                            }
+                            // scatter calls to non-variadic multi-arg functions
+                            return new InvokeInfo(null,
+                                    InvokeInfo.InvokeMode.Scatter, lambdaClass);
+                        }
+                        else
+                        {
+                            // otherwise, intrinsic takes a single argument
+                            return new InvokeInfo(null,
+                                    InvokeInfo.InvokeMode.NoScatter, lambdaClass);
                         }
                     }
-                    catch (IntrinsicsResolver.ResolutionError e)
-                    {
-                        Session.error(base.getLoc(), e.getMessage());
-                        assert false : "Intrinsics should have been previously resolved";
-                        return null;
-                    }
-
                     // should be an assert? calling an intrinsic with non-function type?
                     return null;
                 }

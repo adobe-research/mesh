@@ -263,14 +263,8 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
             }
 
             final IntrinsicsResolver resolver = IntrinsicsResolver.getThreadLocal();
-            try
-            {
-                resolver.resolve(let);
-            }
-            catch (IntrinsicsResolver.ResolutionError e)
-            {
-                Session.error(let.getLoc(), e.getMessage());
-            }
+            if (resolver.resolve(let) == null)
+                Session.error(let.getLoc(), resolver.getErrorMessage());
         }
 
         if (let.hasDeclaredType())
