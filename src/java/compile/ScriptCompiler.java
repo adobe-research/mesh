@@ -11,9 +11,7 @@
 package compile;
 
 import compile.analyze.ModuleAnalyzer;
-import compile.gen.java.Unit;
-import compile.gen.java.UnitBuilder;
-import compile.gen.java.UnitDictionary;
+import compile.gen.java.*;
 import compile.module.*;
 import compile.parse.RatsScriptParser;
 import compile.parse.RatsShellScriptParser;
@@ -35,9 +33,18 @@ public class ScriptCompiler
 {
     public static final String INTRINSICS = "intrinsics";
 
+    // Uses only Java backend and runtime for now
+    private static final IntrinsicsResolver intrinsicsResolver =
+        new JavaIntrinsicsResolver();
+
     private static final List<String> compilerImports = new ArrayList<String>();
     static {
         compilerImports.add("lang");
+    }
+
+    private static IntrinsicsResolver getIntrinsicsResolver()
+    {
+        return intrinsicsResolver;
     }
 
     /**
@@ -89,7 +96,8 @@ public class ScriptCompiler
         final List<Statement> statements = RatsScriptParser.parseScript(reader, loc);
 
         return statements == null ? null :
-            buildModule(loc, moduleName, imports, statements, dict);
+            buildModule(loc, moduleName, imports, statements, dict,
+                        getIntrinsicsResolver());
     }
 
     /**
@@ -106,7 +114,8 @@ public class ScriptCompiler
     {
         final Module module = buildModule(
            loc, moduleName, imports, statements,
-           unitDictionary.getModuleDictionary());
+           unitDictionary.getModuleDictionary(),
+           getIntrinsicsResolver());
 
         return module == null ? null :
             UnitBuilder.build(module, unitDictionary, debug);
@@ -119,13 +128,14 @@ public class ScriptCompiler
         final Loc loc, final Reader reader, final String moduleName,
         final ModuleDictionary dict)
     {
-        final List<ImportStatement> imports = 
+        final List<ImportStatement> imports =
             Collections.<ImportStatement>emptyList();
         final List<Statement> statements =
             RatsScriptParser.parseScript(reader, loc);
 
         return statements == null ? null : buildModule(
-            loc, moduleName, imports, statements, dict);
+            loc, moduleName, imports, statements, dict,
+            getIntrinsicsResolver());
     }
 
     /**
@@ -144,7 +154,8 @@ public class ScriptCompiler
                                       final String moduleName,
                                       final List<ImportStatement> imports,
                                       final List<Statement> statements,
-                                      final ModuleDictionary dict)
+                                      final ModuleDictionary dict,
+                                      final IntrinsicsResolver intrinsicsResolver)
     {
         // TODO won't need this when we go to two-phase pipeline
         if (Session.inModule(moduleName))
@@ -168,7 +179,8 @@ public class ScriptCompiler
             statements : addImplicitImports(imports, statements);
 
         // create new module with passed loc, name, and parsed term list; import intrinsics
-        final Module module = new Module(loc, moduleName, statementsWithPreloads, dict);
+        final Module module = new Module(loc, moduleName, statementsWithPreloads, dict,
+                intrinsicsResolver);
 
         // add the newly created module to the passed dictionary
         dict.add(module);
@@ -187,7 +199,7 @@ public class ScriptCompiler
      *
      */
     private static List<Statement> addImplicitImports(
-        final List<ImportStatement> imports, 
+        final List<ImportStatement> imports,
         final List<Statement> statements)
     {
         assert !Session.isInImplicitImport();

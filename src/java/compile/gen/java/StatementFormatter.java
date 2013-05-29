@@ -17,6 +17,7 @@ import compile.module.Scope;
 import compile.term.*;
 import compile.term.visit.BindingVisitorBase;
 import compile.type.*;
+import runtime.IntrinsicTypeRecorder;
 import runtime.rep.Record;
 import runtime.rep.Tuple;
 import runtime.rep.lambda.Lambda;
@@ -73,8 +74,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
      */
     private Statement currentStatement;
 
-    private IntrinsicsResolver intrinsicsResolver;
-
     /**
      * if true, we're currently generating expr code, even if
      * {@link #currentStatement} is a non-result unbound term.
@@ -111,8 +110,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         this.lambdaDepth = 0;
 
         this.currentStatement = null;
-
-        this.intrinsicsResolver = new IntrinsicsResolver();
 
         this.inExpr = false;
 
@@ -459,7 +456,10 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         final String rhs;
         if (let.isIntrinsic()) 
         {
-            rhs = intrinsicsResolver.formatAsRHSAndRecord(let);
+            // Record a dump of the intrinsic type for use when printing it.
+            rhs = IntrinsicTypeRecorder.class.getName() + 
+                ".record(" + formatIntrinsicAsRHS(let) + 
+                ", \"" + let.getType().dump() + "\")";
         }
         else
         {
@@ -516,7 +516,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         {
             final LetBinding let = (LetBinding)binding;
             if (let.isIntrinsic())
-                return intrinsicsResolver.formatAsRHS(let);
+                return formatIntrinsicAsRHS(let);
         }
 
         return fixup(ref.getLoc(), formatNameRef(binding), ref.getType());
@@ -577,6 +577,17 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
             return formatName(binding.getName());
         }
+    }
+
+    /**
+     * Here we access special knowledge about how to go from an intrinsic
+     * let binding in the current scope, to a compatible value in the
+     * underlying Java environment
+     */
+    public String formatIntrinsicAsRHS(final LetBinding let)
+    {
+        IntrinsicLambda intrinsic = unit.getModule().getIntrinsic(let);
+        return intrinsic.getClass().getName() + "."+ Constants.INSTANCE;
     }
 
     /**
@@ -1255,12 +1266,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
                 if (let.isIntrinsic())
                 {
-                    final IntrinsicLambda intrinsic = intrinsicsResolver.resolve(let);
-                    if (intrinsic == null)
-                    {
-                        Session.error("No runtime intrinsic found for ''{0}''", let.getName());
-                        return null;
-                    }
+                    final IntrinsicLambda intrinsic = unit.getModule().getIntrinsic(let);
 
                     final String lambdaClass = intrinsic.getClass().getName();
                     final Type baseType = base.getType().deref();

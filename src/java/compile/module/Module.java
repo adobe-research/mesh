@@ -12,7 +12,9 @@ package compile.module;
 
 import com.google.common.collect.Maps;
 import compile.Loc;
+import compile.IntrinsicsResolver;
 import compile.term.*;
+import runtime.rep.lambda.IntrinsicLambda;
 
 import java.util.*;
 
@@ -33,11 +35,12 @@ public class Module extends AbstractScope
     private final List<Import> imports;
     private WhiteList exports;
     private boolean exportLocalsOnly; // for "export ."
+    private IntrinsicsResolver intrinsicsResolver;
 
     private final ModuleDictionary moduleDictionary;
 
     public Module(final Loc loc, final String name, final List<Statement> body, 
-        final ModuleDictionary dict)
+        final ModuleDictionary dict, final IntrinsicsResolver resolver)
     {
         super(loc, body);
         this.name = name;
@@ -46,6 +49,7 @@ public class Module extends AbstractScope
         this.exports = WhiteList.open();
         this.exportLocalsOnly = false;
         this.moduleDictionary = dict;
+        this.intrinsicsResolver = resolver;
     }
 
     public String getName()
@@ -249,6 +253,16 @@ public class Module extends AbstractScope
         {
             super.addDependency(statement, binding);
         }
+    }
+
+    public IntrinsicLambda resolveIntrinsic(final LetBinding let)
+    {
+        return intrinsicsResolver.resolve(let);
+    }
+
+    public IntrinsicLambda getIntrinsic(final LetBinding let)
+    {
+        return intrinsicsResolver.get(let);
     }
 
     // Dumpable
