@@ -170,11 +170,12 @@ public class ScriptCompiler
         // create new module with passed loc, name, and parsed term list; import intrinsics
         final Module module = new Module(loc, moduleName, statementsWithPreloads, dict);
 
-        // add the newly created module to the passed dictionary
-        dict.add(module);
-
         // analyze
         final boolean analyzed = ModuleAnalyzer.analyze(module);
+
+        // add the newly created module to the passed dictionary
+        if (analyzed)
+            dict.add(module);
 
         // clear implicit import flag if we're a root
         if (isImplicitImportRoot)
