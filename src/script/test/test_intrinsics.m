@@ -458,6 +458,7 @@ assert_equals({ "\"String\"" }, { tostr("String") });       // string
 assert_equals({ "[#a: 2]" }, { tostr([#a:2]) });            // symbol, this will hit Symbol after map
 assert_equals({ "[1, 2, 3]" }, { tostr([1,2,3]) });         // list
 assert_equals({ "[#a: 2]" }, { tostr([#a:2]) });            // map
+assert_equals({ "[:]" }, { tostr([:]) });                   // empty map
 assert_equals({ "(1, \"b\", 3)" }, { tostr((1, "b", 3)) }); // tuple
 assert_equals({ "()" }, { tup=(); tostr(tup) }); // tuple
 assert_equals({ "(1,)" }, { tup=(1,); tostr(tup) }); // tuple
@@ -545,6 +546,9 @@ assert_equals({ [#a: "One", #b: "Two"] }, { apply(mapmm, ([#a: 1, #b: 2], [1: "O
 assert_equals({ [6, 8, 8, 10] }, { mapz(([5, 6], [1,2,3,4]) , (+)) });
 assert_equals({ [] }, { mapz(([5, 6], []) , (+)) });
 assert_equals({ [6, 8, 8, 10] }, { apply(mapz, (([5, 6], [1,2,3,4]) , (+))) });
+assert_equals({ [9, 12] }, { triplus(a, b, c) { a + b + c }; mapz(([1, 2], [3, 4], [5, 6]) , triplus) }); // wide lists
+assert_equals({ [16, 20] }, { quadplus(a, b, c, d) { a + b + c + d }; mapz(([1, 2], [3, 4], [5, 6], [7, 8]) , quadplus) }); // wide lists
+assert_equals({ [] }, { triplus(a, b, c) { a + b + c }; mapz(([1, 2], [], [5, 6]) , triplus) }); // empty list bailout
 
 
 
@@ -690,10 +694,12 @@ assert_equals({ [4, 3, 2, 1, 0] }, { append(fromto(4, 1), 0) });
 assert_equals({ [4] }, { append([], 4) });
 assert_equals({ [1, 1, 1, 4] }, { append(rep(3, 1), 4) });
 assert_equals({ [1,2,3,4] }, { apply(append, ([1,2,3], 4)) });
-assert_equals({ [0, 1, 2, 3, 4] }, { append(flatten([[0,1], [2], [3]]), 4) }); // ChainedList
+assert_equals({ [0, 1, 2, 3, 4] }, { append(flatten([[0,1], [2], [3]]), 4) }); // ChainedList.append()
+assert_equals({ [0, 1, 2, 4, 3, 5, 6] }, { append(flatten([[0,1] ,[2,4], [3,5]]), 6) }); // MatrixList.append()
 
 // count : Int -> [Int] = <intrinsic>
 assert_equals({ [0,1,2] }, { count(3) });
+assert_equals({ [0] }, { count(-1) });
 assert_equals({ [0,1,2] }, { apply(count, 3) });
 
 // cut : (T => ([T], [Int]) -> [[T]]) = <intrinsic>
@@ -729,10 +735,12 @@ assert_equals({ 0 }, { find([1], 1) });
 assert_equals({ 1 }, { find([1], 0) });
 assert_equals({ 1 }, { sublist = take(3, take(4, [1,2,3])); find(sublist, 2) }); // sublist
 assert_equals({ 2 }, { find(take(34, count(33)), 2) }); // biglist
-assert_equals({ 1 }, { find(flatten([[0,1], [2,3]]), 1) }); // ChainedListPair
-assert_equals({ 4 }, { find(flatten([[0,1], [2,3]]), 5) }); // ChainedListPair
-assert_equals({ 1 }, { find(flatten([[0,1], [2], [3]]), 1) }); // ChainedList
-assert_equals({ 4 }, { find(flatten([[0,1] ,[2], [3]]), 5) }); // ChainedList
+assert_equals({ 1 }, { find(flatten([[0,1], [2,3]]), 1) }); // ChainedListPair.find()
+assert_equals({ 4 }, { find(flatten([[0,1], [2,3]]), 5) }); // ChainedListPair.find()
+assert_equals({ 1 }, { find(flatten([[0,1], [2], [3]]), 1) }); // ChainedList.find()
+assert_equals({ 4 }, { find(flatten([[0,1] ,[2], [3]]), 5) }); // ChainedList.find()
+assert_equals({ 1 }, { find(flatten([[0,1], [2,4], [3,5]]), 1) }); // MatrixList.find()
+assert_equals({ 6 }, { find(flatten([[0,1] ,[2,4], [3,5]]), 6) }); // MatrixList.find()
 
 
 
@@ -759,6 +767,12 @@ assert_equals({ [1: ["a"], 2: ["b"]] }, { group([1,2,3,4], ["a", "b"]) });
 assert_equals({ [:] }, { group([1,2,3,4], []) });
 assert_equals({ [1: ["a"], 2: ["b"], 3: ["c"], 4: ["d"]] }, { apply(group, ([1,2,3,4], ["a", "b", "c", "d"])) });
 
+// index : { <T> [T] -> [Int] => <intrinsic> }
+assert_equals({ [0, 1, 2, 3] }, { index([5, 3, 2, 1]) });
+assert_equals({ [0, 1, 2] }, { index(["a", "dog", "barks"]) });
+assert_equals({ [] }, { index([]) });
+assert_equals({ [0, 1, 2, 3] }, { apply(index, ([5, 3, 2, 1])) });
+
 // isindex : (T => (Int, [T]) -> Bool) = <intrinsic>
 assert_true({ isindex(3, ["a", "b", "c", "d", "e"]) });
 assert_false({ isindex(9, ["a", "b", "c", "d", "e"]) });
@@ -781,9 +795,10 @@ assert_equals({ [1, 1, 9] }, { listset(rep(3, 1), 2, 9) });
 assert_equals({ [2] }, { listset([1], 0, 2) });
 assert_equals({ [1, 2, 4] }, { sublist = take(3, take(4, [1,2,3])); listset(sublist, 2, 4) }); // sublist
 assert_equals({ append(count(33), 0) }, { listset(take(34, count(33)), 2, 2) }); // biglist
-assert_equals({ [2, 1, 2, 3] }, { listset(flatten([[0,1], [2,3]]), 0, 2) }); // ChainedListPair
-assert_equals({ [0, 1, 2, 5] }, { listset(flatten([[0,1], [2,3]]), 3, 5) }); // ChainedListPair
-assert_equals({ [0, 1, 5, 3] }, { listset(flatten([[0,1], [2], [3]]), 2, 5) }); // ChainedList
+assert_equals({ [2, 1, 2, 3] }, { listset(flatten([[0,1], [2,3]]), 0, 2) }); // ChainedListPair.update()
+assert_equals({ [0, 1, 2, 5] }, { listset(flatten([[0,1], [2,3]]), 3, 5) }); // ChainedListPair.update()
+assert_equals({ [0, 1, 5, 3] }, { listset(flatten([[0,1], [2], [3]]), 2, 5) }); // ChainedList.update()
+assert_equals({ [0, 1, 6, 3, 4, 5] }, { listset(flatten([[0,1] ,[2,3], [4,5]]), 2, 6) }); // MatrixList.update()
 
 
 assert_equals({ [3, 9, 7] }, { apply(listset, ([3,5,7], 1, 9)) });
@@ -830,7 +845,8 @@ assert_equals({ ["a", "b", "c"] }, { take(3, ["a", "b", "c"]) });
 assert_equals({ ["a", "b", "c", "a"] }, { take(4, ["a", "b", "c"]) });
 assert_equals({ ["c", "a", "b", "c"] }, { take(-4, ["a", "b", "c"]) });
 assert_equals({ ["a", "b"] }, { apply(take, (2, ["a", "b", "c"])) });
-assert_equals({ [0, 1, 2] }, { take(3, flatten([[0,1], [2], [3]])) }); // ChainedList
+assert_equals({ [0, 1, 2] }, { take(3, flatten([[0,1], [2], [3]])) }); // ChainedList.sublist()
+assert_equals({ [0, 1, 2, 3] }, { take(4, flatten([[0,1] ,[2,3], [4,5]])) }); // MatrixList.sublist()
 
 // unique : (T => [T] -> [T]) = <intrinsic>
 assert_equals({ [1, 2, 3] }, { unique([1,2,2,3,1,2]) });
@@ -861,8 +877,10 @@ assert_true({ eq(rep(3, 1), [1, 1, 1]) });
 assert_true({ sublist = take(3, take(4, [1,2,3])); eq(sublist, sublist) });
 assert_true({ sublist = take(3, take(4, [1,2,3])); eq(sublist, [1, 2, 3]) });
 assert_true({ l = flatten([[0,1], [2,3]]); eq(l, l) });
-assert_true({ l = flatten([[0,1], [2], [3]]); eq(l, l) }); // ChainedList
-assert_true({ l = flatten([[0,1], [2], [3]]); eq(l, [0, 1, 2, 3]) }); // ChainedLists
+assert_true({ l = flatten([[0,1], [2], [3]]); eq(l, l) }); // ChainedList.eq()
+assert_true({ l = flatten([[0,1], [2], [3]]); eq(l, [0, 1, 2, 3]) }); // ChainedLists.eq()
+assert_true({ l = flatten([[0,1] ,[2,3], [4,5]]); eq(l, l) }); // MatrixList.eq()
+assert_true({ l = flatten([[0,1] ,[2,3], [4,5]]); eq(l, [0, 1, 2, 3, 4, 5]) }); // MatrixList.eq()
 
 
 // for, note the for function simple udates the box value with the current list item
@@ -880,15 +898,17 @@ assert_equals({ 0 }, {
 assert_equals({ 0 }, { for_data = box(0); for([], { for_data <- {$0; $$0} }); *for_data }); // emptylist
 assert_equals({ 1 }, { for_data = box(0); for(rep(3, 1), { for_data <- {$0; $$0} }); *for_data }); // repeatedlist
 assert_equals({ 3 }, { for_data = box(0); for(fromto(6, 3), { for_data <- {$0; $$0} }); *for_data }); // reverseIntlist
-assert_equals({ 3 }, { for_data = box(0); for(flatten([[0,1], [2,3]]), { for_data <- {$0; $$0} }); *for_data }); // ChainedListPair
-assert_equals({ 3 }, { for_data = box(0); for(flatten([[0,1], [2], [3]]), { for_data <- {$0; $$0} }); *for_data }); // ChainedLists
+assert_equals({ 3 }, { for_data = box(0); for(flatten([[0,1], [2,3]]), { for_data <- {$0; $$0} }); *for_data }); // ChainedListPair.run()
+assert_equals({ 3 }, { for_data = box(0); for(flatten([[0,1], [2], [3]]), { for_data <- {$0; $$0} }); *for_data }); // ChainedLists.run()
+assert_equals({ 5 }, { for_data = box(0); for(flatten([[0,1] ,[2,3], [4,5]]), { for_data <- {$0; $$0} }); *for_data }); // MatrixList.run()
 
 // map
 assert_equals({ [] }, { [] | inc }); // emptyList
 assert_equals({ [4, 3, 2] }, { fromto(3, 1) | inc }); // reverseIntRange
 assert_equals({ [2] }, { [1] | inc }); // singleton
-assert_equals({ [1, 2, 3, 4] }, { flatten([[0,1], [2,3]]) | inc }); // ChainedListPair
-assert_equals({ [1, 2, 3, 4] }, { flatten([[0,1], [2], [3]]) | inc }); // ChainedLists
+assert_equals({ [1, 2, 3, 4] }, { flatten([[0,1], [2,3]]) | inc }); // ChainedListPair.apply()
+assert_equals({ [1, 2, 3, 4] }, { flatten([[0,1], [2], [3]]) | inc }); // ChainedLists.apply()
+assert_equals({ [1, 2, 3, 4, 5, 6] }, { flatten([[0,1] ,[2,3], [4,5]]) | inc }); // MatrixList.apply()
 
 
 // mapll
@@ -899,8 +919,10 @@ assert_equals({ [2, 2] }, { mapll(rep(2, 1), [1, 2]) }); // repeatList
 assert_equals({ [2, 1] }, { mapll(fromto(1, 0), [1, 2]) }); // reverseIntRange
 assert_equals({ [1] }, { mapll([0], [1, 2]) }); // singletonlist
 assert_equals({ [2, 3, 4] }, { sublist = take(3, take(4, [1,2,3])); mapll(sublist, [1, 2, 3, 4]) }); // sublist
-assert_equals({ [11, 22, 33, 44] }, { mapll(flatten([[0,1], [2,3]]), [11, 22, 33, 44]) }); // ChainedListPair
-assert_equals({ [11, 22, 33, 44] }, { mapll(flatten([[0,1], [2], [3]]), [11, 22, 33, 44]) }); // ChainedLists
+assert_equals({ [11, 22, 33, 44] }, { mapll(flatten([[0,1], [2,3]]), [11, 22, 33, 44]) }); // ChainedListPair.select(list)
+assert_equals({ [11, 22, 33, 44] }, { mapll(flatten([[0,1], [2], [3]]), [11, 22, 33, 44]) }); // ChainedLists.select(list)
+assert_equals({ [1, 1, 3, 3, 4, 5] }, { mapll(flatten([[1,1] ,[3,3], [4,5]]), count(10)) }); // MatrixList.select(list)
+
 
 // maplm
 assert_equals({ rep(34, 1) }, { maplm(take(34, count(33)), counts(count(33))) }); // biglist
@@ -910,9 +932,9 @@ assert_equals({ [1, 1] }, { maplm(rep(2, 1), [1:1, 2:2]) }); // repeatList
 assert_equals({ [2, 1] }, { maplm(fromto(2, 1), [1:1, 2:2]) }); // reverseIntRange
 assert_equals({ [1] }, { maplm([1], [1:1, 2:2]) }); // singletonlist
 assert_equals({ [1, 2, 3] }, { sublist = take(3, take(4, [1,2,3])); maplm(sublist, [1:1, 2:2, 3:3, 4:4]) }); // sublist
-assert_equals({ [0, 1, 2, 3] }, { maplm(flatten([[0,1], [2,3]]), [0:0, 1:1, 2:2, 3:3]) }); // ChainedListPair
-assert_equals({ [0, 1, 2, 3] }, { maplm(flatten([[0,1], [2], [3]]), [0:0, 1:1, 2:2, 3:3]) }); // ChainedLists
-
+assert_equals({ [0, 1, 2, 3] }, { maplm(flatten([[0,1], [2,3]]), [0:0, 1:1, 2:2, 3:3]) }); // ChainedListPair.select(map)
+assert_equals({ [0, 1, 2, 3] }, { maplm(flatten([[0,1], [2], [3]]), [0:0, 1:1, 2:2, 3:3]) }); // ChainedLists.select(map)
+assert_equals({ [1, 1, 3, 3, 2, 2] }, { maplm(flatten([[1,1] ,[3,3], [2,2]]), [0:0, 1:1, 2:2, 3:3]) }); // MatrixList.select(map)
 
 // ChainedLists
 assert_equals({ [] }, { flatten([]) }); // create an empty list
@@ -965,6 +987,8 @@ assert_equals({ [#c: "C", #b: "B", #a: "A"] }, { apply(mplus, ([#a:"A", #b:"B"],
 // values : (K, V => [K : V] -> [V]) = <intrinsic>
 assert_true({ isperm(["A", "B", "C"], values([#a:"A", #b:"B", #c: "C"])) });
 assert_true({ isperm(["A", "B", "C"], apply(values, [#a:"A", #b:"B", #c: "C"])) });
+
+
 
 
 //////////////////////////////////////////////////
@@ -1024,17 +1048,30 @@ assert_equals({ true }, { fge(l2f(nanotime()), 1.0) });
 assert_equals({ true }, { fge(l2f(apply(nanotime, ())), 1.0) });
 
 // print : (T => T -> ()) = <intrinsic>
+assert_true({ apply(print, ("hello")); true });
+
 // printstr : String -> () = <intrinsic>
+assert_true({ apply(printstr, ("hello")); true });
 
 
 //////////////////////////////////////////////////
 // logging
 //////////////////////////////////////////////////
 // logdebug : (T => T -> ()) = <intrinsic>
-// logerror : (T => T -> ()) = <intrinsic>
-// loginfo : (T => T -> ()) = <intrinsic>
-// logwarning : (T => T -> ()) = <intrinsic>
+assert_true({ logdebug("debug message"); true });
+assert_true({ apply(logdebug, ("debug message")); true });
 
+// logerror : (T => T -> ()) = <intrinsic>
+// do not test logerror, since this will cause the "test" target to fail
+// since it will record the error and then exit with a non-zero exitcode
+
+// loginfo : (T => T -> ()) = <intrinsic>
+assert_true({ loginfo("info message"); true });
+assert_true({ apply(loginfo, ("info message")); true });
+
+// logwarning : (T => T -> ()) = <intrinsic>
+assert_true({ logwarning("warning message"); true });
+assert_true({ apply(logwarning, ("warning message")); true });
 
 //////////////////////////////////////////////////
 // threads
@@ -1138,6 +1175,10 @@ assert_equals({ 10 }, {
 assert_equals({ *box(2) }, { *box(2) });
 assert_equals({ *box(2) }, { *apply(box, 2) });
 
+// boxes : { <Ts:[*]> Tup(Ts) -> Tup(Ts | Box) => <intrinsic> }
+assert_equals({ (1, 3, 4) }, { tup = (1, 3, 4); b = boxes(tup); (*b.0, *b.1, *b.2) });
+assert_equals({ (1, 3, 4) }, { tup = (1, 3, 4); b = apply(boxes, (tup)); (*b.0, *b.1, *b.2) });
+
 // do : (T => (() -> T) -> T) = <intrinsic>
 assert_equals({ true }, { do { intran(); }; });
 assert_equals({ true }, { apply(do, { intran(); }); });
@@ -1163,6 +1204,18 @@ assert_equals({ "abc" }, {
                         b = box("a");
                         // Spawn a thread that will update an owned box after sleeping
                         spawn { do{ own(b); sleep(1000); b <- {$0 + "b"}; done := true; } };
+                        // Need to sleep a little here so that the thread has time to spawn
+                        // and own the box "b".
+                        sleep(50);
+                        b <- {$0 + "c"};
+                        await(done, { eq(true, $0) });
+                        *b;
+                        });
+assert_equals({ "abc" }, {
+                        done = box(false);
+                        b = box("a");
+                        // Spawn a thread that will update an owned box after sleeping
+                        spawn { do{ own(b); sleep(1000); own(b); b <- {$0 + "b"}; done := true; } };
                         // Need to sleep a little here so that the thread has time to spawn
                         // and own the box "b".
                         sleep(50);
@@ -1257,6 +1310,17 @@ assert_equals({ 1 }, {
                       data1 <- inc;
                       x; // x should be 1 not 2
                       });
+
+// Snap a value when already in a transaction
+assert_equals({ 1 }, {
+                      data1 = box(1);
+                      do {
+                        x = snap(data1);
+                        data1 <- inc;
+                        x; // x should be 1 not 2
+                      };
+                      });
+
 assert_equals({ 1 }, {
                       data1 = box(1);
                       x = apply(snap, data1);
@@ -1281,6 +1345,17 @@ assert_equals({ (1, 2) }, {
                         data2 <- inc;
                         x; // x should be 1 not 2
                         });
+assert_equals({ (1, 2) }, {
+                        data1 = box(1);
+                        data2 = box(2);
+                        do {
+                            x = snaps(data1, data2);
+                            data1 <- inc;
+                            data2 <- inc;
+                            x; // x should be 1 not 2
+                        };
+                        });
+
 
 // transfer : (B, A => (*B, A -> B, *A) -> ()) = <intrinsic>
 assert_equals({ 2 }, {
@@ -1293,6 +1368,12 @@ assert_equals({ 2 }, {
                     source = box(1);
                     target = box(9);
                     apply(transfer, (target, inc, source));
+                    *target;
+                });
+assert_equals({ 2 }, {
+                    source = box(1);
+                    target = box(9);
+                    do { transfer(target, inc, source); };
                     *target;
                 });
 
@@ -1312,6 +1393,16 @@ assert_equals({ (2, 3) }, {
                             target2 = box(10);
                             apply(transfers, ((target1, target2), { a, b => ( a+ 1, b + 1) }, (source1, source2)));
                             (*target1, *target2);
+                            });
+assert_equals({ (2, 3) }, {
+                            source1 = box(1);
+                            source2 = box(2);
+                            target1 = box(9);
+                            target2 = box(10);
+                            do { 
+                                transfers((target1, target2), { a, b => ( a+ 1, b + 1) }, (source1, source2));
+                                (*target1, *target2);
+                            }
                             });
 
 // unwatch : (T, X => (*T, (T, T) -> X) -> *T) = <intrinsic>
@@ -1371,6 +1462,16 @@ assert_equals({ (2, 3) }, {
                     {
                         (inc(a),  inc(b) )
                     };
+                    do { updates((data1, data2), foo ); };
+                    (*data1, *data2);
+                    });
+assert_equals({ (2, 3) }, {
+                    data1 = box(1);
+                    data2 = box(2);
+                    foo(a, b)
+                    {
+                        (inc(a),  inc(b) )
+                    };
                     apply(updates, ((data1, data2), foo ));
                     (*data1, *data2);
                     });
@@ -1396,10 +1497,83 @@ assert_equals({ 2 }, {
                 });
 
 
+// Update more than runtime.tran.Transaction.UPDATED_CHUNK_SIZE boxes in a single transaction
+assert_equals({ 66 }, {
+                        zero = box(0);
+                        one = box(1);
+                        two = box(2);
+                        three = box(3);
+                        four = box(4);
+                        five = box(5);
+                        six = box(6);
+                        seven = box(7);
+                        eight = box(8);
+                        nine = box(9);
+                        ten = box(10);
+                        do {
+                            zero := 1;
+                            zero := 1; // re-hit a cached update
+                            one := 2;
+                            two := 3;
+                            three := 4;
+                            four := 5;
+                            five := 6;
+                            six := 7;
+                            seven := 8;
+                            eight := 9;
+                            nine := 10;
+                            ten := 11;
+                        };
+                        *zero + *one + *two + *three + *four + *five + *six + *seven + *eight + *nine + *ten;
+                    });
+
+
+// Get more than runtime.tran.Transaction.PINNED_CHUNK_SIZE boxes in a single transaction
+assert_equals({ 55 }, {
+                        zero = box(0);
+                        one = box(1);
+                        two = box(2);
+                        three = box(3);
+                        four = box(4);
+                        five = box(5);
+                        six = box(6);
+                        seven = box(7);
+                        eight = box(8);
+                        nine = box(9);
+                        ten = box(10);
+                        sum = box(0);
+                        do {
+                            sum := *zero + *one + *two + *three + *four + *five + *six + *seven + *eight + *nine + *ten + *zero;
+                        };
+                        *sum;
+                    });
+
+// Gets more than runtime.tran.Transaction.PINNED_CHUNK_SIZE boxes in a single transaction
+assert_equals({ (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0) }, {
+                        zero = box(0);
+                        one = box(1);
+                        two = box(2);
+                        three = box(3);
+                        four = box(4);
+                        five = box(5);
+                        six = box(6);
+                        seven = box(7);
+                        eight = box(8);
+                        nine = box(9);
+                        ten = box(10);
+                        sum = box(0);
+                        do {
+                            **(zero, one, two, three, four, five, six, seven, eight, nine, ten, zero);
+                        };
+                        });
+
 
 // Inliners
 assert_true({ atan2(1.0, i2f(1)); true });
 assert_true({ and(i2b(1), { i2b(1) }); true });
+assert_true({ band(inc(3), 1+3); true });
+assert_true({ bor(inc(3), 1+3); true });
+assert_true({ bxor(inc(3), 1+3); true });
 assert_true({ cos(i2f(1)); true });
 assert_true({ div(10, inc(4)); true });
 assert_true({ eq(i2f(1), i2f(1)); true });
@@ -1412,6 +1586,10 @@ assert_true({ flt(10.0, 1.0+3.0); true });
 assert_true({ fminus(10.0, 1.0+3.0); true });
 assert_true({ fmod(10.0, 1.0+3.0); true });
 assert_true({ fneg(1.0+3.0); true });
+// ForInliner
+assert_true({ for(index([1,2,3]), { $0 }); true }); // index for index arg
+assert_true({ for(count(s2i("2")), inc); true });   // count with applyTerm
+assert_true({ for(count(2), neg ); true });         // lambdaBody == null
 assert_true({ fpow(10.0, 1.0+3.0); true });
 assert_true({ ftimes(10.0, 1.0+3.0); true });
 assert_true({ ge(4, 1+3); true });
@@ -1421,6 +1599,11 @@ assert_true({ if(i2b(1), {1}, {2}); true });
 assert_true({ le(4, 1+3); true });
 assert_true({ lt(4, 1+3); true });
 assert_true({ ln(1.0+1.1); true });
+
+// Map inliner
+assert_equals({ [("a", 1), ("b", 2)] }, { zip(["a", "b"], [1,2]) | { a:(String, Int) => (a.0, a.1) } });
+assert_equals({ [(1, 3, 5), (2, 4, 6)] }, { zip([1,2], [3,4], [5,6]) | { a:(Int, Int, Int) => (a.0, a.1, a.2) } });
+
 assert_true({ max(inc(3), 1+3); true });
 assert_true({ min(inc(3), 1+3); true });
 assert_true({ minus(inc(3), 1+3); true });
@@ -1431,10 +1614,13 @@ assert_true({ not(i2b(1)); true });
 assert_true({ or(i2b(1), { i2b(1) }); true });
 assert_true({ plus(4, 1+3); true });
 assert_true({ pow(4, 1+3); true });
+assert_true({ shiftl(inc(3), 1+3); true });
+assert_true({ shiftr(inc(3), 1+3); true });
 assert_true({ sin(i2f(1)); true });
 assert_true({ sqrt(1.0+2.0); true });
 assert_true({ tan(i2f(1)); true });
 assert_true({ times(inc(3), 1+3); true });
+assert_true({ ushiftr(inc(3), 1+3); true });
 
 // DEMO SUPPORT
 
@@ -1532,17 +1718,41 @@ assert_true({ times(inc(3), 1+3); true });
 // TEST
 
 //////////////////////////////////////////////////
-// foreign interface
+// Array
 //////////////////////////////////////////////////
-myArray = array(4, 0);
-// TODO: public static final ALen _alen = new ALen();
-// TODO: javassist.CannotCompileException
-// alen(myArray);
-assert_equals({ 0 }, { aget(myArray, 0) });
-aset(myArray, 0, 1);
-assert_equals({ 1 }, { aget(myArray, 0) });
 
-// public static final ASet _aset = new ASet();
+// array : { <T> (Int, T) -> Array(T) => <intrinsic> }
+assert_equals({ (true, true, true) }, { a = array(3, true); (aget(a, 0), aget(a, 1), aget(a, 2)) }); // Boolean
+assert_equals({ (2, 2, 2) }, { a = array(3, 2); (aget(a, 0), aget(a, 1), aget(a, 2)) }); // Int
+assert_equals({ (2L, 2L, 2L) }, { a = array(3, 2L); (aget(a, 0), aget(a, 1), aget(a, 2)) }); // Long
+assert_equals({ (2.1, 2.1, 2.1) }, { a = array(3, 2.1); (aget(a, 0), aget(a, 1), aget(a, 2)) }); // Double
+assert_equals({ ((1, 2), (1, 2), (1, 2)) }, { a = array(3, (1,2)); (aget(a, 0), aget(a, 1), aget(a, 2)) }); // Object
+assert_equals({ (2, 2, 2) }, { a = apply(array, (3, 2)); (aget(a, 0), aget(a, 1), aget(a, 2)) }); // apply
+
+
+// aget : { <T> (Array(T), Int) -> T => <intrinsic> }
+assert_equals({ true }, { a = array(1, true); aget(a, 0) }); // Boolean
+assert_equals({ 2 }, { a = array(1, 2); aget(a, 0) }); // Int
+assert_equals({ 2L }, { a = array(1, 2L); aget(a, 0) }); // Long
+assert_equals({ 2.1 }, { a = array(1, 2.1); aget(a, 0) }); // Double
+assert_equals({ (1, 2) }, { a = array(1, (1,2)); aget(a, 0) }); // Object
+assert_equals({ 2 }, { a = array(1, 2); apply(aget, (a, 0)) }); // apply
+
+// aset : { <T> (Array(T), Int, T) -> Array(T) => <intrinsic> }
+assert_equals({ false }, { a = array(1, true); aset(a, 0, false); aget(a, 0) }); // Boolean
+assert_equals({ 1 }, { a = array(1, 2); aset(a, 0, 1); aget(a, 0) }); // Int
+assert_equals({ 1L }, { a = array(1, 2L); aset(a, 0, 1L); aget(a, 0) }); // Long
+assert_equals({ 1.1 }, { a = array(1, 2.1); aset(a, 0, 1.1); aget(a, 0) }); // Double
+assert_equals({ (0, 0) }, { a = array(1, (1,2)); aset(a, 0, (0,0)); aget(a, 0) }); // Object
+assert_equals({ 1 }, { a = array(1, 2); apply(aset, (a, 0, 1)); aget(a, 0) }); // apply
+
+// alen : { <T> Array(T) -> Int => <intrinsic> }
+assert_equals({ 1 }, { a = array(1, true); alen(a) }); // Boolean
+assert_equals({ 1 }, { a = array(1, 2); alen(a) }); // Int
+assert_equals({ 1 }, { a = array(1, 2L); alen(a) }); // Long
+assert_equals({ 1 }, { a = array(1, 2.1); alen(a) }); // Double
+assert_equals({ 1 }, { a = array(1, (1,2)); alen(a) }); // Object
+assert_equals({ 1 }, { a = array(1, 2); apply(alen, (a)) }); // apply
 
 
 
