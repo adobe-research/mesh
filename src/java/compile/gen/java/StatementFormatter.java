@@ -17,6 +17,7 @@ import compile.module.Scope;
 import compile.term.*;
 import compile.term.visit.BindingVisitorBase;
 import compile.type.*;
+import runtime.IntrinsicTypeRecorder;
 import runtime.rep.Record;
 import runtime.rep.Tuple;
 import runtime.rep.lambda.Lambda;
@@ -51,11 +52,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     private final Unit unit;
 
     /**
-     * our type formatter
-     */
-    private final TypeMapper typeMapper;
-
-    /**
      * our current scope--our module if we're generating top-level code,
      * or the current lambda. (we generate local functions out of line,
      * so this is not a stack)
@@ -72,8 +68,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
      * current statement being generated
      */
     private Statement currentStatement;
-
-    private IntrinsicsResolver intrinsicsResolver;
 
     /**
      * if true, we're currently generating expr code, even if
@@ -104,15 +98,11 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     {
         this.unit = unit;
 
-        this.typeMapper = new TypeMapper();
-
         this.currentScope = unit.getModule();
 
         this.lambdaDepth = 0;
 
         this.currentStatement = null;
-
-        this.intrinsicsResolver = new IntrinsicsResolver();
 
         this.inExpr = false;
 
@@ -149,7 +139,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
     public Class<?> mapType(final Type type)
     {
-        return typeMapper.map(type);
+        return TypeMapper.map(type);
     }
 
     public void setInExpr(final boolean inExpr)
@@ -201,7 +191,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
     public String formatType(final Type type)
     {
-        final Class<?> c = typeMapper.map(type);
+        final Class<?> c = TypeMapper.map(type);
         return formatClass(c);
     }
 
@@ -252,15 +242,15 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         lambdaDepth = 0;
         currentStatement = statement;
 
-        if (statement.isBinding()) 
+        if (statement.isBinding())
         {
             return visitBinding((Binding)statement);
         }
-        else if (statement instanceof UnboundTerm) 
+        else if (statement instanceof UnboundTerm)
         {
             return formatTermAs(((UnboundTerm)statement).getValue(), Object.class);
         }
-        else if (statement instanceof ImportStatement) 
+        else if (statement instanceof ImportStatement)
         {
             final ImportStatement importStatement = (ImportStatement)statement;
             final Unit imported = unit.getImportedUnit(importStatement.getFrom());
@@ -277,7 +267,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
      */
     public String fixup(final Loc loc, final String expr, final Type rtype)
     {
-        return fixup(loc, expr, typeMapper.map(rtype), getLValueClass());
+        return fixup(loc, expr, TypeMapper.map(rtype), getLValueClass());
     }
 
     /**
@@ -286,7 +276,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     public String fixup(final Loc loc, final String expr, final Type rtype,
         final Class<?> lclass)
     {
-        return fixup(loc, expr, typeMapper.map(rtype), lclass);
+        return fixup(loc, expr, TypeMapper.map(rtype), lclass);
     }
 
     /**
@@ -303,7 +293,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     public String fixup(final Loc loc, final String expr,
         final Class<?> rclass, final Type ltype)
     {
-        return fixup(loc, expr, rclass, typeMapper.map(ltype));
+        return fixup(loc, expr, rclass, TypeMapper.map(ltype));
     }
 
     /**
@@ -434,7 +424,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
      */
     public String formatTermAs(final Term term, final Type ltype)
     {
-        return formatTermAs(term, typeMapper.map(ltype));
+        return formatTermAs(term, TypeMapper.map(ltype));
     }
 
     // BindingVisitor
@@ -457,13 +447,16 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     {
         final String lhs = lambdaDepth == 0 ?  formatNameRef(let) : formatVarDeclLHS(let);
         final String rhs;
-        if (let.isIntrinsic()) 
+        if (let.isIntrinsic())
         {
-            rhs = intrinsicsResolver.formatAsRHSAndRecord(let);
+            // Record a dump of the intrinsic type for use when printing it.
+            rhs = IntrinsicTypeRecorder.class.getName() +
+                ".record(" + formatIntrinsicAsRHS(let) +
+                ", \"" + let.getType().dump() + "\")";
         }
         else
         {
-            rhs = formatTermAs(let.getValue(), typeMapper.map(let.getType()));
+            rhs = formatTermAs(let.getValue(), TypeMapper.map(let.getType()));
         }
         return lhs + " = " + rhs;
     }
@@ -516,7 +509,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         {
             final LetBinding let = (LetBinding)binding;
             if (let.isIntrinsic())
-                return intrinsicsResolver.formatAsRHS(let);
+                return formatIntrinsicAsRHS(let);
         }
 
         return fixup(ref.getLoc(), formatNameRef(binding), ref.getType());
@@ -577,6 +570,27 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
             return formatName(binding.getName());
         }
+    }
+
+    private IntrinsicLambda getIntrinsic(final LetBinding let)
+    {
+        final IntrinsicsResolver resolver = IntrinsicsResolver.getThreadLocal();
+
+        final IntrinsicLambda intrinsic = resolver.resolve(let);
+        assert intrinsic != null : "Intrinsic should have been previously resolved";
+
+        return intrinsic;
+    }
+
+    /**
+     * Here we access special knowledge about how to go from an intrinsic
+     * let binding in the current scope, to a compatible value in the
+     * underlying Java environment
+     */
+    public String formatIntrinsicAsRHS(final LetBinding let)
+    {
+        final IntrinsicLambda intrinsic = getIntrinsic(let);
+        return intrinsic.getClass().getName() + "."+ Constants.INSTANCE;
     }
 
     /**
@@ -1255,12 +1269,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
                 if (let.isIntrinsic())
                 {
-                    final IntrinsicLambda intrinsic = intrinsicsResolver.resolve(let);
-                    if (intrinsic == null)
-                    {
-                        Session.error("No runtime intrinsic found for ''{0}''", let.getName());
-                        return null;
-                    }
+                    final IntrinsicLambda intrinsic = getIntrinsic(let);
 
                     final String lambdaClass = intrinsic.getClass().getName();
                     final Type baseType = base.getType().deref();
@@ -1283,7 +1292,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
                                     InvokeInfo.InvokeMode.NoScatter, lambdaClass);
                         }
                     }
-
                     // should be an assert? calling an intrinsic with non-function type?
                     return null;
                 }
