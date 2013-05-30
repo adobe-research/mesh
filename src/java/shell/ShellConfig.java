@@ -14,6 +14,7 @@ import compile.Session;
 import compile.Loc;
 import compile.term.ImportStatement;
 import compile.analyze.ImportResolver;
+import runtime.Arguments;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -182,6 +183,7 @@ public final class ShellConfig
         this.readline = readline;
     }
 
+
     /**
      * Process command line arguments as shell config commands.
      */
@@ -200,7 +202,32 @@ public final class ShellConfig
             {
                 final String command = arg.substring(1);
 
-                if (command.equals("debug"))
+                if (command.equals("arg"))
+                {
+                    if (i < args.length - 1)
+                    {
+                        Arguments.add(args[i + 1]);
+                        i = i + 1;
+                    }
+                    else
+                    {
+                        Session.error("argument value not specified");
+                    }
+                }
+                else if (command.equals("args"))
+                {
+                    if (i < args.length - 1)
+                    {
+                        for (final String value : args[i + 1].split(","))
+                            Arguments.add(value.trim());
+                        i = i + 1;
+                    }
+                    else
+                    {
+                        Session.error("argument values not specified");
+                    }
+                }
+                else if (command.equals("debug"))
                 {
                     if (i < args.length - 1)
                     {

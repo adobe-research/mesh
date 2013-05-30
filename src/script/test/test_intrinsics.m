@@ -4,6 +4,17 @@ import * from unittest;
 /* INTRINSICS */
 
 //////////////////////////////////////////////////
+// external env
+//////////////////////////////////////////////////
+
+// args : () -> [String] = <intrinsic>
+assert_equals({ [] }, { args() });
+
+// getenv : (String) -> String = <intrinsic>
+assert_equals({ "" }, { getenv("NoSuchValue") });
+assert_false({ "" == getenv("PATH") });
+
+//////////////////////////////////////////////////
 // logic
 //////////////////////////////////////////////////
 // and : (Bool, () -> Bool) -> Bool = <intrinsic>
