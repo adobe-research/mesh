@@ -40,8 +40,6 @@ public final class _args extends IntrinsicLambda
 
     public static ListValue invoke()
     {
-        final List<String> values = Arguments.get();
-        final String[] args = values.toArray(new String[values.size()]);
-        return PersistentList.init(Iterators.forArray(args), args.length);
+        return Arguments.get();
     }
 }

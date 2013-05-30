@@ -10,8 +10,8 @@
  */
 package runtime;
 
-import java.util.ArrayList;
-import java.util.List;
+import runtime.rep.list.ListValue;
+import runtime.rep.list.PersistentList;
 
 /**
  * Manages runtime command-line arguments
@@ -20,23 +20,21 @@ import java.util.List;
  */
 public final class Arguments
 {
-    private static List<String> arguments = new ArrayList<String>();
+    private static ListValue arguments = PersistentList.EMPTY;
 
     /**
      * Add a new string argument
      */
-    public static void add(final String value)
+    public static synchronized void add(final String value)
     {
-        arguments.add(value);
+        arguments = arguments.append(value);
     }
 
     /**
      * Retrieve a copy of the arguments
      */
-    public static List<String> get()
+    public static ListValue get()
     {
-        final List<String> args = new ArrayList<String>(arguments.size());
-        args.addAll(arguments);
-        return args;
+        return arguments;
     }
 }
