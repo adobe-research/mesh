@@ -41,7 +41,6 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
      * Memoized list of bindings which have been verified
      */
     private final Map<LetBinding,IntrinsicLambda> verifiedIntrinsics;
-    private String lastErrorMessage;
 
     // TODO: use module name as key into package configuration mapping
     private static final String[] intrinsicPackages = new String[] {
@@ -57,40 +56,19 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
     public JavaIntrinsicsResolver()
     {
         this.verifiedIntrinsics = new HashMap<LetBinding,IntrinsicLambda>();
-        this.lastErrorMessage = null;
     }
 
-
-    private IntrinsicLambda resolved(
-            final LetBinding let, final IntrinsicLambda lambda)
-    {
-        lastErrorMessage = null;
-        verifiedIntrinsics.put(let, lambda);
-        return lambda;
-    }
-
-    private IntrinsicLambda cached(final IntrinsicLambda lambda)
-    {
-        lastErrorMessage = null;
-        return lambda;
-    }
-
-    private IntrinsicLambda error(final String msg)
-    {
-        lastErrorMessage = msg;
-        return null;
-    }
-
-    public String getErrorMessage()
-    {
-        return lastErrorMessage;
-    }
 
     public IntrinsicLambda resolve(final LetBinding let)
     {
+        return verifiedIntrinsics.get(let);
+    }
+
+    public String verify(final LetBinding let)
+    {
         final IntrinsicLambda lambda = verifiedIntrinsics.get(let);
         if (lambda != null)
-            return cached(lambda);
+            return null;
 
         final String name = let.getName();
 
@@ -107,11 +85,7 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
                     if (intrObj != null && intrObj instanceof IntrinsicLambda)
                     {
                         final IntrinsicLambda instance = (IntrinsicLambda)intrObj;
-                        final String msg = verifyIntrinsicType(let, instance);
-                        if (msg == null)
-                            return resolved(let, instance);
-                        else
-                            return error(msg);
+                        return verifyIntrinsicType(let, instance);
                     }
                 }
             }
@@ -120,8 +94,8 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
             catch (IllegalAccessException ignored) {}
         }
 
-        return error("Cannot find implementation for intrinsic " +
-            let.getName() + " with type " + let.getType().dump());
+        return "Cannot find implementation for intrinsic " +
+            let.getName() + " with type " + let.getType().dump();
     }
 
     private String verifyIntrinsicType(final LetBinding let, final IntrinsicLambda lambda)
@@ -142,7 +116,10 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
         {
             final Method method = lambda.getClass().getMethod(Constants.INVOKE, paramspec);
             if (method.getReturnType() == returnType)
+            {
+                verifiedIntrinsics.put(let, lambda);
                 return null; // success
+            }
         }
         catch (NoSuchMethodException ignored) {}
 
@@ -178,7 +155,7 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
     {
         final Pair<Type,Type> pair = getFunctionTypes(function);
         if (pair != null)
-            return (new TypeMapper()).map(pair.right);
+            return TypeMapper.map(pair.right);
 
         return null;
     }
@@ -204,7 +181,6 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
      */
     private List<Class<?> > getParameterTypes(final Type function)
     {
-        final TypeMapper typeMapper = new TypeMapper();
         final Pair<Type,Type> pair = getFunctionTypes(function);
         if (pair != null)
         {
@@ -214,12 +190,12 @@ public final class JavaIntrinsicsResolver extends IntrinsicsResolver
             if (list != null)
             {
                 for (final Type item : list.getItems())
-                    params.add(typeMapper.map(item));
+                    params.add(TypeMapper.map(item));
             }
             else
             {
                 // singleton argument
-                params.add(typeMapper.map(pair.left));
+                params.add(TypeMapper.map(pair.left));
             }
             return params;
         }

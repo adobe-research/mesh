@@ -52,11 +52,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     private final Unit unit;
 
     /**
-     * our type formatter
-     */
-    private final TypeMapper typeMapper;
-
-    /**
      * our current scope--our module if we're generating top-level code,
      * or the current lambda. (we generate local functions out of line,
      * so this is not a stack)
@@ -103,8 +98,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     {
         this.unit = unit;
 
-        this.typeMapper = new TypeMapper();
-
         this.currentScope = unit.getModule();
 
         this.lambdaDepth = 0;
@@ -146,7 +139,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
     public Class<?> mapType(final Type type)
     {
-        return typeMapper.map(type);
+        return TypeMapper.map(type);
     }
 
     public void setInExpr(final boolean inExpr)
@@ -198,7 +191,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
     public String formatType(final Type type)
     {
-        final Class<?> c = typeMapper.map(type);
+        final Class<?> c = TypeMapper.map(type);
         return formatClass(c);
     }
 
@@ -274,7 +267,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
      */
     public String fixup(final Loc loc, final String expr, final Type rtype)
     {
-        return fixup(loc, expr, typeMapper.map(rtype), getLValueClass());
+        return fixup(loc, expr, TypeMapper.map(rtype), getLValueClass());
     }
 
     /**
@@ -283,7 +276,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     public String fixup(final Loc loc, final String expr, final Type rtype,
         final Class<?> lclass)
     {
-        return fixup(loc, expr, typeMapper.map(rtype), lclass);
+        return fixup(loc, expr, TypeMapper.map(rtype), lclass);
     }
 
     /**
@@ -300,7 +293,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     public String fixup(final Loc loc, final String expr,
         final Class<?> rclass, final Type ltype)
     {
-        return fixup(loc, expr, rclass, typeMapper.map(ltype));
+        return fixup(loc, expr, rclass, TypeMapper.map(ltype));
     }
 
     /**
@@ -431,7 +424,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
      */
     public String formatTermAs(final Term term, final Type ltype)
     {
-        return formatTermAs(term, typeMapper.map(ltype));
+        return formatTermAs(term, TypeMapper.map(ltype));
     }
 
     // BindingVisitor
@@ -463,7 +456,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         }
         else
         {
-            rhs = formatTermAs(let.getValue(), typeMapper.map(let.getType()));
+            rhs = formatTermAs(let.getValue(), TypeMapper.map(let.getType()));
         }
         return lhs + " = " + rhs;
     }

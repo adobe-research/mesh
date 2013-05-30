@@ -43,15 +43,16 @@ public abstract class IntrinsicsResolver
     }
 
     /**
-     * Finds an intrinsic that matches the let name, and verifies that the
-     * runtime type matches the let's declared type.  If this returns null,
-     * then getErrorMessage can be called to indicate why.
+     * Looks up an intrinsic and verifies that it exists and that its
+     * data type matches the signature in the let.
+     *
+     * On success, null is returned.  Otherwise the return value contains
+     * the reason for the verification failure.
      */
-    public abstract IntrinsicLambda resolve(final LetBinding let);
+    public abstract String verify(final LetBinding let);
 
     /**
-     * If the last resolve call failed, this will return an error message
-     * indicating why.  If the last resolve call succeeded, this returns null.
+     * Finds the previously verified intrinsic that matches the let name.
      */
-    public abstract String getErrorMessage();
+    public abstract IntrinsicLambda resolve(final LetBinding let);
 }

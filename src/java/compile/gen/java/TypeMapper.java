@@ -29,12 +29,17 @@ import runtime.tran.Box;
  */
 public final class TypeMapper extends TypeVisitorBase<Class<?>>
 {
+    private TypeMapper()
+    {
+    }
+
     /**
      *
      */
-    public Class<?> map(final Type type)
+    public static Class<?> map(final Type type)
     {
-        return visitType(type);
+        final TypeMapper visitor = new TypeMapper();
+        return visitor.visitType(type);
     }
 
     /**
