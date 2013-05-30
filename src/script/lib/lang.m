@@ -59,6 +59,21 @@ intrinsic type Assoc;       // experimental
 //
 
 /**
+ * Returns a list of command line arguments
+ * @return a possibly empty list of strings that were passed via the
+ * commandline
+ */
+intrinsic args() -> [String];
+
+/**
+ * Return the value of an evironment variable.
+ * @param name the name of the environment variable to query
+ * @return the value of the environment varaible, or an empty string
+ * if the named value does not exist
+ */
+intrinsic getenv(name:String) -> String;
+
+/**
  * Guarded execution. If the given condition is true, return the
  * given value immediately, otherwise run the given block and
  * return its result.
