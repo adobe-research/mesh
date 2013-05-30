@@ -11,9 +11,7 @@
 package compile;
 
 import compile.analyze.ModuleAnalyzer;
-import compile.gen.java.Unit;
-import compile.gen.java.UnitBuilder;
-import compile.gen.java.UnitDictionary;
+import compile.gen.java.*;
 import compile.module.*;
 import compile.parse.RatsScriptParser;
 import compile.parse.RatsShellScriptParser;
@@ -38,6 +36,9 @@ public class ScriptCompiler
     private static final List<String> compilerImports = new ArrayList<String>();
     static {
         compilerImports.add("lang");
+
+        // Use Java backend and runtime
+        IntrinsicsResolver.factory = JavaIntrinsicsResolver.factory;
     }
 
     /**
@@ -90,6 +91,7 @@ public class ScriptCompiler
 
         return statements == null ? null :
             buildModule(loc, moduleName, imports, statements, dict);
+
     }
 
     /**
@@ -119,7 +121,7 @@ public class ScriptCompiler
         final Loc loc, final Reader reader, final String moduleName,
         final ModuleDictionary dict)
     {
-        final List<ImportStatement> imports = 
+        final List<ImportStatement> imports =
             Collections.<ImportStatement>emptyList();
         final List<Statement> statements =
             RatsScriptParser.parseScript(reader, loc);
@@ -170,11 +172,12 @@ public class ScriptCompiler
         // create new module with passed loc, name, and parsed term list; import intrinsics
         final Module module = new Module(loc, moduleName, statementsWithPreloads, dict);
 
-        // add the newly created module to the passed dictionary
-        dict.add(module);
-
         // analyze
         final boolean analyzed = ModuleAnalyzer.analyze(module);
+
+        // add the newly created module to the passed dictionary
+        if (analyzed)
+            dict.add(module);
 
         // clear implicit import flag if we're a root
         if (isImplicitImportRoot)
@@ -187,7 +190,7 @@ public class ScriptCompiler
      *
      */
     private static List<Statement> addImplicitImports(
-        final List<ImportStatement> imports, 
+        final List<ImportStatement> imports,
         final List<Statement> statements)
     {
         assert !Session.isInImplicitImport();

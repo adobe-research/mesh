@@ -253,14 +253,19 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
      */
     private void initLet(final LetBinding let)
     {
-        if (let.isIntrinsic()) 
+        if (let.isIntrinsic())
         {
             // Verify that the declaration is fully-specified
-            if (let.getType().hasWildcards()) 
+            if (let.getType().hasWildcards())
             {
                 Session.error(let.getLoc(),
                     "declared intrinsic {0} does not have a fully-specified type.", let.getName());
             }
+
+            final IntrinsicsResolver resolver = IntrinsicsResolver.getThreadLocal();
+            final String errorMsg = resolver.verify(let);
+            if (errorMsg != null)
+                Session.error(let.getLoc(), errorMsg);
         }
 
         if (let.hasDeclaredType())
@@ -834,7 +839,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
     @Override
     public Type visit(final LetBinding let)
     {
-        if (let.isIntrinsic()) 
+        if (let.isIntrinsic())
         {
             return let.getType();
         }
