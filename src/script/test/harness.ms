@@ -18,6 +18,23 @@ $load test.decompa
 $clear
 $load test.inlineparams
 $clear
+
+// Library testing
+$load test.lib.bench
+$clear
+$load test.lib.inliners
+$clear
+$load test.lib.io
+$clear
+$load test.lib.lang
+$clear
+$load test.lib.logging
+$clear
+$load test.lib.mutate
+$clear
+$load test.lib.sort
+$clear
+
 $load test.livelock
 $clear
 $load test.msort
@@ -42,10 +59,6 @@ $clear
 $load test.starvation2
 $clear
 $load test.tagpair
-$clear
-$load test.test_intrinsics
-$clear
-$load test.test_library
 $clear
 $load test.tranfuncs
 $clear
