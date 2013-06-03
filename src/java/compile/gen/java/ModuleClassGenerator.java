@@ -44,10 +44,7 @@ public final class ModuleClassGenerator extends ClassGenerator
         // module rep class implements {@link ModuleRep}
         moduleClassDef.addInterfaceName(ModuleRep.class.getName());
 
-        // add static INSTANCE field
-        moduleClassDef.addStaticFieldDef(buildInstanceFieldDef(className));
-
-        // add private RAN field 
+        // add private RAN field
         addRunLatchField(moduleClassDef);
 
         // add fields for constants
@@ -55,6 +52,12 @@ public final class ModuleClassGenerator extends ClassGenerator
 
         // add fields for value bindings
         addValueBindingFields(module, moduleClassDef, fmt);
+
+        // add static INSTANCE field
+        moduleClassDef.addStaticFieldDef(buildInstanceFieldDef(className));
+
+        // create constructor
+        moduleClassDef.setConstructorDef(buildConstructorDef(module, fmt));
 
         // add run() method
         moduleClassDef.addMethodDef(buildRunMethodDef(module, fmt));
@@ -113,7 +116,7 @@ public final class ModuleClassGenerator extends ClassGenerator
             final String fieldName =
                 StatementFormatter.formatName("$symc_" + symbol.getValue());
 
-            classDef.addFieldDef(
+            classDef.addStaticFieldDef(
                 new FieldDef("public static final " + symbolTypeFmt + " " + fieldName,
                     fmt.formatTermAs(symbol, Types.SYMBOL)));
 
@@ -151,7 +154,7 @@ public final class ModuleClassGenerator extends ClassGenerator
 
                 final String value = fmt.formatObjectArrayLiteral(exprs);
 
-                classDef.addFieldDef(
+                classDef.addStaticFieldDef(
                     new FieldDef("public static final Object[] " + fieldName, value));
             }
 
@@ -174,6 +177,27 @@ public final class ModuleClassGenerator extends ClassGenerator
     }
 
     /**
+     * Constructor method for field initialization
+     */
+    private static ConstructorDef buildConstructorDef(
+        final Module module, final StatementFormatter fmt)
+    {
+        final String sig = "public Module()";
+        final ConstructorDef ctorDef = new ConstructorDef(sig);
+
+        for (final Statement stmt : module.getBody())
+        {
+            if (stmt.isBinding())
+            {
+                final String expr = fmt.formatTopLevelStatement(stmt);
+                ctorDef.addStatement(new JavaStatement(stmt, expr));
+            }
+        }
+        ctorDef.addStatement(new JavaStatement("return"));
+        return ctorDef;
+    }
+
+    /**
      * run() method executes top-level statements, including non-constant
      * initializations.
      * Note: supporting classdefs for lambdas, etc. are generated on-demand
@@ -189,8 +213,11 @@ public final class ModuleClassGenerator extends ClassGenerator
 
         for (final Statement stmt : module.getBody())
         {
-            final String expr = fmt.formatTopLevelStatement(stmt);
-            methodDef.addStatement(new JavaStatement(stmt, expr));
+            if (!stmt.isBinding())
+            {
+                final String expr = fmt.formatTopLevelStatement(stmt);
+                methodDef.addStatement(new JavaStatement(stmt, expr));
+            }
         }
 
         return methodDef;

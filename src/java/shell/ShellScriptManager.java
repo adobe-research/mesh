@@ -89,7 +89,7 @@ public final class ShellScriptManager
     {
         if (scriptLoads.size() > 0)
         {
-            final List<ImportStatement> imports = 
+            final List<ImportStatement> imports =
                 new ArrayList<ImportStatement>(scriptLoads.size());
             for (final String script : scriptLoads)
             {
@@ -100,7 +100,7 @@ public final class ShellScriptManager
                     Session.debug(Loc.INTRINSIC, "Preloading " + script + "...");
             }
 
-            runScript(Loc.INTRINSIC, new StringReader(""), 
+            runScript(Loc.INTRINSIC, new StringReader(""),
                       imports, Session.isDebug(), false);
         }
     }
@@ -123,7 +123,7 @@ public final class ShellScriptManager
         final List<ImportStatement> imports, final boolean debug, final boolean print)
     {
         final List<ImportStatement> unitImports = addPastUnitImport(imports);
-        
+
         final Unit unit = compileScriptUnit(loc, reader, unitImports, debug, print);
 
         if (unit != null)
@@ -161,11 +161,11 @@ public final class ShellScriptManager
      * Parse a statement and return it
      */
     public static ImportStatement parseImportStatement(
-        final Loc loc, final String text) 
+        final Loc loc, final String text)
     {
-        final List<Statement> statements = 
+        final List<Statement> statements =
             RatsScriptParser.parseScript(new StringReader(text), loc);
-        if (statements != null && statements.size() == 1 && 
+        if (statements != null && statements.size() == 1 &&
             statements.get(0) instanceof ImportStatement)
         {
             return (ImportStatement)statements.get(0);
@@ -181,9 +181,9 @@ public final class ShellScriptManager
         final List<ImportStatement> imports)
     {
         final Unit lastUnit = getPastUnit(0);
-        if (lastUnit != null) 
+        if (lastUnit != null)
         {
-            final List<ImportStatement> unitImports = 
+            final List<ImportStatement> unitImports =
                 new ArrayList<ImportStatement>(imports.size() + 1);
             unitImports.addAll(imports);
 
@@ -308,6 +308,12 @@ public final class ShellScriptManager
         seq++;
     }
 
+    private static void ensureInitialized(final Class<?> cls)
+        throws ClassNotFoundException
+    {
+        Class.forName(cls.getName(), true, cls.getClassLoader());
+    }
+
     /**
      * Load a unit's module's representing class, create its static INSTANCE, and
      * run INSTANCE's init() method (which contains top-level script code).
@@ -322,6 +328,8 @@ public final class ShellScriptManager
         {
             try
             {
+                ensureInitialized(moduleClass);
+
                 // e.g. class Shell1 { public static final Shell1 INSTANCE = new Shell1(); }
                 final Field field = moduleClass.getField(Constants.INSTANCE);
 
@@ -373,7 +381,7 @@ public final class ShellScriptManager
                     final Class<?> lambdaCls = def.getCls();
                     if (lambdaCls != null)
                     {
-                        try 
+                        try
                         {
                             final Field lfield = lambdaCls.getDeclaredField(Constants.INSTANCE);
                             if (Session.isDebug())
@@ -408,7 +416,7 @@ public final class ShellScriptManager
      * then statements. (I.e., the two are separated, no longer interleaved in decl order.)
      * Return a map from statement dumps to type dumps.
      */
-    public Map<String, String> printExprTypes(final Loc loc, final Reader reader, 
+    public Map<String, String> printExprTypes(final Loc loc, final Reader reader,
             final List<ImportStatement> imports)
     {
         final Map<String, String> dumps = new LinkedHashMap<String, String>();
