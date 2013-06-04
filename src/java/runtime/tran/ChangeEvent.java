@@ -10,10 +10,11 @@
  */
 package runtime.tran;
 
-import runtime.rep.lambda.Lambda;
 import runtime.rep.Tuple;
+import runtime.rep.lambda.Lambda;
+import runtime.rep.map.PersistentMap;
 
-import java.util.Set;
+import java.util.Map;
 
 /**
  * Change notification event, dispatched over the set of watchers attached
@@ -23,16 +24,17 @@ import java.util.Set;
  */
 final class ChangeEvent
 {
-    final Set<Object> watchers;
-    final Tuple arg;
+    final PersistentMap watchers;
+    final Object arg[];
 
-    ChangeEvent(final Set<Object> watchers, final Object oldval, final Object newval)
+    ChangeEvent(final PersistentMap watchers,
+        final Object oldval, final Object newval)
     {
         assert watchers != null;
         assert !watchers.isEmpty();     // performance leak only
 
         this.watchers = watchers;
-        this.arg = Tuple.from(new Object[]{oldval, newval});
+        this.arg = new Object[] { oldval, newval };
     }
 
     /**
@@ -40,7 +42,11 @@ final class ChangeEvent
      */
     void fire()
     {
-        for (final Object watcher : watchers)
-            ((Lambda)watcher).apply(arg);
+        for (final Map.Entry<Object,Object> watcher : watchers.entrySet())
+        {
+            final Tuple tuple =
+                Tuple.from(arg[0], arg[1], watcher.getValue());
+            ((Lambda)watcher.getKey()).apply(tuple);
+        }
     }
 }

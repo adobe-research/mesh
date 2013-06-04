@@ -10,15 +10,14 @@
  */
 package runtime.tran;
 
-import compile.Session;
 import runtime.Logging;
-import runtime.rep.lambda.Lambda;
 import runtime.rep.Tuple;
+import runtime.rep.lambda.Lambda;
 
-import java.util.Set;
+import java.util.LinkedList;
 
 /**
- * Used by {@link runtime.intrinsic.tran.Await}. For a given box,
+ * Used by {@link runtime.intrinsic.tran._await}. For a given box,
  * our method {@link #await(runtime.rep.lambda.Lambda)} implements
  * wait(box, pred) by by attaching ourselves as a watcher to the box,
  * then doing a thread wait until pred(newval) returns true on box commit.
@@ -29,10 +28,12 @@ import java.util.Set;
 public final class Waiter implements Lambda
 {
     private final Box box;
+    private final LinkedList<Object> updates;
 
     public Waiter(final Box box)
     {
         this.box = box;
+        this.updates = new LinkedList<Object>();
     }
 
     /**
@@ -75,33 +76,15 @@ public final class Waiter implements Lambda
                         box.releaseWriteLock();
                         locked = false;
 
-                        // on a commit to the box, our apply() gets called because
-                        // we're a watcher. this notifies us and we test the new value.
-                        long tick = 0;
-                        boolean retest = false;
-
+                        Object newValue;
                         do
                         {
-                            try
-                            {
-                                box.acquireReadLock();
-                                long curTick = box.getCommitTick();
-                                retest = curTick != tick && tick != 0;
-                                tick = curTick;
-                            }
-                            finally
-                            {
-                                box.releaseReadLock();
-                            }
-
-                            //Logging.info("into wait");
-
-                            if (!retest)
+                            if (updates.isEmpty())
                                 wait();
 
-                            //Logging.info("out of wait");
+                            newValue = updates.remove();
                         }
-                        while (!(Boolean)pred.apply(box.getValue()));
+                        while (!(Boolean)pred.apply(newValue));
 
                         //Logging.info("out of loop");
 
@@ -112,7 +95,7 @@ public final class Waiter implements Lambda
                         box.acquireWriteLock();
                         box.removeWatcher(this);
 
-                        final Set<Object> watchers = box.getWatchers();
+                        //final Set<Object> watchers = box.getWatchers();
                         //Logging.info("removed watcher, count = {0}", watchers == null ? 0 : watchers.size());
 
                         box.releaseWriteLock();
@@ -135,16 +118,24 @@ public final class Waiter implements Lambda
     // Lambda impl
 
     /**
-     * As a watcher, apply() will get an (old, new) value pair when a new
-     * value is committed to our box. At that point we call {@link #notify},
-     * which will wake up the waiting thread to retest the wait predicate
-     * against the new value (which we've saved to a member variable).
+     * As a watcher, apply() will get an (old, new) value pair when a new value
+     * is committed to our box. At that point ew enqueue the new value and call
+     * {@link #notify}, which will wake up the waiting thread to test the
+     * wait predicate against the new value(s).
      * Note: our apply() is synchronized so we don't lose calls during setup -
      * see {@link #await}.
      */
-    synchronized public Object apply(final Object args)
+    synchronized public Object apply(final Object values)
     {
-        notify();
+        final Tuple args = (Tuple)values;
+        final Object oldValue = args.get(0);
+        final Object newValue = args.get(1);
+
+        if (updates.isEmpty() || !oldValue.equals(newValue))
+        {
+            updates.add(newValue);
+            notify();
+        }
         return null;
     }
 }

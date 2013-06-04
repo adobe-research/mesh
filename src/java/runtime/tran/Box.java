@@ -14,7 +14,6 @@ import runtime.Logging;
 import runtime.rep.lambda.Lambda;
 import runtime.rep.map.PersistentMap;
 
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -199,19 +198,28 @@ public final class Box
      * Returns current set of watchers, or null if there are none.
      * Caler must have read or write lock.
      */
-    Set<Object> getWatchers()
+    PersistentMap getWatchers()
     {
-        final PersistentMap w = watchers;
-        return w.isEmpty() ? null : w.keySet();
+        if (watchers == null || watchers.isEmpty())
+            return null;
+
+        return watchers;
     }
 
     /**
      * Add a watcher function.
      * Caller must have write lock.
      */
+    public void addWatcher(final Lambda watcher, final int index)
+    {
+        assertWriteLock();
+
+        watchers = watchers.assoc(watcher, new Integer(index));
+    }
+
     public void addWatcher(final Lambda watcher)
     {
-        watchers = watchers.assoc(watcher, null);
+        addWatcher(watcher, -1); // for those that don't care about index
     }
 
     /**
@@ -366,4 +374,23 @@ public final class Box
     {
         lock.writeLock().unlock();
     }
+
+    /**
+     * Assert that the current thread owns the write lock
+     */
+    void assertWriteLock()
+    {
+        assert lock.isWriteLockedByCurrentThread() :
+            "Current thread must be holding the write lock";
+    }
+
+    /**
+     * Assert that a read lock is held (by any thread)
+     */
+    void assertReadLock()
+    {
+        assert lock.getReadHoldCount() > 0 :
+            "Current thread must be holding the read lock";
+    }
+
 }
