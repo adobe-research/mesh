@@ -16,7 +16,6 @@ import runtime.rep.map.PersistentMap;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -62,7 +61,7 @@ public final class Box
      * concurrently by e.g. {@link runtime.intrinsic.tran._watch},
      * {@link Waiter#await}
      */
-    private AtomicReference<PersistentMap> watchers;
+    private PersistentMap watchers;
 
     /**
      * Note that Boxes are never without a current value.
@@ -74,7 +73,7 @@ public final class Box
         this.owner = null;
         this.queuedOwner = null;
         this.lock = new ReentrantReadWriteLock();
-        this.watchers = null;
+        this.watchers = PersistentMap.EMPTY;
 
         // behave as if owned by a transaction that created us.
         final Transaction tran = TransactionManager.getTransaction();
@@ -202,11 +201,8 @@ public final class Box
      */
     Set<Object> getWatchers()
     {
-        if (watchers == null)
-            return null;
-
-        final PersistentMap currentWatchers = watchers.get();
-        return currentWatchers.isEmpty() ? null : currentWatchers.keySet();
+        final PersistentMap w = watchers;
+        return w.isEmpty() ? null : w.keySet();
     }
 
     /**
@@ -215,10 +211,7 @@ public final class Box
      */
     public void addWatcher(final Lambda watcher)
     {
-        if (watchers == null)
-            watchers = new AtomicReference<PersistentMap>(PersistentMap.EMPTY);
-
-        watchers.set(watchers.get().assoc(watcher, null));
+        watchers = watchers.assoc(watcher, null);
     }
 
     /**
@@ -227,8 +220,7 @@ public final class Box
      */
     public void removeWatcher(final Lambda watcher)
     {
-        if (watchers != null)
-            watchers.set(watchers.get().unassoc(watcher));
+        watchers = watchers.unassoc(watcher);
     }
 
     /**
@@ -362,7 +354,7 @@ public final class Box
     /**
      * Acquire box write lock, no time limit.
      */
-    void acquireWriteLock()
+    public void acquireWriteLock()
     {
         lock.writeLock().lock();
     }
@@ -370,7 +362,7 @@ public final class Box
     /**
      * Release write lock.
      */
-    void releaseWriteLock()
+    public void releaseWriteLock()
     {
         lock.writeLock().unlock();
     }

@@ -38,7 +38,9 @@ public final class _watch extends IntrinsicLambda
 
     public static Lambda invoke(final Box box, final Lambda watcher)
     {
+        box.acquireWriteLock();
         box.addWatcher(watcher);
+        box.releaseWriteLock();
         return watcher;
     }
 }
