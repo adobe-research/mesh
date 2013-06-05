@@ -1,11 +1,10 @@
 $load test.apply
 $clear
 
-// TODO uncomment once await/awaits are clean
-//$load test.await
-//$clear
-//$load test.awaits
-//$clear
+$load test.await
+$clear
+$load test.awaits
+$clear
 
 $load test.cbuf
 $clear

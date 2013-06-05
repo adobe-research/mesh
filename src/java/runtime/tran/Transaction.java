@@ -10,14 +10,14 @@
  */
 package runtime.tran;
 
-import runtime.Logging;
-import runtime.rep.lambda.Lambda;
-import runtime.rep.Tuple;
 import runtime.ConfigUtils;
+import runtime.Logging;
+import runtime.rep.Tuple;
+import runtime.rep.lambda.Lambda;
+import runtime.rep.map.PersistentMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -396,7 +396,7 @@ final class Transaction
 
             final Object oldValue = box.getCurrentValue();
 
-            final Set<Object> watchers = box.getWatchers();
+            final PersistentMap watchers = box.getWatchers();
 
             box.commit(newValue, commitTick);
 
