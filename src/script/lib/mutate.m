@@ -391,16 +391,14 @@ dep(src, f)
 /**
  * create and return a box whose value tracks the value
  * of the passed boxes, mapped through the passed function.
- * E.g. x = box(0); y = box(1); z = deps([x, y], sum);
- * 
- * TODO over non-uniform boxes
+ * E.g. (x, y) = boxes(0, 1); z = deps((x, y), plus);
+ *
  * @param sources list of boxes to track
  * @param f function that will be invoked with the new values of sources when they are altered
  */
 deps(sources, f)
 {
-    sink = box(f(sources | get));
-    updater(v) { do { put(sink, f(sources | get)) } };
-    sources | { react($0, updater) };
+    sink = box(f(gets(sources)));
+    reacts(sources, { put(sink, f($0)) });
     sink
 };

@@ -14,9 +14,7 @@ import runtime.ConfigUtils;
 import runtime.Logging;
 import runtime.rep.Tuple;
 import runtime.rep.lambda.Lambda;
-import runtime.rep.map.PersistentMap;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -128,6 +126,12 @@ final class Transaction
     private int pinnedCount = 0;
     private Box[] pinned = new Box[PINNED_CHUNK_SIZE];
 
+    /**
+     * used to provide multiwatcher/waiter functions access
+     * to current commit set, via {@link #getUpdatedStash()}
+     */
+    private Box[] updatedStash = null;
+
     //
     // TransactionManager API
     //
@@ -181,7 +185,7 @@ final class Transaction
     private Object run(final Box box, final Lambda f, final Object val)
     {
         // events to be fired after a successful commit.
-        ArrayList<ChangeEvent> events = null;
+        ChangeEvent event = null;
 
         // holds the result of the transactional operation, per above
         Object result = null;
@@ -273,7 +277,7 @@ final class Transaction
                             put(box, val);
 
                 // commit box updates and collect change events
-                events = commit();
+                event = commit();
 
                 // all done, proceed to finally for cleanup
                 retry = false;
@@ -295,8 +299,10 @@ final class Transaction
                 // release read locks on pinned boxes
                 releasePinned();
 
-                // clear update map
-                clearUpdates();
+                // clear update map if we're retrying.
+                // otherwise, events may need this info
+                if (retry)
+                    clearUpdates();
 
                 // if we were bumped as a queued owner between our throw and now,
                 // clear attempt state
@@ -322,11 +328,37 @@ final class Transaction
                     MAX_ATTEMPTS);
 
         // fire accumulated change events
-        if (events != null)
-            fireEvents(events);
+        if (event != null)
+            event.fire();
 
         // return user function's result
         return result;
+    }
+
+    /**
+     * stashes a copy of the current {@link #updated} box array
+     * to {@link #updatedStash}.
+     */
+    private void stashUpdated()
+    {
+        updatedStash = Arrays.copyOf(updated, updated.length);
+    }
+
+    /**
+     * clear {@link #updatedStash}
+     */
+    private void unstashUpdated()
+    {
+        updatedStash = null;
+    }
+
+    /**
+     * package local: provides {@link #updatedStash} access to
+     * multiwatcher/waiter functions
+     */
+    Box[] getUpdatedStash()
+    {
+        return updatedStash;
     }
 
     /**
@@ -373,7 +405,7 @@ final class Transaction
      * so we are not guaranteed to run exactly the watchers present
      * at commit time.
      */
-    private ArrayList<ChangeEvent> commit()
+    private ChangeEvent commit()
     {
         final int n = updatedCount;
 
@@ -385,7 +417,7 @@ final class Transaction
 
         final long commitTick = getTick();
 
-        ArrayList<ChangeEvent> events = null;
+        boolean needsChangeEvent = false;
 
         for (int i = 0; i < n; i++)
         {
@@ -394,25 +426,18 @@ final class Transaction
             final Object newValue = updates[i];
             assert newValue != null;
 
-            final Object oldValue = box.getCurrentValue();
-
-            final PersistentMap watchers = box.getWatchers();
-
             box.commit(newValue, commitTick);
 
-            if (watchers != null)
-            {
-                if (events == null)
-                    events = new ArrayList<ChangeEvent>();
-
-                events.add(new ChangeEvent(watchers, oldValue, newValue));
-            }
+            needsChangeEvent |= box.getWatchers() != null;
         }
 
         for (int j = n - 1; j >= 0; j--)
             updated[j].releaseWriteLock();
 
-        return events;
+        if (needsChangeEvent)
+            return new ChangeEvent(updated, updates, updatedCount);
+        else
+            return null;
     }
 
     /**
@@ -448,18 +473,6 @@ final class Transaction
         catch (InterruptedException ignored)
         {
         }
-    }
-
-    /**
-     * Run watcher functions collected during commit.
-     * Watchers are currently run on the transaction's
-     * thread.
-     * TODO formalize whether that's a guarantee or not.
-     */
-    private static void fireEvents(final ArrayList<ChangeEvent> events)
-    {
-        for (final ChangeEvent event : events)
-            event.fire();
     }
 
     /**
@@ -522,9 +535,12 @@ final class Transaction
      */
     private void clearUpdates()
     {
-        updatedCount = 0;
-        Arrays.fill(updates, null);
-        Arrays.fill(updated, null);
+        if (updatedCount > 0)
+        {
+            updatedCount = 0;
+            Arrays.fill(updates, null);
+            Arrays.fill(updated, null);
+        }
     }
 
     /**

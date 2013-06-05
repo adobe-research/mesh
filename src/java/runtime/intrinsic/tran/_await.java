@@ -13,9 +13,7 @@ package runtime.intrinsic.tran;
 import runtime.rep.lambda.IntrinsicLambda;
 import runtime.rep.lambda.Lambda;
 import runtime.rep.Tuple;
-import runtime.tran.Box;
-import runtime.tran.TransactionManager;
-import runtime.tran.Waiter;
+import runtime.tran.*;
 
 /**
  * Transactional wait/notify.
@@ -27,7 +25,7 @@ import runtime.tran.Waiter;
  */
 public final class _await extends IntrinsicLambda
 {
-    public static final _await INSTANCE = new _await(); 
+    public static final _await INSTANCE = new _await();
     public static final String NAME = "await";
 
     public String getName()
@@ -44,7 +42,10 @@ public final class _await extends IntrinsicLambda
     public static Tuple invoke(final Box box, final Lambda pred)
     {
         if (TransactionManager.getTransaction() == null)
-            new Waiter(box).await(pred);
+        {
+            final Waiter waiter = new Waiter(Boxes.from(box), pred);
+            waiter.start();
+        }
 
         return Tuple.UNIT;
     }
