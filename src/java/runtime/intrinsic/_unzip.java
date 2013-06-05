@@ -18,7 +18,7 @@ import runtime.rep.Tuple;
 import java.util.Iterator;
 
 /**
- * the inverse of {@link Zip} (mod ragged lists)
+ * the inverse of {@link _zip} (mod ragged lists)
  *
  * @author Basil Hosmer
  */

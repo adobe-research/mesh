@@ -136,6 +136,7 @@ public final class Waiter implements Lambda
             updates.add(newValue);
             notify();
         }
+
         return null;
     }
 }

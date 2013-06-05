@@ -200,26 +200,29 @@ public final class Box
      */
     PersistentMap getWatchers()
     {
-        if (watchers == null || watchers.isEmpty())
-            return null;
-
-        return watchers;
+        return watchers.isEmpty() ? null : watchers;
     }
 
     /**
-     * Add a watcher function.
-     * Caller must have write lock.
+     * Add a watcher function, with associated cargo value to be
+     * passed as additional argument when watcher is called.
+     * Caller of this method must have write lock.
      */
-    public void addWatcher(final Lambda watcher, final int index)
+    public void addWatcher(final Lambda watcher, final Object cargo)
     {
+        assert cargo != null;
         assertWriteLock();
-
-        watchers = watchers.assoc(watcher, new Integer(index));
+        watchers = watchers.assoc(watcher, cargo);
     }
 
+    /**
+     * Add a watcher function, with no associated value.
+     * Caller must have write lock.
+     */
     public void addWatcher(final Lambda watcher)
     {
-        addWatcher(watcher, -1); // for those that don't care about index
+        assertWriteLock();
+        watchers = watchers.assoc(watcher, null);
     }
 
     /**

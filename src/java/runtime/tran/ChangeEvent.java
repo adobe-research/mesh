@@ -25,7 +25,7 @@ import java.util.Map;
 final class ChangeEvent
 {
     final PersistentMap watchers;
-    final Object arg[];
+    final Tuple valpair;
 
     ChangeEvent(final PersistentMap watchers,
         final Object oldval, final Object newval)
@@ -34,19 +34,26 @@ final class ChangeEvent
         assert !watchers.isEmpty();     // performance leak only
 
         this.watchers = watchers;
-        this.arg = new Object[] { oldval, newval };
+        this.valpair = Tuple.from(oldval, newval);
     }
 
     /**
-     * Invoke {@link #watchers} on (oldval, newval)
+     * Apply each watcher function in {@link #watchers} to either
+     * (oldval, newval) or ((oldval, newval), cargo), depending on
+     * whether the watcher is associated with a non-null caargo value.
+     * NOTE: currently we take non-null cargo to mean that lambda is
+     * of type ((V, V), C) -> X, rather than the standard (V, V) -> X.
+     * Currently this capability is used only by MultiWaiter.
+     * TODO consider surfacing this as part of the watcher API
      */
     void fire()
     {
-        for (final Map.Entry<Object,Object> watcher : watchers.entrySet())
+        for (final Map.Entry<Object, Object> entry : watchers.entrySet())
         {
-            final Tuple tuple =
-                Tuple.from(arg[0], arg[1], watcher.getValue());
-            ((Lambda)watcher.getKey()).apply(tuple);
+            final Lambda watcher = (Lambda)entry.getKey();
+            final Object cargo = entry.getValue();
+
+            watcher.apply(cargo != null ? Tuple.from(valpair, cargo) : valpair);
         }
     }
 }

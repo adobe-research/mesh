@@ -27,7 +27,7 @@ import java.util.LinkedList;
  */
 public final class MultiWaiter implements Lambda
 {
-    private static class IndexedValue
+    private static final class IndexedValue
     {
         final public Object value;
         final public int index;
@@ -38,6 +38,11 @@ public final class MultiWaiter implements Lambda
             this.index = index;
         }
     }
+
+    //
+    // instance
+    //
+
     private final Tuple boxes;
     private LinkedList<IndexedValue> updates;
 
@@ -82,7 +87,9 @@ public final class MultiWaiter implements Lambda
 
                     synchronized (this)
                     {
-                        // add ourselves as a watcher on boxes
+                        // add ourselves as a watcher on boxes. we track the box's
+                        // tuple position with an extra index argument assoc'd to
+                        // watcher. TODO make this part of the watcher API?
                         for (int i = 0; i < boxes.size(); i++)
                             ((Box)boxes.get(i)).addWatcher(this, i);
 
@@ -98,12 +105,12 @@ public final class MultiWaiter implements Lambda
 
                         // on a commit to the box, our apply() gets called because
                         // we're a watcher. this notifies us and we test the new value.
-                        IndexedValue newValue;
                         do
                         {
                             if (updates.isEmpty())
                                 wait();
-                            newValue = updates.remove();
+
+                            final IndexedValue newValue = updates.remove();
                             values[newValue.index] = newValue.value;
                         }
                         while (!(Boolean)pred.apply(Tuple.from(values)));
@@ -135,19 +142,25 @@ public final class MultiWaiter implements Lambda
     // Lambda impl
 
     /**
-     * As a watcher, apply() will get an (old, new) value pair when a new
-     * value is committed to our box. At that point we call {@link #notify},
+     * As a watcher, our apply() will get the argument:
+     *  ((oldvalue, newvalue), cargo)
+     * when a new value is committed to our box. (Cargo is the index
+     * value we supplied when adding the watcher to the box.)
+     * When called, we call {@link #notify},
      * which will wake up the waiting thread to retest the wait predicate
-     * against the new value (which we've saved to a member variable).
+     * against the new tuple of values (which we've saved to a member variable).
      * Note: our apply() is synchronized so we don't lose calls during setup -
      * see {@link #wait}.
      */
-    synchronized public Object apply(final Object values)
+    synchronized public Object apply(final Object arg)
     {
-        final Tuple args = (Tuple)values;
-        final Object oldValue = args.get(0);
-        final Object newValue = args.get(1);
-        final int index = (Integer)args.get(2);
+        final Tuple args = (Tuple)arg;
+
+        final Tuple values = (Tuple)args.get(0);
+        final Object oldValue = values.get(0);
+        final Object newValue = values.get(1);
+
+        final int index = (Integer)args.get(1);
 
         if (updates.isEmpty() || !oldValue.equals(newValue))
         {
