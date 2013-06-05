@@ -168,7 +168,7 @@ assert_equals({ 1 }, {
                     });
 
 // deps = { sources, f => sink = box(f(map(sources, get))); updater = { v => do({ put(sink, f(map(sources, get))); () }); () }; map(sources, { $0_305_15 => react($0_305_15, updater) }); sink }
-assert_equals({ 3 }, { 
+assert_equals({ 3 }, {
                     x = box(0);
                     y = box(1);
                     z = deps([x, y], sum);

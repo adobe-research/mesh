@@ -128,6 +128,12 @@ final class Transaction
     private int pinnedCount = 0;
     private Box[] pinned = new Box[PINNED_CHUNK_SIZE];
 
+    /**
+     * used to provide multiwatcher/waiter functions access
+     * to current commit set, via {@link #getUpdatedStash()}
+     */
+    private Box[] updatedStash = null;
+
     //
     // TransactionManager API
     //
@@ -295,8 +301,10 @@ final class Transaction
                 // release read locks on pinned boxes
                 releasePinned();
 
-                // clear update map
-                clearUpdates();
+                // clear update map if we're retrying.
+                // otherwise, events may need this info
+                if (retry)
+                    clearUpdates();
 
                 // if we were bumped as a queued owner between our throw and now,
                 // clear attempt state
@@ -321,12 +329,48 @@ final class Transaction
                 "transaction fails after max attempts: " +
                     MAX_ATTEMPTS);
 
-        // fire accumulated change events
+        // clear updates after success, and
+        // fire any accumulated change events
         if (events != null)
+        {
+            stashUpdated();
+            clearUpdates();
             fireEvents(events);
+            unstashUpdated();
+        }
+        else
+        {
+            clearUpdates();
+        }
 
         // return user function's result
         return result;
+    }
+
+    /**
+     * stashes a copy of the current {@link #updated} box array
+     * to {@link #updatedStash}.
+     */
+    private void stashUpdated()
+    {
+        updatedStash = Arrays.copyOf(updated, updated.length);
+    }
+
+    /**
+     * clear {@link #updatedStash}
+     */
+    private void unstashUpdated()
+    {
+        updatedStash = null;
+    }
+
+    /**
+     * package local: provides {@link #updatedStash} access to
+     * multiwatcher/waiter functions
+     */
+    Box[] getUpdatedStash()
+    {
+        return updatedStash;
     }
 
     /**
@@ -395,12 +439,10 @@ final class Transaction
             assert newValue != null;
 
             final Object oldValue = box.getCurrentValue();
-
-            final PersistentMap watchers = box.getWatchers();
-
             box.commit(newValue, commitTick);
 
-            if (watchers != null)
+            final PersistentMap watchers = box.getWatchers();
+            if (!watchers.isEmpty())
             {
                 if (events == null)
                     events = new ArrayList<ChangeEvent>();
@@ -522,9 +564,12 @@ final class Transaction
      */
     private void clearUpdates()
     {
-        updatedCount = 0;
-        Arrays.fill(updates, null);
-        Arrays.fill(updated, null);
+        if (updatedCount > 0)
+        {
+            updatedCount = 0;
+            Arrays.fill(updates, null);
+            Arrays.fill(updated, null);
+        }
     }
 
     /**

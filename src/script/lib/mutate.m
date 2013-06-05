@@ -392,8 +392,11 @@ dep(src, f)
  * create and return a box whose value tracks the value
  * of the passed boxes, mapped through the passed function.
  * E.g. x = box(0); y = box(1); z = deps([x, y], sum);
- * 
+ *
+ * TODO this has the same lost-wakeup problem as awaits().
+ * TODO needs to be fixed with an analogous intrinsic implementation.
  * TODO over non-uniform boxes
+ *
  * @param sources list of boxes to track
  * @param f function that will be invoked with the new values of sources when they are altered
  */

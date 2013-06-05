@@ -195,12 +195,12 @@ public final class Box
     }
 
     /**
-     * Returns current set of watchers, or null if there are none.
+     * Returns current watcher map.
      * Caler must have read or write lock.
      */
     PersistentMap getWatchers()
     {
-        return watchers.isEmpty() ? null : watchers;
+        return watchers;
     }
 
     /**
