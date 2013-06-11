@@ -80,7 +80,7 @@ public abstract class Boxes implements Iterable<Box>
     // whether this boxing operation started as a singleton box or a tuple of
     // boxes
     public abstract Tuple applyUpdates(
-        final Object currentValues, final Map<Box,Object> updates);
+        final Object currentValues, final Box[] boxes, final Object[] values);
 
     public void acquireWriteLocks()
     {
@@ -122,10 +122,10 @@ public abstract class Boxes implements Iterable<Box>
         }
     }
 
-    public void addWatcher(final Watcher watcher)
+    public void addWatcher(final Lambda key, final Watcher watcher)
     {
         for (final Box b : this)
-            b.addWatcher(watcher);
+            b.addWatcher(key, watcher);
     }
 
     public void removeWatcher(final Lambda action)

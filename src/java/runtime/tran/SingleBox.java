@@ -12,8 +12,6 @@ package runtime.tran;
 
 import runtime.rep.Tuple;
 
-import java.util.Map;
-
 /**
  * A singleton implementation of the Boxes class.
  *
@@ -46,10 +44,10 @@ public class SingleBox extends Boxes
     }
 
     public Tuple applyUpdates(
-        final Object currentValue, final Map<Box,Object> updates)
+        final Object currentValue, final Box[] boxes, final Object[] values)
     {
-        final Object newValue = updates.get(box);
-        assert newValue != null : "Can't update a box with no value";
-        return Tuple.from(currentValue, newValue);
+        assert boxes.length == 1 && values.length == 1 : "incorrect arguments";
+        assert boxes[0] == box : "Incorrect box";
+        return Tuple.from(currentValue, values[0]);
     }
 }

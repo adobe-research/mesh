@@ -13,8 +13,6 @@ package runtime.tran;
 import runtime.rep.Tuple;
 import runtime.rep.lambda.Lambda;
 
-import java.util.Map;
-
 /**
  * Instances of this are attached to box(es) and react when the value has been
  * changed in a transaction.
@@ -39,7 +37,7 @@ public class Watcher
         boxes.acquireWriteLocks();
 
         stash = boxes.getValues();
-        boxes.addWatcher(this);
+        boxes.addWatcher(action, this);
 
         boxes.releaseWriteLocks();
     }
@@ -54,9 +52,9 @@ public class Watcher
      * of ((oldvalue+), (newValue+)).  The existing stash is modified to
      * contain the new value(s).
      */
-    public synchronized Tuple applyUpdates(final Map<Box,Object> updates)
+    public synchronized Tuple applyUpdates(final Box[] updated, final Object[] values)
     {
-        final Tuple results = boxes.applyUpdates(stash, updates);
+        final Tuple results = boxes.applyUpdates(stash, updated, values);
         this.stash = results.get(1);
 
         return results;
@@ -66,9 +64,9 @@ public class Watcher
      * This is called after a transaction commit if that transaction updated
      * any of the boxes that we're interested in.
      */
-    public void trigger(final Map<Box,Object> updates)
+    public void trigger(final Box[] boxes, final Object[] values)
     {
-        final Tuple args = applyUpdates(updates);
+        final Tuple args = applyUpdates(boxes, values);
         commitAction(args);
     }
 

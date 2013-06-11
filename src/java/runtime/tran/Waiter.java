@@ -25,7 +25,7 @@ import java.util.LinkedList;
  *
  * @author Basil Hosmer
  */
-public final class Waiter extends Watcher
+public final class Waiter extends Watcher implements Lambda
 {
     private LinkedList<Object> updates;
 
@@ -60,7 +60,7 @@ public final class Waiter extends Watcher
                     synchronized (this)
                     {
                         // add ourselves as a watcher on these boxes
-                        boxes.addWatcher(this);
+                        boxes.addWatcher(this, this);
 
                         // when we release the lock, box updates will start to
                         // flow again. but because we're in a synchronized
@@ -83,7 +83,7 @@ public final class Waiter extends Watcher
                         // We're probably in the middle of iterating through the
                         // watchers.
                         boxes.acquireWriteLocks();
-                        boxes.removeWatcher(action);
+                        boxes.removeWatcher(this);
                     }
                 }
                 catch (InterruptedException e)
@@ -117,5 +117,16 @@ public final class Waiter extends Watcher
                 notify();
             }
         }
+    }
+
+    //
+    // Lambda
+    //
+
+    public Object apply(final Object obj)
+    {
+        // Only here so that Waiter can be it's own key in a box's watcher set
+        assert false : "This should not be called";
+        return null;
     }
 }
