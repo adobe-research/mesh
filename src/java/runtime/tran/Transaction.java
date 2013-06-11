@@ -299,10 +299,8 @@ final class Transaction
                 // release read locks on pinned boxes
                 releasePinned();
 
-                // clear update map if we're retrying.
-                // otherwise, events may need this info
-                if (retry)
-                    clearUpdates();
+                // clear update map 
+                clearUpdates();
 
                 // if we were bumped as a queued owner between our throw and now,
                 // clear attempt state
