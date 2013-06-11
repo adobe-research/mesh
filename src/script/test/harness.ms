@@ -21,15 +21,13 @@ $clear
 // Library testing
 $load test.lib.bench
 $clear
+$load test.lib.concutil
+$clear
 $load test.lib.inliners
 $clear
-$load test.lib.io
-$clear
-$load test.lib.lang
+$load test.lib.test_lang
 $clear
 $load test.lib.logging
-$clear
-$load test.lib.mutate
 $clear
 $load test.lib.sort
 $clear

@@ -17,7 +17,7 @@ import compile.term.TupleTerm;
 import runtime.intrinsic._mapz;
 import runtime.intrinsic._zip;
 import runtime.rep.Tuple;
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import runtime.rep.list.ListValue;
 
 import java.util.List;

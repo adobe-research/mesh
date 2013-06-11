@@ -1,7 +1,4 @@
 
-import * from std;
-export .;
-
 num_flops(N, nz, num_iterations) {
     actual_nz = (nz/N) * N;
     i2f(actual_nz * 2 * num_iterations)

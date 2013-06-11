@@ -131,6 +131,6 @@ public final class TypeRefResolver extends StackedTypeVisitor<Object>
                 return param;
         }
 
-        return refResolver.getCurrentScope().findType(name);
+        return refResolver.getCurrentScope().findTypeBinding(name);
     }
 }

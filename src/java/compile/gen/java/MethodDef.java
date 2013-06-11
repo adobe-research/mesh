@@ -66,17 +66,17 @@ public class MethodDef
         this.ctBehavior = ctMethod;
     }
 
-    public String getSource(final boolean debug, final boolean comments)
+    public String getSource(final boolean comments)
     {
-        return buildSource(true, debug, comments);
+        return buildSource(true, comments);
     }
 
     public String getEmptySource()
     {
-        return buildSource(false, false, false);
+        return buildSource(false, false);
     }
 
-    private String buildSource(final boolean body, final boolean debug, final boolean comments)
+    private String buildSource(final boolean body, final boolean comments)
     {
         final StringBuilder buf = new StringBuilder().
             append("\t").
@@ -88,10 +88,13 @@ public class MethodDef
 
             final List<String> statements = new ArrayList<String>();
             for (final JavaStatement stmt : getStatements())
-                statements.add(stmt.getSource(debug, comments));
+                statements.add(stmt.getSource(comments));
 
-            final boolean doublesp = !statements.isEmpty() && statements.get(0).contains("\n");
-            buf.append(StringUtils.joinAndDelimit(statements, doublesp ? "\n\n" : "\n", "\n", "\n\t"));
+            final boolean doublesp = !statements.isEmpty() &&
+                statements.get(0).contains("\n");
+
+            buf.append(StringUtils.joinAndDelimit(statements,
+                doublesp ? "\n\n" : "\n", "\n", "\n\t"));
             buf.append("}");
         }
         else

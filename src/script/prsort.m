@@ -1,6 +1,5 @@
 
-import * from std;
-import * from processing;
+import processing;
 
 // serial/parallel quicksort animation
 

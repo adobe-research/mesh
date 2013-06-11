@@ -12,6 +12,7 @@ package compile.analyze;
 
 import com.google.common.collect.*;
 import compile.*;
+import compile.gen.IntrinsicsResolver;
 import compile.module.Module;
 import compile.module.Scope;
 import compile.parse.ApplyFlavor;
@@ -259,11 +260,11 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
             if (let.getType().hasWildcards())
             {
                 Session.error(let.getLoc(),
-                    "declared intrinsic {0} does not have a fully-specified type.", let.getName());
+                    "declared intrinsic {0} does not have a fully-specified type.",
+                    let.getName());
             }
 
-            final IntrinsicsResolver resolver = IntrinsicsResolver.getThreadLocal();
-            final String errorMsg = resolver.verify(let);
+            final String errorMsg = IntrinsicsResolver.verify(let);
             if (errorMsg != null)
                 Session.error(let.getLoc(), errorMsg);
         }

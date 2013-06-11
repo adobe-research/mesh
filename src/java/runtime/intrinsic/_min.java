@@ -11,7 +11,6 @@
 package runtime.intrinsic;
 
 import runtime.rep.Tuple;
-import runtime.rep.lambda.IntrinsicLambda;
 
 /**
  * int min()

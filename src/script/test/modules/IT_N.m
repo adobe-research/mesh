@@ -1,3 +1,3 @@
-import * from IT;
+import IT;
 
 foo();

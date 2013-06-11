@@ -1,5 +1,5 @@
 
-import * from unittest;
-// import * from HY;
+import unittest;
+// import HY;
 
 // HY is malformed.  var,foo are not unqualified symbols

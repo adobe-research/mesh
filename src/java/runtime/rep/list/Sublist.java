@@ -10,8 +10,8 @@
  */
 package runtime.rep.list;
 
-import runtime.Logging;
-import runtime.rep.lambda.Lambda;
+import runtime.sys.Logging;
+import runtime.rep.Lambda;
 import runtime.rep.map.MapValue;
 
 import java.util.Iterator;

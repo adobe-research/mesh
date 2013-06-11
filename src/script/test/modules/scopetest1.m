@@ -1,8 +1,8 @@
 
-import * from unittest;
+import unittest;
 
-import * from scopeA;
-import * from scopeB;
-import * from scopeC;
+import scopeA;
+import scopeB;
+import scopeC;
 
 assert_equals( { value }, { "scopeC" } );

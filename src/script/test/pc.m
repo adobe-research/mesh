@@ -1,5 +1,5 @@
 
-import * from std;
+import concutil;
 
 // test produce/consume library funcs
 

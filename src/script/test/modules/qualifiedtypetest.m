@@ -1,10 +1,10 @@
 
-import * from unittest;
+import unittest;
 
 import M qualified;
 import M into N;
-import * from P;
-import * from Q;
+import P;
+import Q;
 
 type LocalType = (#field : Int, #next : (Double,Double));
 

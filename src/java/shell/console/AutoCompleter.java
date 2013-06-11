@@ -10,7 +10,7 @@
  */
 package shell.console;
 
-import compile.gen.java.Unit;
+import compile.gen.Unit;
 import compile.term.LetBinding;
 import jline.console.completer.Completer;
 import shell.ShellScriptManager;

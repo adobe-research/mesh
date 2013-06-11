@@ -10,15 +10,15 @@
  */
 package runtime.tran;
 
-import runtime.Logging;
+import runtime.rep.Lambda;
 import runtime.rep.Tuple;
-import runtime.rep.lambda.Lambda;
+import runtime.sys.Logging;
 
 import java.util.LinkedList;
 
 /**
  * Used by {@link runtime.intrinsic.tran._await}. For a given box,
- * our method {@link #wait(runtime.rep.lambda.Lambda)} implements
+ * our method {@link #wait(runtime.rep.Lambda)} implements
  * wait(box, pred) by by attaching ourselves as a watcher to the box,
  * then doing a thread wait until pred(newval) returns true on box commit.
  * (We remove ourselves from the box's watcher list before returning.)
@@ -143,7 +143,7 @@ public final class MultiWaiter implements Lambda
 
     /**
      * As a watcher, our apply() will get the argument:
-     *  ((oldvalue, newvalue), cargo)
+     * ((oldvalue, newvalue), cargo)
      * when a new value is committed to our box. (Cargo is the index
      * value we supplied when adding the watcher to the box.)
      * When called, we call {@link #notify},

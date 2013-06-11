@@ -10,18 +10,16 @@
  */
 package shell;
 
-import compile.Loc;
-import compile.NameUtils;
-import compile.Session;
-import compile.StringUtils;
-import compile.gen.java.Unit;
-import compile.gen.java.UnitBuilder;
-import compile.gen.java.UnitDumper;
-import compile.module.Module;
+import com.google.common.collect.Sets;
+import compile.*;
+import compile.Compiler;
+import compile.gen.UnitBuilder;
+import compile.gen.Unit;
 import compile.module.Import;
+import compile.module.Module;
 import compile.term.*;
 import shell.console.Console;
-import runtime.Logging;
+import runtime.sys.Logging;
 
 import java.io.*;
 import java.util.*;
@@ -54,7 +52,7 @@ public final class Main
     {
         this.shellConfig = shellConfig;
         this.fileServices = fileServices;
-        this.shellScriptManager = new ShellScriptManager();
+        this.shellScriptManager = new ShellScriptManager(Config.newUnitManager());
         this.console = Console.create(shellConfig, shellScriptManager,
             fileServices, shellConfig.getCommandFiles());
     }
@@ -77,38 +75,6 @@ public final class Main
             compareErrors > 0 ? ", " + compareErrors + " compare errors" : "");
 
         return errorCount == 0 ? 0 : 1;
-    }
-
-    /**
-     *
-     */
-    private void loadFile(final String moduleName)
-    {
-        final String fileName = NameUtils.module2file(moduleName);
-        final File file = fileServices.findFile(fileName);
-
-        if (file != null)
-        {
-            try
-            {
-                final Loc loc = new Loc(file.getPath());
-                final Reader r = fileServices.getReader(file);
-                final boolean debug = shellConfig.getDebug();
-                final List<ImportStatement> imports = shellConfig.getImports();
-
-                shellScriptManager.runScript(loc, r, imports, debug, false);
-
-                r.close();
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-        }
-        else
-        {
-            Session.error("script file \"{0}\" not found", fileName);
-        }
     }
 
     /**
@@ -175,8 +141,8 @@ public final class Main
         }
         else
         {
-            shellScriptManager.runScript(SHELL_LOC, new StringReader(input),
-                shellConfig.getImports(), shellConfig.getDebug(), true);
+            shellScriptManager.evalShellInput(
+                SHELL_LOC, new StringReader(input), shellConfig.getImports());
         }
         return result;
     }
@@ -210,10 +176,6 @@ public final class Main
         else if (first.equals("i") || first.equals("import"))
         {
             cmdImport(words);
-        }
-        else if (first.equals("k") || first.equals("check"))
-        {
-            cmdCheckOutput(command.substring(first.length()));
         }
         else if (first.equals("l") || first.equals("load"))
         {
@@ -258,7 +220,7 @@ public final class Main
     {
         final String path =
             shellConfig.getWritePath() == null ? "ws" : shellConfig.getWritePath();
-        return shellScriptManager.writeUnits(path);
+        return compile.Compiler.writeUnits(path);
     }
 
     /**
@@ -290,7 +252,7 @@ public final class Main
      */
     private void cmdClearState(final boolean verbose)
     {
-        shellScriptManager.clear(shellConfig.getLoads());
+        shellScriptManager.clearShellState();
         if (verbose)
             Session.info("cleared");
     }
@@ -314,34 +276,46 @@ public final class Main
         "",
         "$h / $help             print this message",
         "",
-        "$i / $import           modify the default import list for the shell",
-        "                       '?' | 'list': prints the current set of imports.",
-        "                       '-' | 'clear' <spec>: deletes import at position <spec>",
-        "                                             or which uniquely matches prefix <spec>",
-        "                       '+' | 'add' <spec>: Creates a new import",
+        "$i / $import           print current import list. The import list provides",
+        "                       definitions to interactive shell input.",
+        "                       Optional args:",
+        "             <spec>    add <spec> to import list. <spec> is standard import",
+        "                       statement syntax. Note that this command will attempt to",
+        "                       locate and initialize the specified module immediately.",
+        "             -<spec>   removes <spec> from import list",
+        "             -<pos>    removes import list item at given position",
         "",
-        "$l / $load <module>    load and run a script file. A file pathname is created by",
+        "$l / $load <module>    load and run a script. A file pathname is created by",
         "                       replacing dot with the file separator and appending a",
-        "                       .m extension.  If such a file is found in the path it",
-        "                       is loaded and executed.  The search path is the cwd and",
+        "                       .m extension. If such a file is found in the path, it",
+        "                       is loaded and executed. The search path is the cwd and",
         "                       what is specified on the command line with ",
         "                       -path <path1>;<path2>;...",
         "",
-        "$m / $messages         toggle compilation debug messages",
+        "$m / $messages         toggle verbose compilation messages",
         "",
         "$q / $quit             quit",
         "",
         "$t / $type <expr>      print the type of <expr>",
         "",
-        "$u / $unit [<num>|*]   print generated code for a unit (= interactive",
-        "                       statement or loaded script). Optional arg is either",
-        "                       <num> for the unit that number of steps into the past,",
-        "                       or * for all",
+        "$u / $unit             print unit details (including generated source, if available)",
+        "                       for most recent unit compilation attempt (failed or successful).",
+        "                       A unit is the compilation product of an interactive statement,",
+        "                       or loaded or imported script.",
+        "                       Optional args:",
+        "           ?           print unit history, most recent first",
+        "           !           print transitive closure of most recent unit and all its imports",
+        "           <module>    print unit for module <module>",
+        "           <module>!   ...and all its imports",
+        "           *           print all units",
         "",
-        "$v / $vars [? | <ns>*] print variable bindings. ? prints available namespaces.",
-        "                       If a namespace is present in the list, it's contents are",
-        "                       printed (namespace '.' shows the last modules's ",
-        "                       locals only).",
+        "$v / $vars             print variable bindings. Without arguments, all available",
+        "                       qualified and unqualified bindings are included.",
+        "                       Optional args:",
+        "           .           print variables defined in the most recent interactive,",
+        "                       input or loaded script",
+        "           ?           list inhabited namespaces and the modules inhabiting them",
+        "           <module>    print variable definitions from module <module>",
         "",
         "$w / $write            write binaries to <cwd>/ws, or to path specified",
         "                       on the command line with -writepath",
@@ -376,92 +350,39 @@ public final class Main
     }
 
     /**
-     * run input as if entered without $k, and treat inline comment as test target
-     */
-    private void cmdCheckOutput(final String line)
-    {
-        if (Session.isDebug())
-        {
-            System.out
-                .println("$k/$check not supported with debug messages enabled ($m)");
-            return;
-        }
-
-        final int comment = line.indexOf("//");
-        final String input;
-        final String comp;
-        if (comment >= 0)
-        {
-            input = line.substring(0, comment);
-            comp = StringUtils.unescapeJava(line.substring(comment + 2).trim());
-        }
-        else
-        {
-            input = line;
-            comp = null;
-        }
-
-        if (input.length() > 0)
-        {
-            final ByteArrayOutputStream captureBuffer = new ByteArrayOutputStream();
-            final PrintStream stdout = System.out;
-            System.setOut(new PrintStream(captureBuffer));
-
-            Session.pushErrorCount();
-            shellScriptManager.runScript(SHELL_LOC, new StringReader(line),
-                shellConfig.getImports(), shellConfig.getDebug(), true);
-            final boolean err = Session.popErrorCount() > 0;
-
-            System.setOut(stdout);
-
-            String output = captureBuffer.toString();
-            System.out.print(output);
-
-            if (comp != null)
-            {
-                output = output.trim();
-                if (err ? (comp.isEmpty() || !output.endsWith(comp)) :
-                    !output.equals(comp))
-                {
-                    Session
-                        .error(SHELL_LOC,
-                            "COMPARE ERROR $k: expected ''{0}'', got ''{1}''", comp,
-                            output);
-                    compareErrors++;
-                }
-            }
-        }
-    }
-
-    /**
      * Add, list, or remove a import to be used for every (following) shell module
      */
     private void cmdImport(final String[] words)
     {
-        if (words.length == 1 || words.length == 2 &&
-            (words[1].equals("?") || words[1].equals("list")))
+        assert words.length > 0;
+
+        if (words.length == 1)
         {
+            // $import => list 'em
             shellConfig.listImplicitImports();
         }
-        else if (words.length > 2 &&
-                 (words[1].equals("-") || words[1].equals("clear")))
+        else if (words.length == 2 && words[1].equals("?"))
         {
+            // $import ? => list 'em
+            shellConfig.listImplicitImports();
+        }
+        else if (words[1].equals("-"))
+        {
+            // $import - x, y, z => remove x, y, z from import list
             final List<String> specPart =
                 Arrays.asList(words).subList(2, words.length);
             final String spec = StringUtils.join(specPart, " ");
             shellConfig.clearImplicitImport(spec);
         }
-        else if (words.length > 2 &&
-                 (words[1].equals("+") || words[1].equals("add")))
-        {
-            final List<String> specPart =
-                Arrays.asList(words).subList(2, words.length);
-            final String spec = StringUtils.join(specPart, " ");
-            shellConfig.addImplicitImport(spec);
-        }
         else
         {
-            Session.error("Could not fathom the import command (see $help)");
+            // $import + x, y, z => add x, y, z to import list
+            // $import x, y, z => ditto
+            final int specStart = words.length > 2 && words[1].equals("+") ? 2 : 1;
+            final List<String> specPart =
+                Arrays.asList(words).subList(specStart, words.length);
+            final String spec = StringUtils.join(specPart, " ");
+            shellConfig.addImplicitImport(spec);
         }
     }
 
@@ -474,6 +395,38 @@ public final class Main
             loadFile(words[1]);
         else
             Session.error("script file not specified");
+    }
+
+    /**
+     *
+     */
+    private void loadFile(final String moduleName)
+    {
+        final String fileName = NameUtils.module2file(moduleName);
+        final File file = fileServices.findFile(fileName);
+
+        if (file != null)
+        {
+            try
+            {
+                final Loc loc = new Loc(file.getPath());
+                final Reader r = fileServices.getReader(file);
+                final boolean debug = shellConfig.getDebug();
+                final List<ImportStatement> imports = shellConfig.getImports();
+
+                shellScriptManager.loadScript(loc, r);
+
+                r.close();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+        else
+        {
+            Session.error("script file \"{0}\" not found", fileName);
+        }
     }
 
     /**
@@ -518,7 +471,7 @@ public final class Main
             Session.pushErrorCount();
 
             final Map<String, String> dumps =
-                shellScriptManager.printExprTypes(new Loc("<shell>"),
+                shellScriptManager.dumpTypes(new Loc("<shell>"),
                     new StringReader(exprs), shellConfig.getImports());
 
             if (Session.popErrorCount() == 0)
@@ -536,18 +489,16 @@ public final class Main
                         final String comp = comps.size() > i ? comps.get(i).trim() : null;
                         if (!typeDump.equals(comp))
                         {
-                            Session
-                                .error(SHELL_LOC,
-                                    "COMPARE ERROR $t: expected ''{0}'', got ''{1}''",
-                                    comp, typeDump);
+                            Session.error(SHELL_LOC,
+                                "COMPARE ERROR $t: expected ''{0}'', got ''{1}''",
+                                comp, typeDump);
                             compareErrors++;
                         }
                         else
                         {
-                            Session
-                                .debug(SHELL_LOC, "$t ''{0}'' expected and got ''{1}''",
-                                    valueDump,
-                                    comp);
+                            Session.debug(SHELL_LOC,
+                                "$t ''{0}'' expected and got ''{1}''",
+                                valueDump, comp);
                         }
                     }
 
@@ -561,19 +512,20 @@ public final class Main
                 {
                     // TODO need @ERR token
                     final String comp = comps.get(0).trim();
+
                     if (comp.isEmpty() || !errorMsg.endsWith(comp))
                     {
                         Session.error(SHELL_LOC,
                             "COMPARE ERROR $t: expected ''{0}'', got ''{1}''",
                             comp, errorMsg);
+
                         compareErrors++;
                     }
                     else if (Session.isDebug())
                     {
-                        Session
-                            .debug(SHELL_LOC, "$t ''{0}'' expected and got ''{1}''",
-                                exprs.trim(),
-                                comp);
+                        Session.debug(SHELL_LOC,
+                            "$t ''{0}'' expected and got ''{1}''",
+                            exprs.trim(), comp);
                     }
                 }
             }
@@ -591,15 +543,24 @@ public final class Main
      */
     private void cmdDumpUnit(final String[] words)
     {
+        final Unit lastBuildAttempt = UnitBuilder.getLastBuildAttempt();
+
+        if (lastBuildAttempt == null)
+        {
+            System.out.println("no units have yet been compiled");
+            return;
+        }
+
         if (words.length == 1)
         {
-            // DEV ONLY: on failed compile, this gives last generated source
-            dumpUnit(UnitBuilder.LastUnit, false);
+            // Note: for compiler dev, second param ensures
+            // a source dump even on failed compiles
+            dumpUnit(lastBuildAttempt, false);
         }
         else if (words[1].equals("!"))
         {
             // Dumps all units and imports recursively
-            dumpAllUnits(UnitBuilder.LastUnit);
+            dumpUnitsAndImports(lastBuildAttempt);
         }
         else if (words[1].equals("*") || words[1].equals("+"))
         {
@@ -612,8 +573,17 @@ public final class Main
         {
             try
             {
-                dumpUnit(shellScriptManager.getPastUnit(
-                    Integer.valueOf(words[1])), false);
+                final Unit pastUnit = shellScriptManager.getHistoryUnit(
+                    Integer.valueOf(words[1]));
+
+                if (pastUnit == null)
+                {
+                    System.out.println("too far back: " + words[1]);
+                }
+                else
+                {
+                    dumpUnit(pastUnit, false);
+                }
             }
             catch (NumberFormatException ignored)
             {
@@ -629,46 +599,35 @@ public final class Main
      */
     private void dumpUnit(final Unit unit, final boolean omitIfEmpty)
     {
-        if (unit != null)
+        if (!(omitIfEmpty &&
+            unit.getModule().getLets().isEmpty() &&
+            unit.getModule().getTypeDefs().isEmpty()))
         {
-            if (!(omitIfEmpty &&
-                unit.getModule().getLets().isEmpty() &&
-                unit.getModule().getTypeDefs().isEmpty()))
-                System.out.println(UnitDumper.dump(unit, shellConfig.getDebug()));
-            else
-                System.out.println(
-                    "unit " + unit.getModule().getName() +
-                        " contains no definitions, skipping");
+            System.out.println(unit.dump());
         }
         else
         {
-            System.out.println("unit not available");
+            System.out.println(
+                "unit " + unit.getModule().getName() +
+                    " contains no definitions, skipping");
         }
 
         System.out.println();
     }
 
-    private void dumpAllUnits(final Unit unit)
+    /**
+     * dump a unit, then its imports and their imports, etc. (depth-first)
+     */
+    private void dumpUnitsAndImports(final Unit unit)
     {
-        final Set<String> alreadyDumped = new HashSet<String>();
-        dumpAllUnits(unit, alreadyDumped);
-    }
+        dumpUnit(unit, false);
 
-    private void dumpAllUnits(final Unit unit, final Set<String> alreadyDumped)
-    {
-        for (final Unit imported : unit.getUnitDictionary().getUnits())
-        {
-            dumpAllUnits(imported, alreadyDumped);
-        }
-        if (!alreadyDumped.contains(unit.getModule().getName()))
-        {
-            dumpUnit(unit, true);
-            alreadyDumped.add(unit.getModule().getName());
-        }
+        for (final Module imported : unit.getModule().getImportedModules())
+            dumpUnitsAndImports(Compiler.getUnitDictionary().getUnit(imported));
     }
 
     /**
-     * Dump current var bindings, sorted by name. "!" arg includes intrinsics,
+     * Dump current var bindings, sorted by name.
      * "." is the current set of bindings in the default namespace, "?" prints
      * the known namespaces, and any other arg is a namespace that will be
      * printed.
@@ -682,66 +641,73 @@ public final class Main
 
         final Module module = history.get(0).getModule();
 
-        final Set<String> names = getAllBindings(module);
-
         if (words.length == 2 && words[1].equals("?"))
         {
-            for (final String ns : module.getNamespaces())
+            // list namespaces
+            System.out.println("Namespaces:\n.");
+
+            for (final String ns : Sets.newTreeSet(module.getNamespaces()))
                 System.out.println(ns);
+
+            return;
+        }
+
+        //  otherwise print bindings by namespace:
+
+        // collect namespaces
+        final LinkedHashSet<String> namespaces = new LinkedHashSet<String>();
+        boolean printLocalBindings = false;
+        if  (words.length == 1)
+        {
+            printLocalBindings = true;
         }
         else
         {
-            final Map<String, LetBinding> bindings = new TreeMap<String, LetBinding>();
-            if (words.length == 1)
+            for (int i = 1; i < words.length; i++)
             {
-                for (final String name : names)
-                {
-                    final ValueBinding vb = module.findValueBinding(name);
-                    if (vb != null && vb.isLet())
-                        bindings.put(name, (LetBinding)vb);
-                }
+                final String word = words[i];
+                if (word.equals("."))
+                    printLocalBindings = true;
+                else
+                    namespaces.add(word);
             }
-            else
-            {
-                for (int i = 1; i < words.length; ++i)
-                {
-                    if (words[i].equals("."))
-                    {
-                        for (final String name : module.getLetNames())
-                            bindings.put(name,
-                               (LetBinding)module.getValueBinding(name));
-                    }
-                    else
-                        for (final String name : names)
-                        {
-                            final ValueBinding vb = module.findValueBinding(name);
-                            if (vb != null && vb.isLet() &&
-                                    name.startsWith(words[i] + "."))
-                                bindings.put(name, (LetBinding)vb);
-                        }
-                }
-            }
-
-            for (final Map.Entry<String,LetBinding> b : bindings.entrySet())
-                System.out.println(b.getValue().dump(b.getKey()));
         }
-    }
 
-    private Set<String> getAllBindings(final Module module)
-    {
-        final Set<String> names = new HashSet<String>();
-        for (final String name : module.getUnqualifiedNames())
-            names.add(name);
-
-        for (final Import imp : module.getImports())
+        // print local bindings if desired, split between locals and unq imports
+        if (printLocalBindings)
         {
-            final Module m = imp.getModule();
-            final String qualifier = imp.getQualifier();
-            if (qualifier != null)
-                for (final String name : m.getUnqualifiedNames())
-                    names.add(qualifier + "." + name);
+            System.out.println("// Unqualified bindings:");
+            System.out.println("// local definitions");
+
+            for (final LetBinding let : module.getLets().values())
+                System.out.println(let.dump());
+
+            System.out.println("// unqualified imports");
+
+            for (final Import imp : module.getUnqualifiedImports())
+            {
+                System.out.println("// imported from " + imp.getModule().getName());
+                for (final LetBinding let : imp.getModule().getLets().values())
+                    System.out.println(let.dump());
+            }
+
+            System.out.println("// End unqualified bindings");
         }
-        return names;
+
+        // print qualified bindings by namespace
+        for (final String namespace : namespaces)
+        {
+            System.out.println("// Bindings in namespace " + namespace);
+
+            for (final Import imp : module.getNamespaceImports(namespace))
+            {
+                System.out.println("// imported from " + imp.getModule().getName());
+                for (final LetBinding let : imp.getModule().getLets().values())
+                    System.out.println(let.dump());
+            }
+
+            System.out.println("// End bindings in namespace " + namespace);
+        }
     }
 
     /**

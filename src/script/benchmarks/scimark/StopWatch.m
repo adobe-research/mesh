@@ -22,7 +22,6 @@
 @version 1 May 2013
 */
 
-import * from std;
 export StopWatch;
 
 

@@ -11,7 +11,7 @@
 package runtime.rep.list;
 
 import com.google.common.collect.Iterators;
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import runtime.rep.map.MapValue;
 
 import java.util.Iterator;

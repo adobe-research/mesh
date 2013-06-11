@@ -15,7 +15,7 @@ import compile.Session;
 import compile.term.*;
 import compile.type.Type;
 import compile.type.Types;
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import compile.NameUtils;
 import compile.StringUtils;
 

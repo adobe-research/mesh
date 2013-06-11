@@ -11,8 +11,8 @@
 package runtime.intrinsic.log;
 
 import runtime.intrinsic._tostr;
-import runtime.Logging;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.sys.Logging;
+import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Tuple;
 
 /**

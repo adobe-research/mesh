@@ -11,7 +11,6 @@
 package runtime.intrinsic;
 
 import runtime.rep.list.ChainedLists;
-import runtime.rep.lambda.IntrinsicLambda;
 import runtime.rep.list.ListValue;
 
 /**

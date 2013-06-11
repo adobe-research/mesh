@@ -20,41 +20,35 @@ import java.io.File;
 public final class NameUtils
 {
     /**
-     * @param s String to unqualify
-     * @return the substring of s that follows the last occurence of '.', or all of s if '.' does not occur
+     * @param name name to unqualify
+     * @return the substring of name that follows the last occurence of '.',
+     *      or all of name if '.' does not occur
      */
-    public static String unqualify(final String s, final char sep)
+    public static String unqualify(final String name)
     {
-        final int last = s.lastIndexOf(sep);
-        return last >= 0 ? s.substring(last + 1) : s;
+        final int last = name.lastIndexOf('.');
+        return last >= 0 ? name.substring(last + 1) : name;
     }
 
     /**
-     * @param s String to unqualify
-     * @return the substring of s that follows the last occurence of '.', or all of s if '.' does not occur
+     * @param name name to extract qualifier from
+     * @return the substring of s that preceds the last occurence of '.',
+     *      or the empty string if '.' does not occur
      */
-    public static String unqualify(final String s)
+    public static String qualifier(final String name)
     {
-        return unqualify(s, '.');
+        final int last = name.lastIndexOf('.');
+        return last >= 0 ? name.substring(0, last) : "";
     }
 
     /**
-     * @param s String to extract qualifier from
-     * @return the substring of s that preceds the last occurence of '.', or the empty string if '.' does not occur
+     * @param name name to check qualification of
+     * @return true iff name contains '.', defined as the separator between
+     *      qualifier and unqualified leaf name
      */
-    public static String qualifier(final String s, final char sep)
+    public static boolean isQualified(final String name)
     {
-        final int last = s.lastIndexOf(sep);
-        return last >= 0 ? s.substring(0, last) : "";
-    }
-
-    /**
-     * @param s String to extract qualifier from
-     * @return the substring of s that preceds the last occurence of '.', or the empty string if '.' does not occur
-     */
-    public static String qualifier(final String s)
-    {
-        return qualifier(s, '.');
+        return name.contains(".");
     }
 
     /**
@@ -81,9 +75,10 @@ public final class NameUtils
     /**
      * Valid names are nonempty strings in which
      * <ul>
-     * <li>the first character is either a letter (as determined by java.lang.Character.isLetter()) or the underscore character;
-     * <li>subsequent characters are either letters (java.lang.Character.isLetter()), digits
-     * (java.lang.Character.isDigit()), or the underscore character.
+     * <li>the first character is either a letter (as determined by
+     * java.lang.Character.isLetter()) or the underscore character;
+     * <li>subsequent characters are either letters (java.lang.Character.isLetter()),
+     * digits (java.lang.Character.isDigit()), or the underscore character.
      * </ul>
      *
      * @param s String to test

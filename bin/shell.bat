@@ -29,4 +29,4 @@ if "%MODULEPATH%" == "" (
 )
 
 @rem TODO bake lang + std access into compiler as default
-java %JVM_ARGS% shell.Main -path %MODULEPATH% -import lang -load std %*
+java %JVM_ARGS% shell.Main -path %MODULEPATH% %*

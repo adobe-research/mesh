@@ -1,5 +1,5 @@
 
-// A: import * from M
+// A: import M
 // B: import foo,bar from M
 // C: import () from M
 // G: import M into N

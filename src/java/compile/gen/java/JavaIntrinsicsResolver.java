@@ -11,32 +11,25 @@
 package compile.gen.java;
 
 import compile.*;
+import compile.gen.IntrinsicsResolver;
 import compile.term.LetBinding;
 import compile.type.*;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
 /**
- * Find intrinsics in the classpath and verify that thier runtime signatures match
- * the source-declared signatures.
+ * Implementation of {@link compile.gen.IntrinsicsResolver} for the current
+ * JVM back end. An intrinsics resolver finds intrinsics in the
+ * classpath and verifies that their runtime signatures match the
+ * source-declared signatures.
  *
  * @author Keith McGuigan
  */
-public final class JavaIntrinsicsResolver extends IntrinsicsResolver
+public final class JavaIntrinsicsResolver implements IntrinsicsResolver.Impl
 {
-
-    public static IntrinsicsResolver.Factory factory =
-        new IntrinsicsResolver.Factory()
-        {
-            public IntrinsicsResolver create()
-            {
-                return new JavaIntrinsicsResolver();
-            }
-        };
-
     /**
      * Memoized list of bindings which have been verified
      */

@@ -10,7 +10,7 @@
  */
 package runtime.intrinsic.test;
 
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Tuple;
 
 /**

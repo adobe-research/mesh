@@ -1,3 +1,3 @@
-import * from GW;
+import GW;
 
 a = var;

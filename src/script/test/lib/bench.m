@@ -1,5 +1,6 @@
-import * from std;
-import * from unittest;
+
+import lib.bench;
+import unittest;
 
 // bench = { b => t0 = millitime(); result = b(); (#result: result, #time: integer:l2i(lang:lminus(millitime(), t0))) }
 assert_equals({ true }, {

@@ -228,7 +228,7 @@ public final class JavassistHelper
      * Add method prototypes and convert from CtClass to Class.
      * Class is stored in cls member and returned.
      */
-    public Class<?> finishClass(final ClassDef classDef, final boolean debug)
+    public Class<?> finishClass(final ClassDef classDef)
     {
         try
         {
@@ -238,10 +238,10 @@ public final class JavassistHelper
             // as a side-effect in addClassSignature()
             ctClass.setModifiers(Modifier.PUBLIC | Modifier.FINAL);
 
-            addInitializedFields(classDef.getStaticFieldDefs(), debug, ctClass);
-            addInitializedFields(classDef.getInstanceFieldDefs(), debug, ctClass);
-            addFullConstructor(classDef, debug, ctClass);
-            addFullClassMethods(classDef.getMethodDefs(), debug, ctClass);
+            addInitializedFields(classDef.getStaticFieldDefs(), ctClass);
+            addInitializedFields(classDef.getInstanceFieldDefs(), ctClass);
+            addFullConstructor(classDef, ctClass);
+            addFullClassMethods(classDef.getMethodDefs(), ctClass);
 
             // create class
             classDef.setCls(ctClass.toClass());
@@ -261,8 +261,8 @@ public final class JavassistHelper
     /**
      * Ensures that full versions of field defs are present in ctclass.
      */
-    private void addInitializedFields(final List<FieldDef> fieldDefs,
-        final boolean debug, final CtClass ctClass)
+    private void addInitializedFields(
+        final List<FieldDef> fieldDefs, final CtClass ctClass)
         throws CannotCompileException, NotFoundException
     {
         for (final FieldDef fieldDef : fieldDefs)
@@ -274,7 +274,7 @@ public final class JavassistHelper
 
                 // add initialized version
                 final CtField ctField =
-                    CtField.make(fieldDef.getSource(debug, false), ctClass);
+                    CtField.make(fieldDef.getSource(false), ctClass);
 
                 fieldDef.setCtField(ctField);
                 ctClass.addField(ctField);
@@ -285,8 +285,7 @@ public final class JavassistHelper
     /**
      * Ensure that full version of constructor is present in the class.
      */
-    private void addFullConstructor(final ClassDef classDef, final boolean debug,
-        final CtClass ctClass)
+    private void addFullConstructor(final ClassDef classDef, final CtClass ctClass)
         throws CannotCompileException, NotFoundException
     {
         final ConstructorDef ctorDef = classDef.getConstructorDef();
@@ -300,7 +299,7 @@ public final class JavassistHelper
 
                 // add full version
                 final CtConstructor ctConstructor =
-                    CtNewConstructor.make(ctorDef.getSource(debug, false), ctClass);
+                    CtNewConstructor.make(ctorDef.getSource(false), ctClass);
 
                 ctorDef.setCtConstructor(ctConstructor);
                 ctClass.addConstructor(ctConstructor);
@@ -311,8 +310,8 @@ public final class JavassistHelper
     /**
      * Ensure that full versions of method defs are present in the class.
      */
-    private void addFullClassMethods(final List<MethodDef> methodDefs,
-        final boolean debug, final CtClass ctClass)
+    private void addFullClassMethods(
+        final List<MethodDef> methodDefs, final CtClass ctClass)
         throws CannotCompileException, NotFoundException
     {
         for (final MethodDef methodDef : methodDefs)
@@ -322,7 +321,7 @@ public final class JavassistHelper
 
             // add full version
             final CtMethod ctMethod =
-                CtNewMethod.make(methodDef.getSource(debug, false), ctClass);
+                CtNewMethod.make(methodDef.getSource(false), ctClass);
 
             methodDef.setCtMethod(ctMethod);
             ctClass.addMethod(ctMethod);

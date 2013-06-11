@@ -1,5 +1,5 @@
 
-import * from unittest;
+import unittest;
 
 // Example from Milner's 1978 paper
 // http://www.classes.cs.uchicago.edu/archive/2007/spring/32001-1/papers/milner-type-poly.pdf

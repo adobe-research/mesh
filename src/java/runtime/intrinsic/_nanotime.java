@@ -10,8 +10,6 @@
  */
 package runtime.intrinsic;
 
-import runtime.rep.lambda.IntrinsicLambda;
-
 /**
  * return current time in nanos
  *

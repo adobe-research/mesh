@@ -1,8 +1,9 @@
 
-import * from std;
-import * from unittest;
+import sort;
+import bench;
+import unittest;
 
-// benchmark merge sort from std.m
+// benchmark merge sort from sort.m
 
 //
 // test runner - run the sort, check sortedness and population of result list

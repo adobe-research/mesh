@@ -10,7 +10,7 @@
  */
 package runtime.rep.list;
 
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import runtime.rep.map.MapValue;
 
 import java.util.Iterator;

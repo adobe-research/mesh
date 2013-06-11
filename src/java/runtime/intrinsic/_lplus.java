@@ -10,15 +10,9 @@
  */
 package runtime.intrinsic;
 
-import runtime.rep.PersistentConstants;
 import runtime.rep.list.ChainedListPair;
-import runtime.rep.lambda.IntrinsicLambda;
-import runtime.rep.list.ChainedLists;
 import runtime.rep.list.ListValue;
 import runtime.rep.Tuple;
-import runtime.rep.list.PersistentList;
-
-import java.util.Iterator;
 
 /**
  * list concatenation

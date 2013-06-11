@@ -1,5 +1,5 @@
-import * from std;
-import * from unittest;
+
+import unittest;
 
 // Inliners
 assert_true({ atan2(1.0, i2f(1)); true });

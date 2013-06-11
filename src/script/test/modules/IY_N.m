@@ -1,1 +1,1 @@
-import * from IY;
+import IY;

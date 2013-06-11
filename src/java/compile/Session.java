@@ -13,19 +13,19 @@ package compile;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.MessageFormat;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Stack;
 
 /**
- * Simple session logging and error tracking
+ * Simple thread-local session state: logging and error tracking,
+ * module dictionary, maybe more later.
+ * <p/>
+ * TODO eventually want to make this state global (cross-thread)
  *
  * @author Basil Hosmer
  */
 public final class Session
 {
-    public static final ThreadLocal<Session> LOCAL = new ThreadLocal<Session>()
+    private static final ThreadLocal<Session> LOCAL = new ThreadLocal<Session>()
     {
         protected Session initialValue()
         {
@@ -53,19 +53,26 @@ public final class Session
     // instance
     //
 
+    /**
+     * output writer for messages
+     */
     private Writer writer;
+
+    /**
+     * message level, from debug to error
+     */
     private int messageLevel;
 
+    /**
+     * error state. code can arbitrarily push and pop error state
+     * to assist in control flow decision making. error count is
+     * incremented when the {@link #error} method or one of its
+     * overloads is called.
+     */
     private final Stack<Integer> errorCountStack;
     private int currentErrorCount;
     private int pushedErrorCount;
     private String lastMessage;
-
-    private List<String> searchPath;
-
-    // TODO remove when we go to two-phase pipeline
-    private ArrayDeque<String> moduleStack;
-    private boolean inImplicitImport;
 
     /**
      * @param writer       Writer to use. If null, use System.out
@@ -78,11 +85,6 @@ public final class Session
         this.errorCountStack = new Stack<Integer>();
         this.currentErrorCount = 0;
         this.pushedErrorCount = 0;
-
-        this.searchPath = new ArrayList<String>();
-
-        this.moduleStack = new ArrayDeque<String>();
-        this.inImplicitImport = false;
     }
 
     /**
@@ -152,59 +154,6 @@ public final class Session
     public static String getLastMessage()
     {
         return getThreadLocal().lastMessage;
-    }
-
-    public static void addSearchPath(final String path)
-    {
-        final Session session = getThreadLocal();
-        session.searchPath.add(path);
-    }
-
-    public static List<String> getSearchPaths()
-    {
-        final Session session = getThreadLocal();
-        return session.searchPath;
-    }
-
-    public static void pushCurrentModule(final String name)
-    {
-        final Session session = getThreadLocal();
-        session.moduleStack.push(name);
-    }
-
-    public static void popCurrentModule()
-    {
-        final Session session = getThreadLocal();
-        session.moduleStack.pop();
-    }
-
-    public static boolean inModule(final String name)
-    {
-        final Session session = getThreadLocal();
-
-        for (final String module : session.moduleStack)
-            if (module.equals(name))
-                return true;
-
-        return false;
-    }
-
-    public static boolean isInImplicitImport()
-    {
-        final Session session = getThreadLocal();
-        return session.inImplicitImport;
-    }
-
-    public static void setInImplicitImport()
-    {
-        final Session session = getThreadLocal();
-        session.inImplicitImport = true;
-    }
-
-    public static void clearInImplicitImport()
-    {
-        final Session session = getThreadLocal();
-        session.inImplicitImport = false;
     }
 
     public static void error(final String msg, final Object... args)

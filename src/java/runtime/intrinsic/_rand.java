@@ -10,8 +10,6 @@
  */
 package runtime.intrinsic;
 
-import runtime.rep.lambda.IntrinsicLambda;
-
 /**
  * rand(max) returns an integer between 0 and max - 1
  *

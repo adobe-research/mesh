@@ -169,7 +169,7 @@ public final class ClassDef
     /**
      * Java source. NOTE: not used by Javassist CG, which builds a class incrementally.
      */
-    public String getSource(final boolean debug)
+    public String getSource()
     {
         if (isExternal())
             return "// external Class " + name + " = " + cls;
@@ -187,22 +187,22 @@ public final class ClassDef
         // static fields
         final List<String> staticFieldDecls = new ArrayList<String>();
         for (final FieldDef staticFieldDef : staticFieldDefs)
-            staticFieldDecls.add(staticFieldDef.getSource(debug, true));
+            staticFieldDecls.add(staticFieldDef.getSource(true));
         buf.append(StringUtils.joinAndDelimit(staticFieldDecls, "\n", "\n"));
 
         // instance fields
         final List<String> instanceFieldDecls = new ArrayList<String>();
         for (final FieldDef instanceFieldDef : instanceFieldDefs)
-            instanceFieldDecls.add(instanceFieldDef.getSource(debug, true));
+            instanceFieldDecls.add(instanceFieldDef.getSource(true));
         buf.append(StringUtils.joinAndDelimit(instanceFieldDecls, "\n", "\n"));
 
         // methods, including constructor
         final List<String> methodDecls = new ArrayList<String>();
         if (constructorDef != null)
-            methodDecls.add(constructorDef.getSource(debug, true));
+            methodDecls.add(constructorDef.getSource(true));
 
         for (final MethodDef methodDef : methodDefs)
-            methodDecls.add(methodDef.getSource(debug, true));
+            methodDecls.add(methodDef.getSource(true));
 
         buf.append(StringUtils.joinAndDelimit(methodDecls, "\n\n", "\n", "\n"));
         buf.append("}");

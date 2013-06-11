@@ -10,11 +10,11 @@
  */
 package runtime.tran;
 
-import runtime.ConfigUtils;
-import runtime.Logging;
+import runtime.rep.Lambda;
 import runtime.rep.Tuple;
-import runtime.rep.lambda.Lambda;
 import runtime.rep.map.PersistentMap;
+import runtime.sys.ConfigUtils;
+import runtime.sys.Logging;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * calls to {@link runtime.intrinsic.tran._get} or
  * {@link runtime.intrinsic.tran._gets}).
  * TODO static analysis to mark read-only transactions.
- *
+ * <p/>
  * NOTE: the use of STM over ML-style managed containers,
  * with persistent data structures providing practical copy-
  * on-write semantics, is inspired by Rich Hickey's prioneering
@@ -760,7 +760,7 @@ final class Transaction
      * Attempt to take ownership of a box. If the box is owned or
      * pinned by another transaction, our ownership attempt fails
      * and we retry.
-     *
+     * <p/>
      * If the failure is due to the box being owned by another
      * transaction, our retry will await the completion of the
      * current owner. And if we're older than the current owner,
@@ -770,7 +770,7 @@ final class Transaction
      * the main transaction loop will reuse our current attempt object
      * for the retry, meaning we retain ownership of any boxes already
      * acquired prior to this failure.
-     *
+     * <p/>
      * Successful acquisition of ownership will leave our attempt
      * object attached to the owned box.
      */

@@ -1,6 +1,5 @@
 
-import * from std;
-import * from unittest;
+import unittest;
 
 // test fixed-shape transaction funcs
 // note: tests high-level logic only, not atomicity.

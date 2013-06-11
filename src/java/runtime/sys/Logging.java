@@ -8,7 +8,7 @@
  * a copy of which can be found in the LICENSE.txt file or at
  * http://opensource.org/licenses/MIT.
  */
-package runtime;
+package runtime.sys;
 
 import java.text.MessageFormat;
 import java.util.concurrent.atomic.AtomicBoolean;

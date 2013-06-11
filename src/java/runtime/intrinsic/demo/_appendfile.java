@@ -12,7 +12,7 @@ package runtime.intrinsic.demo;
 
 import com.google.common.io.Closeables;
 import runtime.rep.Tuple;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 
 import java.io.File;
 import java.io.FileWriter;

@@ -1,3 +1,3 @@
-import * from BX;
+import BX;
 
 a = var;

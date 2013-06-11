@@ -8,7 +8,7 @@
  * a copy of which can be found in the LICENSE.txt file or at
  * http://opensource.org/licenses/MIT.
  */
-package runtime;
+package runtime.sys;
 
 import runtime.rep.list.ListValue;
 import runtime.rep.list.PersistentList;
@@ -23,7 +23,7 @@ public final class Arguments
     private static ListValue arguments = PersistentList.EMPTY;
 
     /**
-     * Add a new string argument
+     * Add a new string argument (copy on write)
      */
     public static synchronized void add(final String value)
     {
@@ -31,7 +31,7 @@ public final class Arguments
     }
 
     /**
-     * Retrieve a copy of the arguments
+     * Retrieve the arguments
      */
     public static ListValue get()
     {

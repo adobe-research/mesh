@@ -1,6 +1,5 @@
 
-import * from std;
-import * from processing;
+import processing;
 
 // brian's brain CA
 //
@@ -357,7 +356,7 @@ drawview() {
 
     // time tracking
     now = nanotime();
-    last = postput(lastdraw, now);
+    last = getput(lastdraw, now);
     drawelapsed = l2f(lminus(now, last));
     drawfps := SECNANOS /. drawelapsed;
 

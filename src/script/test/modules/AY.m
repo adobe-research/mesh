@@ -1,5 +1,5 @@
 
-import * from M;
+import M;
 export var, MyType;
 
 localvar = 10;

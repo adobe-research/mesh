@@ -10,8 +10,8 @@
  */
 package compile.module;
 
-import com.google.common.collect.Maps;
 import compile.Loc;
+import compile.NameUtils;
 import compile.term.*;
 
 import java.util.*;
@@ -25,113 +25,160 @@ import java.util.*;
  */
 public class Module extends AbstractScope
 {
-    private static HashMap<String, ParamBinding>
-        EMPTY_PARAM_MAP = Maps.newHashMap();
-
+    /**
+     * module name
+     */
     private final String name;
-    private final Map<String, Module> importMap;
-    private final List<Import> imports;
+
+    /**
+     * unqualified imports
+     */
+    private final List<Import> unqualifiedImports;
+
+    /**
+     * map of import specs by namespace.
+     */
+    private final Map<String, List<Import>> qualifiedImports;
+
+    /**
+     * whitelist of exported symbols
+     */
     private WhiteList exports;
-    private boolean exportLocalsOnly; // for "export ."
 
-    private final ModuleDictionary moduleDictionary;
+    /**
+     * derived on demand from imports--cached
+     */
+    private List<Module> importedModules;
 
-    public Module(final Loc loc, final String name, final List<Statement> body, 
-        final ModuleDictionary dict)
+    /**
+     *
+     */
+    public Module(final Loc loc, final String name, final List<Statement> body)
     {
         super(loc, body);
         this.name = name;
-        this.importMap = new LinkedHashMap<String, Module>();
-        this.imports = new LinkedList<Import>();
+        this.unqualifiedImports = new ArrayList<Import>();
+        this.qualifiedImports = new LinkedHashMap<String, List<Import>>();
         this.exports = WhiteList.open();
-        this.exportLocalsOnly = false;
-        this.moduleDictionary = dict;
+
+        this.importedModules = null;
     }
 
+    /**
+     * module name
+     */
     public String getName()
     {
         return name;
     }
 
-    public ModuleDictionary getModuleDictionary() { return moduleDictionary; }
-
     /**
-     * map of imported modules by name
+     * list of unqualified imports
      */
-    public Map<String, Module> getImportMap()
+    public List<Import> getUnqualifiedImports()
     {
-        return importMap;
-    }
-
-    public List<Import> getImports()
-    {
-        return imports;
-    }
-
-    public void setExportLocalsOnly()
-    {
-        exportLocalsOnly = true;
-    }
-
-    public void setExports(final WhiteList wl)
-    {
-        exports = wl;
-    }
-
-    public boolean isExported(final String name)
-    {
-        if (exportLocalsOnly) 
-            return getValueBinding(name) != null || getTypeDef(name) != null;
-        else
-            return exports.allows(name);
+        return unqualifiedImports;
     }
 
     /**
-     * List of imported modules
+     * return list of imports for a given namespace.
      */
-    public List<Module> getImportList()
+    public List<Import> getNamespaceImports(final String namespace)
     {
-        return new ArrayList<Module>(importMap.values());
+        final List<Import> nsimps = qualifiedImports.get(namespace);
+        return nsimps != null ? nsimps : Collections.<Import>emptyList();
     }
 
     /**
-     * note: breadth-first transitive search
+     * Return flat set of imported modules, derived from from our imports.
+     * Note: cached.
      */
-    public Module getImportedModule(final String name)
+    public List<Module> getImportedModules()
     {
-        final Module module = importMap.get(name);
-        if (module != null)
-            return module;
+        // return cached list if available
+        if (this.importedModules != null)
+            return this.importedModules;
 
-        for (final Module importedModule : importMap.values())
+        // build list
+        final List<Module> importedModules = new ArrayList<Module>();
         {
-            final Module sub = importedModule.getImportedModule(name);
-            if (sub != null)
-                return sub;
+            // unqualified
+            for (final Import imp : unqualifiedImports)
+                importedModules.add(imp.getModule());
+
+            // qualified by namespace
+            for (final List<Import> imports : this.qualifiedImports.values())
+                for (final Import imp : imports)
+                    importedModules.add(imp.getModule());
         }
-        return null;
+
+        // cache and return
+        this.importedModules = importedModules;
+        return importedModules;
     }
 
     /**
-     * Note: importList order is reversed, so that the contents of later
-     * importList occlude the contents of earlier ones.
+     * Note: import order is reversed within per-namespace lists,
+     * so that the contents of later importList occlude the contents
+     * of earlier ones.
      */
     public void addImport(final Import imp)
     {
-        importMap.put(imp.getModule().getName(), imp.getModule());
-        imports.add(0, imp);
+        // invalidate cache
+        importedModules = null;
+
+        if (imp.isQualified())
+        {
+            // get or create import set for this namespace
+            final List<Import> nsimps;
+            {
+                final String ns = imp.getNamespace();
+                if (qualifiedImports.containsKey(ns))
+                {
+                    nsimps = qualifiedImports.get(ns);
+                }
+                else
+                {
+                    nsimps = new ArrayList<Import>();
+                    qualifiedImports.put(ns, nsimps);
+                }
+            }
+
+            // add this import -- duplicates should be errors before now
+            assert !nsimps.contains(imp);
+            nsimps.add(0, imp);
+        }
+        else
+        {
+            assert !unqualifiedImports.contains(imp);
+            unqualifiedImports.add(imp);
+        }
     }
 
+    /**
+     * return the set of inhabited namespaces in the module.
+     */
     public Set<String> getNamespaces()
     {
-        final Set<String> namespaces = new HashSet<String>();
-        for (final Import imp : imports)
-        {
-            final String qualifier = imp.getQualifier();
-            if (qualifier != null) 
-                namespaces.add(qualifier);
-        }
-        return namespaces;
+        return qualifiedImports.keySet();
+    }
+
+    /**
+     * set export whitelist. Note: caller's responsibility
+     * to ensure whitelist validity w.r.t. our definitions.
+     */
+    public void setExports(final WhiteList exports)
+    {
+        assert exports.isValid(this);
+        this.exports = exports;
+    }
+
+    /**
+     * true iff the given name matches an exported definition
+     */
+    public boolean isExported(final String name)
+    {
+        return exports.allows(name);
     }
 
     // Scope
@@ -156,95 +203,105 @@ public class Module extends AbstractScope
         return false;
     }
 
-    public ValueBinding getValueBinding(final String name)
+    /**
+     * resolve a value binding by (possibly) qualified name, either in
+     * our local definitions or in our imports.
+     */
+    public ValueBinding findValueBinding(final String qname)
+    {
+        if (NameUtils.isQualified(qname))
+        {
+            // qualified name must be imported (currently)
+            for (final Import imp : getNamespaceImports(NameUtils.qualifier(qname)))
+            {
+                final ValueBinding binding = imp.findValueBinding(qname);
+                if (binding != null)
+                    return binding;
+            }
+        }
+        else
+        {
+            // first check local defs, then unqualified imports
+            final ValueBinding localDef = getLocalValueBinding(qname);
+            if (localDef != null)
+                return localDef;
+
+            for (final Import imp : unqualifiedImports)
+            {
+                final ValueBinding binding = imp.findValueBinding(qname);
+                if (binding != null)
+                    return binding;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * find a locally defined value binding by unqualified name.
+     */
+    public ValueBinding getLocalValueBinding(final String name)
     {
         return lets.get(name);
     }
 
-    public Set<String> getLetNames() 
+    /**
+     * resolve a type binding by (possibly) qualified name, either in
+     * our local definitions or in our imports.
+     */
+    public TypeBinding findTypeBinding(final String qname)
     {
-        return lets.keySet();
-    }
-
-    public Set<String> getUnqualifiedNames() 
-    {
-        final Set<String> names = new HashSet<String>();
-        names.addAll(getLetNames());
-        for (final Import imp : getImports())
-            if (imp.getQualifier() == null) 
-                names.addAll(imp.getModule().getUnqualifiedNames());
-        return names;
-    }
-
-    public HashMap<String, ParamBinding> getParams()
-    {
-        return EMPTY_PARAM_MAP;
-    }
-
-    public ValueBinding findValueBinding(final String qname)
-    {
-        return findValueBinding(qname, true);
-    }
-
-    public ValueBinding findValueBinding(
-        final String qname, final boolean qualifiedOk)
-    {
-        final ValueBinding vb = getValueBinding(qname);
-
-        if (vb != null) 
-            return vb;
-
-        // look for a binding with this name locally defined in
-        // a module we import - most recent first
-        for (final Import imp : imports) 
+        if (NameUtils.isQualified(qname))
         {
-            if (imp.getQualifier() == null || qualifiedOk)
+            // qualified name must (currently) be imported
+            for (final Import imp : getNamespaceImports(NameUtils.qualifier(qname)))
             {
-                final ValueBinding binding = imp.findValueBinding(qname);
-                if (binding != null) 
+                final TypeBinding binding = imp.findTypeBinding(qname);
+                if (binding != null)
                     return binding;
             }
         }
-        return null;
-    }
-
-    public TypeDef findType(final String qname)
-    {
-        return findType(qname, true);
-    }
-
-    public TypeDef findType(final String qname, final boolean qualifiedOk)
-    {
-        final TypeDef td = getTypeDef(qname);
-        
-        if (td != null) 
-            return td;
-
-        for (final Import imp : imports) 
+        else
         {
-            if (imp.getQualifier() == null || qualifiedOk)
+            // first check local defs, then unqualified imports
+            final TypeBinding localDef = getLocalTypeBinding(qname);
+            if (localDef != null)
+                return localDef;
+
+            for (final Import imp : unqualifiedImports)
             {
-                final TypeDef type = imp.findTypeDef(qname);
-                if (type != null) 
-                    return type;
+                final TypeBinding binding = imp.findTypeBinding(qname);
+                if (binding != null)
+                    return binding;
             }
         }
+
         return null;
     }
 
-    public TypeDef getTypeDef(final String name)
+    /**
+     * find a locally defined type by unqualified name
+     */
+    public TypeBinding getLocalTypeBinding(final String name)
     {
         return typeDefs.get(name);
     }
 
+    /**
+     * Add a dependency between a statement and a binding--i.e., record the fact
+     * that the given statement depends on the given binding.
+     * <p/>
+     * Here we're simply filtering for local definitions before calling the
+     * super method (common between modules and lambdas).
+     * <p/>
+     * NOTE: we only track dependencies whose targets are in our immediate module,
+     * NOT in imported modules. This forces all imports to have been typechecked
+     * before us, which precludes cycles in imports under current pipeline.
+     * TODO either 1) no cycles, 2) split pipeline + annotations in cycles,
+     * 3) cross-module typechecking. (2) looks like the winner currently
+     */
     public void addDependency(final Statement statement, final Binding binding)
     {
-        // NOTE: we only track dependencies whose targets are in our immediate module,
-        // NOT in imported modules. This forces all imports to have been typechecked
-        // before us, which precludes cycles in imports under current pipeline.
-        // TODO either 1) no cycles, 2) split pipeline + annotations in cycles,
-        // 3) cross-module typechecking. (2) looks like the winner currently
-
         if (binding.getScope() == this)
         {
             super.addDependency(statement, binding);

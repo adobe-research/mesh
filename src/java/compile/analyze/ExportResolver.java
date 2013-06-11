@@ -14,9 +14,7 @@ import compile.Loc;
 import compile.Session;
 import compile.module.Module;
 import compile.module.WhiteList;
-import compile.term.*;
-
-import java.util.*;
+import compile.term.ExportStatement;
 
 /**
  * Find load statements and load the module, placing all symbols defined into
@@ -48,11 +46,11 @@ public final class ExportResolver extends ImportExportResolverBase
     // ModuleVisitor
 
     @Override
-    protected void visitExportStatement(final ExportStatement stmt) 
+    protected void visitExportStatement(final ExportStatement stmt)
     {
         final Loc loc = stmt.getLoc();
 
-        if (exportFound) 
+        if (exportFound)
         {
             Session.error(loc, "Multiple export statements");
             return;
@@ -61,19 +59,10 @@ public final class ExportResolver extends ImportExportResolverBase
         exportFound = true;
 
         final Module current = getModule();
-        if (stmt.getLocalsOnly()) 
-            current.setExportLocalsOnly();
-        else if (stmt.getSymbols() == null) 
-            current.setExports(WhiteList.open());
-        else
-        {
-            if (verifyExports(stmt.getSymbols(), current))
-                current.setExports(WhiteList.enumerated(stmt.getSymbols()));
-        }
-    }
 
-    private boolean verifyExports(final List<String> syms, final Module module)
-    {
-        return verifySymbols(syms, module, "export");
+        final WhiteList whiteList = stmt.getWhiteList();
+
+        if (verifyWhiteList(whiteList, current, "export"))
+            current.setExports(whiteList);
     }
 }

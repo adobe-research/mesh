@@ -1,6 +1,4 @@
 
-import * from std;
-
 FPS = 60;
 FRAME_DELAY = 1000 / FPS;
 

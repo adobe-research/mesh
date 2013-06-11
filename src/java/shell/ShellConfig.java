@@ -10,11 +10,12 @@
  */
 package shell;
 
+import compile.Config;
 import compile.Session;
 import compile.Loc;
 import compile.term.ImportStatement;
 import compile.analyze.ImportResolver;
-import runtime.Arguments;
+import runtime.sys.Arguments;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,9 +29,7 @@ import java.util.List;
 public final class ShellConfig
 {
     private final List<String> scriptPath = new ArrayList<String>();
-    private final List<ImportStatement> imports = 
-        new ArrayList<ImportStatement>();
-    private final List<String> loads = new ArrayList<String>();
+    private final List<ImportStatement> imports = new ArrayList<ImportStatement>();
     private final List<String> commandFiles = new ArrayList<String>();
     private String writePath;
     private boolean interactive = true;
@@ -53,7 +52,7 @@ public final class ShellConfig
     public void listImplicitImports()
     {
         System.out.println("Auto-imports: ");
-        for (int i = 0; i < imports.size(); ++i) 
+        for (int i = 0; i < imports.size(); ++i)
             System.out.println("(" + i + ")\t" + imports.get(i).dumpAbbrev());
     }
 
@@ -61,10 +60,11 @@ public final class ShellConfig
     {
         final ImportStatement stmt = ShellScriptManager.parseImportStatement(
                 Loc.INTRINSIC, "import " + spec);
+
         if (stmt != null)
         {
-            if (!ImportResolver.moduleExists(stmt.getFrom())) 
-                Session.error("Can not find module ''{0}''", stmt.getFrom());
+            if (!ImportResolver.moduleExists(stmt.getModuleName()))
+                Session.error("Cannot find module ''{0}''", stmt.getModuleName());
             else
                 imports.add(stmt);
         }
@@ -99,18 +99,6 @@ public final class ShellConfig
             else // matches > 1
                 Session.error("Ambiguous import specification ''{0}''", spec);
         }
-    }
-
-    // Loads get loaded as an implicit first module in the shell, when it starts or
-    // after a $clear
-    public List<String> getLoads()
-    {
-        return loads;
-    }
-
-    private void addLoadScript(final String name)
-    {
-        loads.add(name);
     }
 
     public List<String> getCommandFiles()
@@ -263,21 +251,6 @@ public final class ShellConfig
                         Session.error("import scripts not specified");
                     }
                 }
-                else if (command.equals("load"))
-                {
-                    if (i < args.length - 1)
-                    {
-                        for (final String script : Arrays.asList(args[i + 1].split(";")))
-                        {
-                            addLoadScript(script);
-                        }
-                        i = i + 1;
-                    }
-                    else
-                    {
-                        Session.error("load scripts not specified");
-                    }
-                }
                 else if (command.equals("messages"))
                 {
                     if (i < args.length - 1)
@@ -298,7 +271,7 @@ public final class ShellConfig
                         getScriptPath().addAll(Arrays.asList(args[i + 1].split(";")));
                         for (final String path : Arrays.asList(args[i + 1].split(";")))
                         {
-                            Session.addSearchPath(path);
+                            Config.addSearchPath(path);
                         }
                         i = i + 1;
                     }

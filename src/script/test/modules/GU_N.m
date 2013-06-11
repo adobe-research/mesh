@@ -1,3 +1,3 @@
-import * from GU;
+import GU;
 
 N.foo();

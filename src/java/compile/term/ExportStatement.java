@@ -11,73 +11,61 @@
 package compile.term;
 
 import compile.Loc;
+import compile.StringUtils;
+import compile.module.WhiteList;
+
 import java.util.List;
 
 /**
- * Causes a module to be loaded and a namespace created for it's symbols.
+ * Specifies the set of definitions to be exported from a module.
  *
  * @author Keith McGuigan
  */
 public final class ExportStatement implements Statement
 {
-    private final Loc loc;
-    private final List<String> symbols;
-    private final boolean localsOnly;
+    public static ExportStatement open(final Loc loc)
+    {
+        return new ExportStatement(loc, WhiteList.open());
+    }
 
-    public ExportStatement(final Loc loc, final List<String> symbols)
+    public static ExportStatement enumerated(final Loc loc, final List<String> symbols)
+    {
+        return new ExportStatement(loc, WhiteList.enumerated(symbols));
+    }
+
+    //
+    // instance
+    //
+
+    private final Loc loc;
+    private final WhiteList whiteList;
+
+    /**
+     * export *:    symbols=open,
+     * export x,y:  symbols={"x","y"}
+     */
+    private ExportStatement(final Loc loc, final WhiteList whiteList)
     {
         this.loc = loc;
-        this.symbols = isWildcard(symbols) ? null : symbols;
-        this.localsOnly = isLocalsOnly(symbols);
+        this.whiteList = whiteList;
     }
 
-    public List<String> getSymbols() { return symbols; }
-    public boolean getLocalsOnly() { return localsOnly; }
-
-    private static boolean isSpecial(final List<String> syms, final String str) 
+    /**
+     * return the explicitly enumerated set of symbols to export
+     */
+    public WhiteList getWhiteList()
     {
-        return syms != null && syms.size() == 1 && syms.get(0).equals(str); 
-    }
-
-    private static boolean isEmpty(final List<String> syms) 
-    { 
-        return syms != null && syms.size() == 0;
-    }
-
-    private static boolean isWildcard(final List<String> syms) 
-    { 
-        return syms == null || isSpecial(syms, "*"); 
-    }
-
-    private static boolean isLocalsOnly(final List<String> syms) 
-    { 
-        return isSpecial(syms, "."); 
+        return whiteList;
     }
 
     // Statement
 
     public String dump()
     {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("export ");
-
-        if (isEmpty(symbols))
-            sb.append("()");
-        else if (isWildcard(symbols))
-            sb.append("*");
-        else if (localsOnly)
-            sb.append(".");
-        else
-        {
-            String sep = "";
-            for (final String sym : symbols)
-            {
-                sb.append(sep);
-                sb.append(sym);
-                sep = ",";
-            }
-        }
-        return sb.toString();
+        return "export " + (
+            whiteList.isOpen() ? "*" :
+            whiteList.isEmpty() ? "()" :
+            StringUtils.join(whiteList.getEntries(), ", "));
     }
 
     // Statement
@@ -103,29 +91,16 @@ public final class ExportStatement implements Statement
         if (o == null || getClass() != o.getClass()) return false;
 
         final ExportStatement that = (ExportStatement)o;
-        if (localsOnly != that.localsOnly) return false;
-        if (!checkNullEquals(symbols, that.symbols)) return false;
-        return true;
-    }
 
-    private static boolean checkNullEquals(final Object o1, final Object o2) 
-    {
-        if ((o1 == null) != (o2 == null)) return false;
-        if (o1 == null) return true;
-        return o1.equals(o2);
+        if (!whiteList.equals(that.whiteList))
+            return false;
+
+        return true;
     }
 
     @Override
     public int hashCode()
     {
-        int h = 0;
-        if (symbols != null)
-        {
-            for (final String sym : symbols)
-            {
-                h = 31 * h + sym.hashCode();
-            }
-        }
-        return h;
+        return whiteList.hashCode();
     }
 }

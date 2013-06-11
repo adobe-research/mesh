@@ -2,8 +2,8 @@
 // Testing functions
 //
 
-/** {@link std.m} */
-import * from std;
+/** {@link logging.m} */
+import logging;
 
 assert_equals(expected, actual)
 {

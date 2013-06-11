@@ -11,6 +11,8 @@
 package compile.analyze;
 
 import compile.*;
+import compile.Compiler;
+import compile.gen.Unit;
 import compile.module.*;
 import compile.term.*;
 
@@ -61,50 +63,43 @@ public final class ImportResolver extends ImportExportResolverBase
             return;
         }
 
-        final String moduleName = stmt.getFrom();
-        final Module current = getModule();
-        final ModuleDictionary dict = current.getModuleDictionary();
+        final Module importer = getModule();
+        final String importName = stmt.getModuleName();
 
         if (Session.isDebug())
-            Session.debug(loc, "Importing module: ''{0}''", moduleName);
+            Session.debug(loc, "Importing module: ''{0}''", importName);
 
-        Module loaded = dict.get(moduleName);
-
-        if (loaded == null) 
+        // load imported module, if it hasn't been loaded already
+        final Module imported;
         {
-            loaded = performLoad(loc, moduleName); 
-        }
-        else
-        {
-            if (Session.isDebug())
-                Session.debug(loc, "''{0}'' is already loaded", moduleName);
-        }
+            final Module loaded = Compiler.getUnitDictionary().getModule(importName);
 
-        if (loaded != null) 
-        {
-            final WhiteList wl;
-
-            if (!stmt.isWildcard())
+            if (loaded == null)
             {
-                final List<String> syms = stmt.getSymbols();
-
-                verifyImports(syms, loaded);
-                wl = WhiteList.enumerated(syms);
+                // note: will add to importer's module dictionary
+                imported = performLoad(loc, importName);
             }
             else
             {
-                wl = WhiteList.open();
-            }
+                if (Session.isDebug())
+                    Session.debug(loc, "''{0}'' is already loaded", importName);
 
-            current.addImport(new Import(loaded, stmt.getInto(), wl));
+                imported = loaded;
+            }
+        }
+
+        if (imported != null)
+        {
+            verifyWhiteList(stmt.getWhiteList(), imported, "import");
+
+            importer.addImport(new Import(imported, stmt));
         }
     }
 
-    private boolean verifyImports(final List<String> syms, final Module module)
-    {
-        return verifySymbols(syms, module, "import");
-    }
-
+    /**
+     * NOTE: we check positioning of both imports and exports here,
+     * to avoid duplicated logic.
+     */
     @Override
     protected void visitExportStatement(final ExportStatement stmt) 
     {
@@ -139,8 +134,9 @@ public final class ImportResolver extends ImportExportResolverBase
     private Module performLoad(final Loc loc, final String moduleName)
     {
         final String currentModulePath = getModule().getLoc().getPath();
-        final File modulePath = getModulePath(
-            loc, moduleName, currentModulePath);
+
+        final File modulePath = getModulePath(loc, moduleName, currentModulePath);
+
         if (modulePath == null)
         {
             Session.error(loc, "Could not load module ''{0}''", moduleName);
@@ -163,22 +159,23 @@ public final class ImportResolver extends ImportExportResolverBase
             filePath = modulePath.getPath();
         }
 
-        final Module module = ScriptCompiler.compileModule(
-            new Loc(filePath), reader, moduleName,
-            getModule().getModuleDictionary());
+        // note: compiling imported module eagerly, currently.
+        // unit will be added to Session.getUnitDictionary() if successful
+        // TODO two-phase
 
-        if (module == null) 
+        final Unit unit = Compiler.compileScript(new Loc(filePath), reader, moduleName);
+
+        if (unit == null)
         {
-            Session.error(loc, "Error loading module ''{0}''", moduleName);
+            Session.error(loc, "Error importing module ''{0}''", moduleName);
             return null;
         }
         else
         {
             if (Session.isDebug())
-                Session.debug(loc,
-                    "Successfully loaded module ''{0}''", moduleName);
+                Session.debug(loc, "Successfully imported module ''{0}''", moduleName);
 
-            return module;
+            return unit.getModule();
         }
     }
 
@@ -198,7 +195,8 @@ public final class ImportResolver extends ImportExportResolverBase
         File modulePath = null;
         final String pathFragment = NameUtils.module2file(moduleName);
 
-        if (currentPath != null) {
+        if (currentPath != null)
+        {
             final File currentModuleFile = new File(currentPath);
             if (currentModuleFile.isFile())
             {
@@ -209,7 +207,7 @@ public final class ImportResolver extends ImportExportResolverBase
 
         if (modulePath == null)
         {
-            final List<String> searchPaths = Session.getSearchPaths();
+            final List<String> searchPaths = Config.getSearchPaths();
             for (int i = 0; modulePath == null && i < searchPaths.size(); ++i)
             {
                 final String rootPath = searchPaths.get(i);

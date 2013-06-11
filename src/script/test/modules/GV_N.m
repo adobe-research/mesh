@@ -1,3 +1,3 @@
-import * from GV;
+import GV;
 
 a = var;

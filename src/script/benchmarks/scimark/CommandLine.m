@@ -5,11 +5,9 @@
 	factorizations.  
 */
 
-import * from std;
-
 import Constants qualified;
-import * from Random;
-import * from Kernel;
+import Random;
+import Kernel;
 
 //export ();
 

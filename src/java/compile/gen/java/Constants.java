@@ -45,7 +45,7 @@ public final class Constants
      * their names defined here.
      *
      * Note: there is no guarantee that the source functions are actually loaded -
-     * right now the convention is that they appear in std.m, and that std.m gets
+     * right now the convention is that they appear in lang.m, and that lang.m gets
      * preloaded before anything nontrivial.
      */
     public static final String COMPOSE_FN = "compose";

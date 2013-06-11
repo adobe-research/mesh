@@ -1,5 +1,6 @@
-import * from std;
-import * from unittest;
+
+import lib.sort;
+import unittest;
 
 // insertion_point = { list, val => first_where({ $0_199_31 => le(val, $0_199_31) }, list) }
 assert_equals({ 1 }, { insertion_point(1, [0,2,4]) });

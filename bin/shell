@@ -45,4 +45,4 @@ if [ "${MODULEPATH}" = "" ]; then
 fi
 
 # TODO bake lang + std access into compiler as default
-java ${JVM_ARGS} shell.Main -path ${MODULEPATH} -load std $@
+java ${JVM_ARGS} shell.Main -path ${MODULEPATH} $@

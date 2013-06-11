@@ -1,5 +1,5 @@
 
-import * from unittest;
+import unittest;
 import AV qualified;
 
 // exports nothing

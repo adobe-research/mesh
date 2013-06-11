@@ -1,4 +1,4 @@
 
-import * from scopeA;
+import scopeA;
 
 value = "scopeC";

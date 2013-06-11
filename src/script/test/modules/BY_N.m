@@ -1,3 +1,3 @@
-import * from BY;
+import BY;
 
 foo();

@@ -11,7 +11,6 @@
 /* See {@link ComplexDoubleFFT ComplexDoubleFFT} for details of data layout.
 */
 
-import * from std;
 //export num_flops, transform, inverse, test;
 
 num_flops(N:Int) -> Double {

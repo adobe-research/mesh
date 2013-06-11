@@ -1,5 +1,5 @@
 
-import * from M;
+import M;
 
 localvar = 10;
 type LocalType = (Int,Int);

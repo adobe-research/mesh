@@ -10,8 +10,8 @@
  */
 package runtime.intrinsic.tran;
 
-import runtime.rep.lambda.IntrinsicLambda;
-import runtime.rep.lambda.Lambda;
+import runtime.intrinsic.IntrinsicLambda;
+import runtime.rep.Lambda;
 import runtime.rep.Tuple;
 import runtime.tran.Box;
 import runtime.tran.TransactionManager;

@@ -1,3 +1,3 @@
-import * from IV qualified;
+import IV qualified;
 
 a = IV.var;

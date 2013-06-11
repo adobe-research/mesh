@@ -1,5 +1,5 @@
 
-import * from unittest;
-import * from BX;
+import unittest;
+import BX;
 
 assert_equals({ localvar }, { localvar });

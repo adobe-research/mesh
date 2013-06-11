@@ -11,7 +11,6 @@
 package runtime.intrinsic;
 
 import compile.Session;
-import runtime.rep.lambda.IntrinsicLambda;
 import runtime.rep.list.ListValue;
 import runtime.rep.map.MapValue;
 import runtime.rep.Tuple;

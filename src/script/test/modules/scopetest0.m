@@ -1,7 +1,7 @@
 
-import * from unittest;
+import unittest;
 
-import * from scopeA;
-import * from scopeB;
+import scopeA;
+import scopeB;
 
 assert_equals( { value }, { "scopeB" } );

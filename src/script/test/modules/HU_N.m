@@ -1,3 +1,3 @@
-import * from HU;
+import HU;
 
 a = N.var;

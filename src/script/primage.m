@@ -1,6 +1,5 @@
 
-import * from std;
-import * from processing;
+import processing;
 
 //
 // image browser with background loading

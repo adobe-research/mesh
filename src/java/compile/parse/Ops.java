@@ -95,8 +95,8 @@ public class Ops
     // populate BINOP_INFO. Entries are added in low-to-high precedence order.
     // Ops that desugar to intrinsics have BinopInfo name entries that refer
     // to the static NAME field of the implementing class; others desugar to
-    // Mesh functions currently defined in std.m and have name fields that
-    // are defined in Contants.
+    // Mesh functions currently defined in lang.m and have name fields that
+    // are defined in Constants.
     //
     static
     {

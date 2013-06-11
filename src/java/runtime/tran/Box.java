@@ -10,8 +10,8 @@
  */
 package runtime.tran;
 
-import runtime.Logging;
-import runtime.rep.lambda.Lambda;
+import runtime.sys.Logging;
+import runtime.rep.Lambda;
 import runtime.rep.map.PersistentMap;
 
 import java.util.concurrent.TimeUnit;

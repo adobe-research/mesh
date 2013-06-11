@@ -159,8 +159,6 @@
             <jvmarg line="${test.extra_vmargs}" />
             <arg value="-path" />
             <arg value="./src/script;./src/script/lib" />
-            <arg value="-import" />
-            <arg value="lang" />
             <arg value="@test/harness.ms" />
         </java>
     </target>

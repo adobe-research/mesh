@@ -1,6 +1,6 @@
 
-import * from std;
-import * from unittest;
+import bench;
+import unittest;
 
 // Given a box mutator, an initial value and a terminal value,
 // and counts for boxes, repetitions and tasks,

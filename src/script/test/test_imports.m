@@ -1,11 +1,11 @@
 
-import * from unittest;
+import unittest;
 
 import () from modules.combotest;
 import () from modules.scopetest;
 import () from modules.qualifiedtypetest;
 
-import * from test.test_imports_right;
+import test.test_imports_right;
 import test.test_imports_right into right;
 import leftop,status from test.test_imports_left;
 import test.test_imports_right qualified;

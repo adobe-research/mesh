@@ -1,5 +1,6 @@
-import * from std;
-import * from unittest;
+
+import lib.logging;
+import unittest;
 
 
 //////////////////////////////////////////////////

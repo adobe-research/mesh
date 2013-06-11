@@ -11,17 +11,21 @@
 package compile.gen.java;
 
 import compile.*;
+import compile.Compiler;
+import compile.gen.IntrinsicsResolver;
+import compile.gen.Unit;
+import compile.gen.UnitDictionary;
 import compile.gen.java.inline.TermInliner;
 import compile.module.Module;
 import compile.module.Scope;
 import compile.term.*;
 import compile.term.visit.BindingVisitorBase;
 import compile.type.*;
-import runtime.IntrinsicTypeRecorder;
+import compile.type.visit.TypeDumper;
 import runtime.rep.Record;
 import runtime.rep.Tuple;
-import runtime.rep.lambda.Lambda;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.rep.Lambda;
+import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.list.ListValue;
 import runtime.rep.list.PersistentList;
 import runtime.rep.map.MapValue;
@@ -44,12 +48,15 @@ import static compile.parse.ApplyFlavor.StructAddr;
  */
 public final class StatementFormatter extends BindingVisitorBase<String>
 {
-    // instance
-
     /**
      * our compilation unit
      */
-    private final Unit unit;
+    private final JavaUnit unit;
+
+    /**
+     * unit dictionary, used to resolve out-of-unit definitions
+     */
+    private final UnitDictionary unitDictionary;
 
     /**
      * our current scope--our module if we're generating top-level code,
@@ -94,9 +101,11 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     /**
      *
      */
-    public StatementFormatter(final Unit unit)
+    public StatementFormatter(final JavaUnit unit, final UnitDictionary unitDictionary)
     {
         this.unit = unit;
+
+        this.unitDictionary = unitDictionary;
 
         this.currentScope = unit.getModule();
 
@@ -111,6 +120,14 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         this.keyListConstants = new HashMap<List<SimpleLiteralTerm>, String>();
 
         this.lvalueClassStack = new ArrayDeque<Class<?>>();
+    }
+
+    /**
+     *
+     */
+    public UnitDictionary getUnitDictionary()
+    {
+        return unitDictionary;
     }
 
     /**
@@ -253,12 +270,25 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         else if (statement instanceof ImportStatement)
         {
             final ImportStatement importStatement = (ImportStatement)statement;
-            final Unit imported = unit.getImportedUnit(importStatement.getFrom());
-            assert imported != null : "Imported unit not created";
-            final ClassDef def = imported.getModuleClassDef();
 
-            return def.getName() + "." + Constants.INSTANCE + ".run()";
+            final Unit imported =
+                unitDictionary.getUnit(importStatement.getModuleName());
+
+            assert imported != null : "Imported unit not created";
+
+            if (!(imported instanceof JavaUnit))
+            {
+                Session.error(statement.getLoc(),
+                    "import of non-Java unit not supported: {0}", statement.dump());
+            }
+            else
+            {
+                final ClassDef def = ((JavaUnit)imported).getModuleClassDef();
+
+                return def.getName() + "." + Constants.INSTANCE + ".run()";
+            }
         }
+
         return "";
     }
 
@@ -445,19 +475,34 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     @Override
     public String visit(final LetBinding let)
     {
-        final String lhs = lambdaDepth == 0 ?  formatNameRef(let) : formatVarDeclLHS(let);
+        final Type letType = let.getType();
+
+        final String lhs = lambdaDepth == 0 ?
+            formatNameRef(let) :        // top-level, LHS assigns predeclared var
+            formatVarDeclLHS(let);      // in lambda, LHS declares and assigns
+
         final String rhs;
         if (let.isIntrinsic())
         {
-            // Record a dump of the intrinsic type for use when printing it.
-            rhs = IntrinsicTypeRecorder.class.getName() +
-                ".record(" + formatIntrinsicAsRHS(let) +
-                ", \"" + let.getType().dump() + "\")";
+            if (Types.isFun(letType))
+            {
+                // Note: here we piggyback on the let initializer to install
+                // a prettyprint of an IntrinsicLambda's declared signature.
+                rhs = formatIntrinsicAsRHS(let) + ".setSigDump(\"" +
+                        TypeDumper.dumpTypeParams(letType) + "\", \"" +
+                        TypeDumper.dumpWithoutParams(letType) + "\")";
+            }
+            else
+            {
+                rhs = formatIntrinsicAsRHS(let);
+            }
         }
         else
         {
-            rhs = formatTermAs(let.getValue(), TypeMapper.map(let.getType()));
+            // for non intrinsics, generate code for the RHS
+            rhs = formatTermAs(let.getValue(), TypeMapper.map(letType));
         }
+
         return lhs + " = " + rhs;
     }
 
@@ -480,7 +525,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
             final Term rhs = binding.getValue();
 
             if (rhs instanceof LambdaTerm)
-                return unit.ensureLambdaClassName((LambdaTerm)rhs);
+                return unit.ensureLambdaClassName((LambdaTerm)rhs, unitDictionary);
         }
 
         return formatType(binding.getType());
@@ -536,21 +581,33 @@ public final class StatementFormatter extends BindingVisitorBase<String>
             // find the binding's unit.
             // TODO should use a bidi map or something instead of lookup
             final Unit bindingUnit = (bindingModule == unit.getModule()) ? unit :
-                unit.getImportedUnit(bindingModule.getName());
+                Compiler.getUnitDictionary().getUnit(bindingModule.getName());
 
-            // Note: we have to actually use the class name if it's there,
-            // as it might be nonstandard for intrinsics.
-            final ClassDef moduleClassDef = bindingUnit.getModuleClassDef();
+            if (!(bindingUnit instanceof JavaUnit))
+            {
+                Session.error(binding.getLoc(),
+                    "references to non-Java bindings not supported: {0}",
+                    binding.dump());
 
-            // But it might not be there, e.g. if we're generating a lambda
-            // class before its defining module class.
-            final String moduleNameRef =
-                (moduleClassDef != null ?
-                    bindingUnit.getModuleClassDef().getName() :
-                    ModuleClassGenerator.qualifiedModuleClassName(bindingModule))
-                + "." + Constants.INSTANCE;
+                return formatName(binding.getName());   // error, unqualified
+            }
+            else
+            {
+                // Note: we have to actually use the class name if it's there,
+                // as it might be nonstandard for intrinsics.
+                final ClassDef moduleClassDef =
+                    ((JavaUnit)bindingUnit).getModuleClassDef();
 
-            return moduleNameRef + "." + formatName(binding.getName());
+                // But it might not be there, e.g. if we're generating a lambda
+                // class before its defining module class.
+                final String moduleNameRef =
+                    (moduleClassDef != null ?
+                        moduleClassDef.getName() :
+                        ModuleClassGenerator.qualifiedModuleClassName(bindingModule))
+                    + "." + Constants.INSTANCE;
+
+                return moduleNameRef + "." + formatName(binding.getName());
+            }
         }
         else
         {
@@ -574,9 +631,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
     private IntrinsicLambda getIntrinsic(final LetBinding let)
     {
-        final IntrinsicsResolver resolver = IntrinsicsResolver.getThreadLocal();
-
-        final IntrinsicLambda intrinsic = resolver.resolve(let);
+        final IntrinsicLambda intrinsic = IntrinsicsResolver.resolve(let);
         assert intrinsic != null : "Intrinsic should have been previously resolved";
 
         return intrinsic;
@@ -1246,7 +1301,8 @@ public final class StatementFormatter extends BindingVisitorBase<String>
             final LambdaTerm baseLambda = (LambdaTerm)base;
 
             // this ensures a stable class name, but doesn't generate code
-            final String className = unit.ensureLambdaClassName(baseLambda);
+            final String className = unit.ensureLambdaClassName(
+                baseLambda, unitDictionary);
 
             // can scatter if num args != 1
             final InvokeInfo.InvokeMode mode = baseLambda.getParams().size() == 1 ?

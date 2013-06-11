@@ -1,3 +1,3 @@
-import * from AT;
+import AT;
 
 a = M.var;

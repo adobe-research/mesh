@@ -15,7 +15,6 @@ import runtime.rep.Record;
 import runtime.rep.Symbol;
 import runtime.rep.Tuple;
 import runtime.rep.Variant;
-import runtime.rep.lambda.IntrinsicLambda;
 import runtime.rep.list.ListValue;
 import runtime.rep.map.MapValue;
 import runtime.tran.Box;

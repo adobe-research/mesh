@@ -11,7 +11,7 @@
 package runtime.rep.map;
 
 import runtime.rep.PersistentConstants;
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import runtime.rep.list.ListValue;
 
 import java.util.Iterator;

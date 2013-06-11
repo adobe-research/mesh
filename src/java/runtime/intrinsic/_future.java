@@ -10,10 +10,9 @@
  */
 package runtime.intrinsic;
 
-import runtime.conc.ConcurrencyManager;
+import runtime.sys.ConcurrencyManager;
 import runtime.rep.Tuple;
-import runtime.rep.lambda.IntrinsicLambda;
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;

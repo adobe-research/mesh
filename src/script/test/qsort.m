@@ -1,8 +1,9 @@
 
-import * from std;
-import * from unittest;
+import sort;
+import bench;
+import unittest;
 
-// benchmark qsort from std.m
+// benchmark qsort from sort.m
 
 //
 // test runner - run the sort, check sortedness and population of result list

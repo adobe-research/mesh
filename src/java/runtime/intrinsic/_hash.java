@@ -10,8 +10,6 @@
  */
 package runtime.intrinsic;
 
-import runtime.rep.lambda.IntrinsicLambda;
-
 /**
  * Hash code, defined over all values. Structural hash for
  * everything except lamdas and boxes, identity hash for those.

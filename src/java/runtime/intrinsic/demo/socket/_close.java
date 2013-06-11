@@ -10,8 +10,7 @@
  */
 package runtime.intrinsic.demo.socket;
 
-import runtime.intrinsic.demo.ServerSocket;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Tuple;
 
 import java.io.IOException;

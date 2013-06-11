@@ -10,8 +10,8 @@
  */
 package runtime.tran;
 
+import runtime.rep.Lambda;
 import runtime.rep.Tuple;
-import runtime.rep.lambda.Lambda;
 import runtime.rep.map.PersistentMap;
 
 import java.util.Map;

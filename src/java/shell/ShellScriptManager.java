@@ -10,22 +10,22 @@
  */
 package shell;
 
+import com.google.common.collect.Lists;
+import compile.Compiler;
 import compile.Loc;
-import compile.ScriptCompiler;
+import compile.NameUtils;
 import compile.Session;
-import compile.gen.java.*;
+import compile.gen.Unit;
+import compile.gen.UnitManager;
 import compile.module.Module;
-import compile.module.ModuleDictionary;
 import compile.parse.RatsScriptParser;
-import compile.term.LambdaTerm;
 import compile.term.ImportStatement;
 import compile.term.Statement;
 import compile.term.TypeDef;
 import compile.term.ValueStatement;
-import runtime.rep.ModuleRep;
 
-import java.io.*;
-import java.lang.reflect.Field;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.*;
 
 /**
@@ -36,15 +36,21 @@ import java.util.*;
  */
 public final class ShellScriptManager
 {
-    private int seq;
-    private UnitDictionary unitDictionary;
+    //private int seq;
+    private Map<String, Integer> loadCounts;
     private List<Unit> unitHistory;
+    private List<ImportStatement> historyImports;
+    private UnitManager unitManager;
 
     /**
      *
      */
-    public ShellScriptManager()
+    public ShellScriptManager(final UnitManager unitManager)
     {
+        this.loadCounts = new HashMap<String, Integer>();
+        this.unitHistory = new ArrayList<Unit>();
+        this.historyImports = new ArrayList<ImportStatement>();
+        this.unitManager = unitManager;
     }
 
     /**
@@ -56,351 +62,117 @@ public final class ShellScriptManager
     }
 
     /**
-     * clear shell state
-     * Note that we don't reset {@link #seq}, since even when we clear our state,
-     * we leave old compiled module classes around that we can't step on.
-     */
-    public void clear(final List<String> scriptLoads)
-    {
-        if (unitDictionary != null)
-        {
-            // release script instance data - since module instances are singleton
-            // static members of their representing classes, they won't be reclaimed
-            // by simply detaching from units->modules
-            for (final Unit unit : unitDictionary.getUnits())
-                clearScriptUnit(unit);
-        }
-
-        ModuleClassGenerator.newEpoch();
-
-        this.unitDictionary = new UnitDictionary();
-        this.unitHistory = new ArrayList<Unit>();
-
-        // also, we have carnal knowledge of Javassist internals
-        JavassistHelper.resetClassPool();
-
-        preloadShellScripts(scriptLoads);
-    }
-
-    /**
-     * Imports that occur at init time and after every $clear
-     */
-    private void preloadShellScripts(final List<String> scriptLoads)
-    {
-        if (scriptLoads.size() > 0)
-        {
-            final List<ImportStatement> imports = 
-                new ArrayList<ImportStatement>(scriptLoads.size());
-            for (final String script : scriptLoads)
-            {
-                imports.add(
-                    ImportStatement.allUnqualified(Loc.INTRINSIC, script));
-
-                if (Session.isDebug())
-                    Session.debug(Loc.INTRINSIC, "Preloading " + script + "...");
-            }
-
-            runScript(Loc.INTRINSIC, new StringReader(""), 
-                      imports, Session.isDebug(), false);
-        }
-    }
-
-    /**
      * Retrieve a past unit.
      *
      * @param n number of steps into the past, 0 most recent
      * @return unit, or null if argument is out of range
      */
-    public Unit getPastUnit(final int n)
+    public Unit getHistoryUnit(final int n)
     {
         return unitHistory.size() > n ? unitHistory.get(n) : null;
     }
 
     /**
-     * Compile, save and run passed script text. See {@link #compileScriptUnit}, {@link #loadScriptUnit}.
+     * Compile, save and run passed script text.
      */
-    public boolean runScript(final Loc loc, final Reader reader,
-        final List<ImportStatement> imports, final boolean debug, final boolean print)
+    public boolean loadScript(final Loc loc, final Reader reader)
     {
-        final List<ImportStatement> unitImports = addPastUnitImport(imports);
-        
-        final Unit unit = compileScriptUnit(loc, reader, unitImports, debug, print);
+        // derive module name from passed location, presumably a file path
+        final String name = NameUtils.getFilenameStemFromPath(loc.getPath());
 
-        if (unit != null)
+        if (!NameUtils.isValidName(name))
         {
-            saveUnit(unit);
+            Session.error(loc,
+                "script path {0} does not yield a valid module name ({1})",
+                loc.getPath(), name);
 
-            if (Session.isDebug())
-                Session.debug(loc, "Loading script...");
+            return false;
+        }
 
-            return loadScriptUnit(unit, debug);
+        final String loadName = getLoadName(name);
+
+        // compile script unit from input
+        final Unit unit = Compiler.compileScript(loc, reader, loadName);
+        if (unit == null)
+            return false;
+
+        // add unit to history
+        addHistoryUnit(unit);
+
+        if (Session.isDebug())
+            Session.debug(loc, "Loading script {0}...", loadName);
+
+        return unitManager.loadUnit(unit);
+    }
+
+    /**
+     * attach disambiguating suffix to given name
+     */
+    private String getLoadName(final String name)
+    {
+        return name + "_" + postIncLoadCount(name);
+    }
+
+    /**
+     * retrieve the load count for a given name, increment it,
+     * then return the original.
+     */
+    private int postIncLoadCount(final String name)
+    {
+        if (!loadCounts.containsKey(name))
+        {
+            loadCounts.put(name, 1);
+            return 0;
         }
         else
         {
-            return false;
+            final int count = loadCounts.get(name);
+            loadCounts.put(name, count + 1);
+            return count;
         }
     }
 
     /**
-     * Compile a unit for passed script.
-     * Script implicitly imports previous script, and so has access to all
-     * values and types defined in any previous scripts built by this method.
+     * Save successfully built unit in {@link #unitHistory}
      */
-    private Unit compileScriptUnit(final Loc loc, final Reader reader,
-        final List<ImportStatement> imports, final boolean debug, final boolean print)
+    private void addHistoryUnit(final Unit unit)
     {
-        // disambiguate module name with counter
-        final String moduleName = "Shell" + seq;
-
-        // compile script module unit
-        return ScriptCompiler.compileScript(
-            loc, reader, moduleName, imports, unitDictionary, debug, print);
-    }
-
-    /**
-     * Parse a statement and return it
-     */
-    public static ImportStatement parseImportStatement(
-        final Loc loc, final String text) 
-    {
-        final List<Statement> statements = 
-            RatsScriptParser.parseScript(new StringReader(text), loc);
-        if (statements != null && statements.size() == 1 && 
-            statements.get(0) instanceof ImportStatement)
-        {
-            return (ImportStatement)statements.get(0);
-        }
-        return null;
-    }
-
-    /**
-     * We only need to import the most recently created past unit,
-     * since it will import its predecessor, and so on.
-     */
-    private List<ImportStatement> addPastUnitImport(
-        final List<ImportStatement> imports)
-    {
-        final Unit lastUnit = getPastUnit(0);
-        if (lastUnit != null) 
-        {
-            final List<ImportStatement> unitImports = 
-                new ArrayList<ImportStatement>(imports.size() + 1);
-            unitImports.addAll(imports);
-
-            final String name = lastUnit.getModule().getName();
-            unitImports.add(ImportStatement.allUnqualified(
-                Loc.INTRINSIC, name));
-            return unitImports;
-        }
-        return imports;
-    }
-
-    /**
-     *
-     */
-    public boolean writeUnits(final String path)
-    {
-        for (final Unit unit : unitDictionary.getUnits())
-        {
-            if (!writeUnit(unit, path))
-                return false;
-        }
-
-        return true;
-    }
-
-    /**
-     *
-     */
-    private boolean writeUnit(final Unit unit, final String path)
-    {
-        try
-        {
-            final String srcpath = path + File.separatorChar + "src";
-            final String binpath = path + File.separatorChar + "classes";
-
-            final ClassDef moduleClassDef = unit.getModuleClassDef();
-
-            if (Session.isDebug())
-                Session.debug(unit.getModule().getLoc(),
-                    "writing module class source to directory \"{0}\"",
-                    srcpath);
-
-            writeClassDefSource(moduleClassDef, srcpath);
-
-            if (Session.isDebug())
-                Session.debug(unit.getModule().getLoc(),
-                    "writing module class binary to directory \"{0}\"",
-                    binpath);
-
-            moduleClassDef.getCtClass().writeFile(binpath);
-
-            for (final Map.Entry<LambdaTerm, ClassDef> entry : unit.getLambdaClassDefs()
-                .entrySet())
-            {
-                final LambdaTerm lambdaTerm = entry.getKey();
-                final ClassDef classDef = entry.getValue();
-
-                if (Session.isDebug())
-                    Session.debug(lambdaTerm.getLoc(),
-                        "writing lambda class source {0} to directory \"{1}\"",
-                        classDef.getName(), srcpath);
-
-                writeClassDefSource(classDef, srcpath);
-
-                if (Session.isDebug())
-                    Session.debug(lambdaTerm.getLoc(),
-                        "writing lambda class binary {0} to directory \"{1}\"",
-                        classDef.getName(), binpath);
-
-                classDef.getCtClass().writeFile(binpath);
-            }
-            return true;
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     *
-     */
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void writeClassDefSource(final ClassDef classDef, final String path)
-        throws IOException
-    {
-        final String classname = classDef.getCtClass().getName();
-        final String filename =
-            path + File.separatorChar + classname.replace('.', File.separatorChar) +
-                ".java";
-
-        // make path
-        final int pos = filename.lastIndexOf(File.separatorChar);
-        if (pos > 0)
-        {
-            final String dir = filename.substring(0, pos);
-            if (!dir.equals("."))
-                new File(dir).mkdirs();
-        }
-
-        final FileOutputStream outputStream = new FileOutputStream(filename);
-        try
-        {
-            outputStream.write(classDef.getSource(false).getBytes());
-        }
-        finally
-        {
-            outputStream.close();
-        }
-
-
-    }
-
-    /**
-     * Save successfully built unit in {@link #unitHistory} and {@link #unitDictionary}.
-     */
-    private void saveUnit(final Unit unit)
-    {
-        unitDictionary.add(unit);
+        // add unit to history (most recent first)
         unitHistory.add(0, unit);
-        seq++;
+
+        // this becomes an import for subsequent shell input
+        final ImportStatement historyImport =
+            ImportStatement.openUnqualified(Loc.INTRINSIC, unit.getModule().getName());
+
+        // add module to import list (most recent last)
+        historyImports.add(historyImport);
     }
 
     /**
-     * Load a unit's module's representing class, create its static INSTANCE, and
-     * run INSTANCE's init() method (which contains top-level script code).
-     * Debug flag controls whether runtime debug messages are enabled.
+     * Evaluate shell input
      */
-    @SuppressWarnings({"UnusedParameters"})
-    private boolean loadScriptUnit(final Unit unit, final boolean debug)
+    public boolean evalShellInput(
+        final Loc loc, final Reader reader, final List<ImportStatement> shellImports)
     {
-        final Class<?> moduleClass = unit.getModuleClassDef().getCls();
+        // import shell imports, followed by history
+        final List<ImportStatement> imports = Lists.newArrayList(shellImports);
+        imports.addAll(historyImports);
 
-        if (moduleClass != null)
-        {
-            try
-            {
-                // e.g. class Shell1 { public static final Shell1 INSTANCE = new Shell1(); }
-                final Field field = moduleClass.getField(Constants.INSTANCE);
+        // disambiguate module name with counter
+        final String loadName = getLoadName("shell");
 
-                // get INSTANCE
-                final ModuleRep moduleRep = (ModuleRep)field.get(null);
+        // compile script unit from input
+        final Unit unit = Compiler.compileShellInput(loc, reader, loadName, imports);
 
-                // run init()
-                // TODO ensure that all imported modules have had their init() methods run.
-                moduleRep.run();
+        if (unit == null)
+            return false;
 
-                return true;
-            }
-            catch (Exception e)
-            {
-                // TODO print activation stack from DebugWatcher
-                e.printStackTrace();
-            }
-            catch (Error e)
-            {
-                e.printStackTrace();
-            }
-        }
+        addHistoryUnit(unit);
 
-        return false;
-    }
+        if (Session.isDebug())
+            Session.debug(loc, "Loading script...");
 
-    /**
-     * Clear a unit's module's class's INSTANCE. This is done when clearing old scripts
-     */
-    private boolean clearScriptUnit(final Unit unit)
-    {
-        final Class<?> moduleClass = unit.getModuleClassDef().getCls();
-
-        if (moduleClass != null)
-        {
-            try
-            {
-                if (Session.isDebug())
-                    Session.debug("Setting field ''{0}'' of ''{1}'' to null",
-                            Constants.INSTANCE, moduleClass.getName());
-                // e.g. class Shell1 { public static final Shell1 INSTANCE = new Shell1(); }
-                final Field field = moduleClass.getField(Constants.INSTANCE);
-
-                // clear INSTANCE
-                field.set(null, null);
-
-                for (final ClassDef def : unit.getLambdaClassDefs().values())
-                {
-                    final Class<?> lambdaCls = def.getCls();
-                    if (lambdaCls != null)
-                    {
-                        try 
-                        {
-                            final Field lfield = lambdaCls.getDeclaredField(Constants.INSTANCE);
-                            if (Session.isDebug())
-                                Session.debug("Setting field ''{0}'' of ''{1}'' to null",
-                                        lfield, lambdaCls.getName());
-                            lfield.set(null, null);
-                        }
-                        catch (NoSuchFieldException e)
-                        {
-                            /* some lambda don't have an instance field and that's ok. */
-                        }
-                    }
-                }
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-            catch (Error e)
-            {
-                e.printStackTrace();
-            }
-        }
-
-        return false;
+        return unitManager.loadUnit(unit);
     }
 
     /**
@@ -408,16 +180,17 @@ public final class ShellScriptManager
      * then statements. (I.e., the two are separated, no longer interleaved in decl order.)
      * Return a map from statement dumps to type dumps.
      */
-    public Map<String, String> printExprTypes(final Loc loc, final Reader reader, 
-            final List<ImportStatement> imports)
+    public Map<String, String> dumpTypes(
+        final Loc loc, final Reader reader, final List<ImportStatement> shellImports)
     {
         final Map<String, String> dumps = new LinkedHashMap<String, String>();
 
-        final List<ImportStatement> unitImports = addPastUnitImport(imports);
+        // imports list is shell history, followed $import list
+        final List<ImportStatement> imports = Lists.newArrayList(historyImports);
+        imports.addAll(shellImports);
 
-        final ModuleDictionary dict = unitDictionary.getModuleDictionary();
-        final Module module = ScriptCompiler.analyzeScript(
-                loc, reader, "TypeCheck", unitImports, dict);
+        final Module module = compile.Compiler.analyzeShellInput(
+            loc, reader, "typecheck", imports);
 
         if (module != null)
         {
@@ -437,5 +210,45 @@ public final class ShellScriptManager
         }
 
         return dumps;
+    }
+
+    /**
+     * clear shell state
+     * Note that we don't reset {@link #loadCounts}, since even when we
+     * clear our state, we leave old compiled module classes around that
+     * we can't step on.
+     */
+    public void clearShellState()
+    {
+        // release script instance data - since module instances are singleton
+        // static members of their representing classes, they won't be reclaimed
+        // by simply detaching from units->modules
+        for (final Unit unit : Compiler.getUnitDictionary().getUnits())
+            unitManager.unloadUnit(unit);
+
+        Compiler.clearUnitDictionary();
+
+        this.unitHistory = new ArrayList<Unit>();
+        this.historyImports = new ArrayList<ImportStatement>();
+
+        unitManager.resetInternals();
+    }
+
+    /**
+     * Attempt to parse an import statement from passed text
+     */
+    public static ImportStatement parseImportStatement(
+        final Loc loc, final String text)
+    {
+        final List<Statement> statements =
+            RatsScriptParser.parseScript(new StringReader(text), loc);
+
+        if (statements != null && statements.size() == 1 &&
+            statements.get(0) instanceof ImportStatement)
+        {
+            return (ImportStatement)statements.get(0);
+        }
+
+        return null;
     }
 }

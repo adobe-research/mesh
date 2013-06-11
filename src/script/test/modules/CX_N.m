@@ -1,3 +1,3 @@
-import * from CX;
+import CX;
 
 a = var;

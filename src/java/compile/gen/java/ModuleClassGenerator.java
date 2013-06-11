@@ -12,11 +12,16 @@ package compile.gen.java;
 
 import compile.analyze.SymbolConstantCollector;
 import compile.module.Module;
-import compile.term.*;
+import compile.term.LetBinding;
+import compile.term.SimpleLiteralTerm;
+import compile.term.Statement;
+import compile.term.SymbolLiteral;
 import compile.type.Types;
 import runtime.rep.ModuleRep;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * {@link #generate} produces a classdef for a module.
@@ -25,19 +30,35 @@ import java.util.*;
  */
 public final class ModuleClassGenerator extends ClassGenerator
 {
-    private static int epochCounter = 0;
+    /**
+     * epoch counter--used only to ensure disjoint class names after shell reset
+     */
+    private static int Epoch = 0;
 
-    // Used after a $clear to get all new class names
-    public static void newEpoch() { ++epochCounter; }
+    /**
+     *
+     */
+    synchronized static int getEpoch()
+    {
+        return Epoch;
+    }
+
+    /**
+     *
+     */
+    synchronized static void newEpoch()
+    {
+        Epoch++;
+    }
 
     /**
      * Create a {@link ClassDef} to represent this module's
      * definitions and state at runtime. Necessary subdefinitions
-     * are created on demand and stored to the {@link Unit} associated
+     * are created on demand and stored to the {@link JavaUnit} associated
      * with the passed {@link StatementFormatter}.
      */
-    public static ClassDef generate(final Module module,
-        final String className, final StatementFormatter fmt)
+    static ClassDef generate(
+        final Module module, final String className, final StatementFormatter fmt)
     {
         final ClassDef moduleClassDef = new ClassDef(className);
 
@@ -60,7 +81,7 @@ public final class ModuleClassGenerator extends ClassGenerator
         moduleClassDef.addMethodDef(buildRunMethodDef(module, fmt));
 
         // add main() method
-        moduleClassDef.addMethodDef(buildMainMethodDef(module));
+        moduleClassDef.addMethodDef(buildMainMethodDef());
 
         return moduleClassDef;
     }
@@ -81,7 +102,7 @@ public final class ModuleClassGenerator extends ClassGenerator
      * Note: lets are not initialized inline or in a constructor,
      * due to Javassist issues around init/cinit ordering. Instead
      * they're initialized in the generated run() method.
-     *
+     * <p/>
      * But note that we're declaring them final anyway, since at
      * runtime they are in fact written exactly once. Javassist
      * doesn't appear to do any static flow check that prevents
@@ -199,15 +220,10 @@ public final class ModuleClassGenerator extends ClassGenerator
     /**
      * main() method just calls INSTANCE.run(), throwing away args.
      */
-    private static MethodDef buildMainMethodDef(final Module module)
+    private static MethodDef buildMainMethodDef()
     {
         final String sig = "public static void main(String[] args)";
         final MethodDef methodDef = new MethodDef(sig);
-
-        final Set<Module> runModules = new HashSet<Module>();
-
-        for (final Module importedModule : module.getImportList())
-            addModuleRunStatement(methodDef, importedModule, runModules);
 
         methodDef.addStatement(new JavaStatement("INSTANCE.run()"));
 
@@ -215,28 +231,9 @@ public final class ModuleClassGenerator extends ClassGenerator
     }
 
     /**
-     *
-     */
-    private static void addModuleRunStatement(final MethodDef methodDef,
-        final Module module, final Set<Module> runModules)
-    {
-        for (final Module importedModule : module.getImportList())
-        {
-            addModuleRunStatement(methodDef, importedModule, runModules);
-        }
-
-        if (!runModules.contains(module))
-        {
-            methodDef.addStatement(
-                    new JavaStatement(qualifiedModuleClassName(module) + ".INSTANCE.run()"));
-            runModules.add(module);
-        }
-    }
-
-    /**
      * qualified module class name
      */
-    public static String qualifiedModuleClassName(final Module module)
+    static String qualifiedModuleClassName(final Module module)
     {
         return qualifyModuleClassName(module, "Module");
     }
@@ -244,9 +241,9 @@ public final class ModuleClassGenerator extends ClassGenerator
     /**
      * Qualify class name with module.
      */
-    public static String qualifyModuleClassName(final Module module,
-        final String className)
+    static String qualifyModuleClassName(final Module module, final String className)
     {
-        return module.getName().toLowerCase() + "_" + epochCounter + "." + className;
+        final int epoch = getEpoch();
+        return module.getName().toLowerCase() + "_" + epoch + "." + className;
     }
 }

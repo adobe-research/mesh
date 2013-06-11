@@ -1,6 +1,4 @@
 
-import * from std;
-
 // Example of generators and data-hiding/encapsulation
 
 // This is a rather stupid (but perhaps interesting) way of generating prime 

@@ -1,7 +1,7 @@
 
-import * from unittest;
+import unittest;
 
-import * from scopeA;
+import scopeA;
 import scopeB qualified;
 import scopeC qualified;
 

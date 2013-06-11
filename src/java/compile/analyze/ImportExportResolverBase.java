@@ -12,8 +12,7 @@ package compile.analyze;
 
 import compile.Session;
 import compile.module.Module;
-
-import java.util.List;
+import compile.module.WhiteList;
 
 /**
  * Base class for ImportResolver and ExportResolver to contain common code
@@ -27,21 +26,25 @@ public class ImportExportResolverBase extends ModuleVisitor<Object>
         super(module);
     }
 
-    protected boolean verifySymbols(
-        final List<String> syms, final Module module, final String direction)
+    protected boolean verifyWhiteList(final WhiteList whiteList,
+        final Module module, final String direction)
     {
         boolean status = true;
 
-        for (final String sym : syms) 
+        if (!whiteList.isOpen())
         {
-            if (module.findValueBinding(sym) == null &&
-                    module.findType(sym) == null)
+            for (final String sym : whiteList.getEntries())
             {
-                Session.error("No value or type ''{0}'' available for {1}",
+                if (module.getLocalValueBinding(sym) == null &&
+                    module.getLocalTypeBinding(sym) == null)
+                {
+                    Session.error("No value or type ''{0}'' available for {1}",
                         sym, direction);
-                status = false;
+                    status = false;
+                }
             }
         }
+
         return status;
     }
 }

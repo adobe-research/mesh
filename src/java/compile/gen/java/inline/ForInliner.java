@@ -14,7 +14,7 @@ import compile.gen.java.StatementFormatter;
 import compile.term.*;
 import runtime.intrinsic._count;
 import runtime.intrinsic._index;
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import runtime.rep.list.ListValue;
 
 import java.util.List;

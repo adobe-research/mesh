@@ -10,7 +10,7 @@
  */
 package runtime.intrinsic.tran;
 
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Tuple;
 import runtime.tran.TransactionManager;
 

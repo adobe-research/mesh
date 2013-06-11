@@ -12,7 +12,6 @@ package compile.analyze;
 
 import compile.Loc;
 import compile.Session;
-import compile.module.Module;
 import compile.module.Scope;
 import compile.parse.ApplyFlavor;
 import compile.term.*;
@@ -139,6 +138,7 @@ class TermRefResolver extends TermTransformerBase {
         {
             // some refs are already bound, e.g. inline param refs,
             // and refs from some decomposing assignments
+
             binding = ref.getBinding();
             final Scope bindingScope = binding.getScope();
 
@@ -164,10 +164,11 @@ class TermRefResolver extends TermTransformerBase {
         }
         else
         {
-            final Module module = refResolver.getModule();
-            final ValueBinding vb = currentScope.findValueBinding(name);
+            // final Module module = refResolver.getModule();
+            // final ValueBinding vb = currentScope.findValueBinding(name);
 
-            binding = (vb != null) ? vb : module.findValueBinding(name);
+            // binding = (vb != null) ? vb : module.findValueBinding(name);
+            binding = currentScope.findValueBinding(name);
 
             // error cases:
 

@@ -10,13 +10,8 @@
  */
 package runtime.intrinsic;
 
-import com.google.common.collect.Iterators;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.sys.Arguments;
 import runtime.rep.list.ListValue;
-import runtime.rep.list.PersistentList;
-import runtime.Arguments;
-
-import java.util.List;
 
 /**
  * Retrieves command line arguments

@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  * Binding scope, either a {@link compile.module.Module} or
- * {@link runtime.rep.lambda.Lambda}.
+ * {@link runtime.rep.Lambda}.
  *
  * @author Basil Hosmer
  */
@@ -56,26 +56,22 @@ public interface Scope extends Located, Dumpable
      */
     boolean isLambda();
 
+    //
     // value bindings
+    //
 
     /**
-     * Find a value binding by name, either locally or in enclosing bindings.
+     * Find a value binding by (possibly) qualified name,
+     * either locally or in enclosing/imported bindings.
      */
-    ValueBinding findValueBinding(String name);
+    ValueBinding findValueBinding(String qname);
 
     /**
-     * Look up a value binding defined in the current scope by name.
-     * <strong>Note that in module scopes, this includes imported
-     * modules.</strong> So it would be great to find a better adjective
-     * than "local".
+     * Look up a local value binding by (unqualified) name.
+     * Local value bindings will be either let or parameter
+     * bindings defined in-scope.
      */
-    ValueBinding getValueBinding(String name);
-
-    /**
-     * Ordered map of scope's (value) param bindings.
-     * Implementations must guarantee ordering.
-     */
-    Map<String, ParamBinding> getParams();
+    ValueBinding getLocalValueBinding(String name);
 
     /**
      * Ordered map of scope's let bindings.
@@ -89,23 +85,28 @@ public interface Scope extends Located, Dumpable
      */
     void addLet(LetBinding let);
 
+    //
     // type bindings
+    //
 
     /**
-     * Find a type binding by name, either locally or in enclosing bindings.
+     * Find a type binding by (possibly) qualified name,
+     * either locally or in enclosing/imported bindings.
      */
-    TypeBinding findType(String name);
+    TypeBinding findTypeBinding(String name);
+
+    /**
+     * Look up a local type binding by (unqualified) name.
+     * Local type bindings will be either typedefs or type
+     * parameters defined in-scope.
+     */
+    TypeBinding getLocalTypeBinding(String name);
 
     /**
      * Map of scope's local type defs.
      */
     Map<String, TypeDef> getTypeDefs();
 
-    /**
-     * get a locally defined type def
-     */
-    TypeBinding getTypeDef(String name);
-    
     /**
      * Add a local type def
      */

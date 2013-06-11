@@ -4,60 +4,61 @@
  * can compare results with equivalent Java, C and Fortran codes.
  */
 
-import * from std;
-export .;
-
-// constants
-M1 = (1 << 30) + ((1 << 30) - 1);
-M2 = 1 << 16;
-DM1 = 1.0 /. i2f(M1);
-
-K0 = 9069 % M2;
-K1 = 9069 / M2;
-
 // Creates and returns a new pseudo-random number generator
 // If 'seed' is 0, then the generator is seeded using the current time (in millis)
-randomgen(seed : Int) -> () -> Double
+randomgen =
 {
-    // Initialize members (i, j, m)
-    actualseed = guard(seed != 0, seed, { l2i(millitime()) }); 
+    // private constants
+    M1 = (1 << 30) + ((1 << 30) - 1);
+    M2 = 1 << 16;
+    DM1 = 1.0 /. i2f(M1);
 
-    makeodd = { guard($0 % 2 != 0, $0, { dec($$0) }) };
-    jseed = (min $ makeodd)(abs(actualseed), M1);
+    K0 = 9069 % M2;
+    K1 = 9069 / M2;
 
-    initseeds = { 
-        js, j0, j1 => 
-            nextjseed = j0 * K0; 
-            ( 
-                nextjseed, 
-                nextjseed % M2, 
-                (nextjseed / M2 + j0 * K1 + j1 * K0) % (M2 / 2)
-            ) 
-    };
+    // function
+    { (seed : Int) -> (() -> Double) =>
 
-    seeds = tracen((jseed, jseed % M2, jseed / M2), 17, initseeds) |
-            { _, j0, j1 => j0 + M2 * j1 };
+        // Initialize members (i, j, m)
+        actualseed = guard(seed != 0, seed, { l2i(millitime()) });
 
-    m = rest(seeds); // tracen includes the initial value as first element
+        makeodd = { guard($0 % 2 != 0, $0, { dec($$0) }) };
+        jseed = (min $ makeodd)(abs(actualseed), M1);
 
-    state = box(4, 16, m);
+        initseeds = {
+            js, j0, j1 =>
+                nextjseed = j0 * K0;
+                (
+                    nextjseed,
+                    nextjseed % M2,
+                    (nextjseed / M2 + j0 * K1 + j1 * K0) % (M2 / 2)
+                )
+        };
 
-    {
-        // private utils
-        makepositive(n) { guard(n >= 0, n, { n + M1 }) };
-        decwrap(n) { guard(n == 0, 16, { dec(n) }) };
+        seeds = tracen((jseed, jseed % M2, jseed / M2), 17, initseeds) |
+                { _, j0, j1 => j0 + M2 * j1 };
 
-        (i, j, m) = *state;
+        m = rest(seeds); // tracen includes the initial value as first element
 
-        k = makepositive(m[i] - m[j]);
+        state = box(4, 16, m);
 
-        state := (decwrap(i),
-                    decwrap(j),
-                    listset(m, j, k));
+        {
+            // private utils
+            makepositive(n) { guard(n >= 0, n, { n + M1 }) };
+            decwrap(n) { guard(n == 0, 16, { dec(n) }) };
 
-        DM1 *. i2f(k)
+            (i, j, m) = *state;
+
+            k = makepositive(m[i] - m[j]);
+
+            state := (decwrap(i),
+                        decwrap(j),
+                        listset(m, j, k));
+
+            DM1 *. i2f(k)
+        }
     }
-};
+}();
 
 randomgen_range(seed, left, right)
 {

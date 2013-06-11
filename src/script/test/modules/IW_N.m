@@ -1,3 +1,3 @@
-import * from IW;
+import IW;
 
 foo();

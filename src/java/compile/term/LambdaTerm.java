@@ -126,6 +126,14 @@ public final class LambdaTerm extends AbstractScope implements Term
     }
 
     /**
+     * Ordered map of (value) param bindings.
+     */
+    public Map<String, ParamBinding> getParams()
+    {
+        return signature.getParams();
+    }
+
+    /**
      * Called once all params have been added.
      * 1. Lock param binding map.
      * 2. Fill gaps if inline params have been used.
@@ -288,7 +296,7 @@ public final class LambdaTerm extends AbstractScope implements Term
      */
     public ValueBinding findValueBinding(final String name)
     {
-        final ValueBinding localValueBinding = getValueBinding(name);
+        final ValueBinding localValueBinding = getLocalValueBinding(name);
         if (localValueBinding != null)
             return localValueBinding;
 
@@ -304,7 +312,6 @@ public final class LambdaTerm extends AbstractScope implements Term
 
         // look up in enclosing scope
         final ValueBinding outerValueBinding = parentScope.findValueBinding(name);
-
         if (outerValueBinding != null)
         {
             captureValueBinding(outerValueBinding);
@@ -353,7 +360,7 @@ public final class LambdaTerm extends AbstractScope implements Term
         }
     }
 
-    public ValueBinding getValueBinding(final String name)
+    public ValueBinding getLocalValueBinding(final String name)
     {
         final ParamBinding param = signature.getParams().get(name);
         if (param != null)
@@ -366,11 +373,6 @@ public final class LambdaTerm extends AbstractScope implements Term
         return null;
     }
 
-    public Map<String, ParamBinding> getParams()
-    {
-        return signature.getParams();
-    }
-
     public void addLet(final LetBinding let)
     {
         if (signature.getParams().containsKey(let.getName()))
@@ -381,13 +383,13 @@ public final class LambdaTerm extends AbstractScope implements Term
         super.addLet(let);
     }
 
-    public TypeBinding findType(final String name)
+    public TypeBinding findTypeBinding(final String name)
     {
-        final TypeBinding localType = getTypeDef(name);
-        return localType != null ? localType : parentScope.findType(name);
+        final TypeBinding localType = getLocalTypeBinding(name);
+        return localType != null ? localType : parentScope.findTypeBinding(name);
     }
 
-    public TypeBinding getTypeDef(final String name)
+    public TypeBinding getLocalTypeBinding(final String name)
     {
         // if signature has explicit (thus visible) type params,
         // they will have been committed.

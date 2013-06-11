@@ -17,7 +17,7 @@ import compile.term.ApplyTerm;
 import compile.term.Term;
 import compile.term.TupleTerm;
 import compile.type.Types;
-import runtime.ConfigUtils;
+import runtime.sys.ConfigUtils;
 import runtime.intrinsic.*;
 
 import java.util.HashMap;
@@ -41,7 +41,6 @@ public class TermInliner
      */
     private static final boolean ENABLED =
         ConfigUtils.parseBoolProp(TermInliner.class.getName() + ".ENABLED", true);
-
 
     /**
      * Inliners mapped by intrinsic function implementation class name.

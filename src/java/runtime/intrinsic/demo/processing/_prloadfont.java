@@ -10,8 +10,7 @@
  */
 package runtime.intrinsic.demo.processing;
 
-import runtime.intrinsic.demo.Font;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 
 import java.io.File;
 
