@@ -10,22 +10,21 @@
  */
 package runtime.intrinsic.tran;
 
+import runtime.rep.Tuple;
 import runtime.rep.lambda.IntrinsicLambda;
 import runtime.rep.lambda.Lambda;
-import runtime.rep.Tuple;
-import runtime.tran.Box;
+import runtime.tran.Boxes;
+import runtime.tran.Watcher;
 
 /**
- * Remove a watcher function from a box.
- * Function equality is identity, so you need to pass
- * the watcher function itself.
+ * Add a watcher to a tuple of boxes, return watcher.
  *
- * @author Basil Hosmer
+ * @author Keith McGuigan
  */
-public final class _unwatch extends IntrinsicLambda
+public final class _watches extends IntrinsicLambda
 {
-    public static final _unwatch INSTANCE = new _unwatch();
-    public static final String NAME = "unwatch";
+    public static final _watches INSTANCE = new _watches();
+    public static final String NAME = "watches";
 
     public String getName()
     {
@@ -35,14 +34,13 @@ public final class _unwatch extends IntrinsicLambda
     public Object apply(final Object arg)
     {
         final Tuple args = (Tuple)arg;
-        return invoke((Box)args.get(0), (Lambda)args.get(1));
+        return invoke((Tuple)args.get(0), (Lambda)args.get(1));
     }
 
-    public static Box invoke(final Box box, final Lambda watcher)
+    public static Lambda invoke(final Tuple boxes, final Lambda action)
     {
-        box.acquireWriteLock();
-        box.removeWatcher(watcher);
-        box.releaseWriteLock();
-        return box;
+        final Watcher watcher = new Watcher(Boxes.from(boxes), action);
+        watcher.start();
+        return action;
     }
 }
