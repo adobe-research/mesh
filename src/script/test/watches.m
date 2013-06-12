@@ -1,5 +1,6 @@
 // Test multiwaiters using watches/unwatches
 
+import std;
 import unittest;
 
 // First do a quick little test to verify watch and watches can be applied
@@ -25,19 +26,34 @@ watches((b2,), inc_counter2);
 b0 <- inc;
 b1 <- inc;
 b2 <- inc;
-updates((b1,b2), fuse(inc,inc));
 
-assert_equals( { 4 }, { *counter } );
+assert_equals( { 12 }, { *counter } );
 
 unwatch(b0, inc_counter);
 unwatches((b1,b2), inc_counter2);
+unwatches((b1,), inc_counter2);
+unwatches((b2,), inc_counter2);
 
 b0 <- inc;
 b1 <- inc;
 b2 <- inc;
-updates((b1,b2), fuse(inc,inc));
 
-assert_equals( { 4 }, { *counter } );
+assert_equals( { 19 }, { *counter } );
+
+unwatch(b0, inc_counter);
+unwatch(b0, inc_counter);
+unwatches((b1,b2), inc_counter2);
+unwatches((b1,), inc_counter2);
+unwatches((b1,), inc_counter2);
+unwatches((b2,), inc_counter2);
+unwatches((b2,), inc_counter2);
+
+b0 <- inc;
+b1 <- inc;
+b2 <- inc;
+
+assert_equals( { 19 }, { *counter } );
+
 
 // Now the full watcher test
 
@@ -63,8 +79,8 @@ watcher(old, new) {
 
     // Each pair should be consistent
     for(count(n), { i =>
-        when(a[i * 2] != a[i * 2 + 1], {
-            assert_equals({ a[i * 2] }, { a[i * 2 + 1] }) });
+        // when(a[i * 2] != a[i * 2 + 1], { print a });
+        assert_equals({ a[i * 2] }, { a[i * 2 + 1] })
     });
 };
 

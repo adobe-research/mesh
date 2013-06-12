@@ -208,10 +208,10 @@ public final class Box
      * passed as additional argument when watcher is called.
      * Caller of this method must have write lock.
      */
-    public void addWatcher(final Lambda key, final Watcher watcher)
+    public void addWatcher(final Watcher watcher)
     {
         assertWriteLock();
-        watchers = watchers.assoc(key, watcher);
+        watchers = watchers.assoc(watcher, null);
     }
 
     /**
@@ -220,8 +220,15 @@ public final class Box
      */
     public void removeWatcher(final Lambda key)
     {
-        assertWriteLock();
-        watchers = watchers.unassoc(key);
+        for (final Object obj : watchers.keySet())
+        {
+            final Watcher watcher = (Watcher)obj;
+            if (watcher.getAction().equals(key))
+            {
+                watchers = watchers.unassoc(watcher);
+                break;
+            }
+        }
     }
 
     /**

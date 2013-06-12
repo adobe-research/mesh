@@ -12,6 +12,8 @@ package runtime.tran;
 
 import runtime.rep.Tuple;
 
+import java.util.Map;
+
 /**
  * An multi-box implementation of the Boxes class
  *
@@ -44,21 +46,14 @@ public class BoxTuple extends Boxes
     }
 
     public Tuple applyUpdates(
-        final Object currentValue, final Box[] updated, final Object[] values)
+        final Object currentValue, final Map<Box,Object> updates)
     {
         final Tuple oldValues = (Tuple)currentValue;
         final Object[] newValues = new Object[size()];
         for (int i = 0; i < size(); ++i)
         {
-            newValues[i] = oldValues.get(i);
-            for (int j = 0; j < updated.length; ++j)
-            {
-                if (boxes.get(i) == updated[j])
-                {
-                    newValues[i] = values[j];
-                    break;
-                }
-            }
+            final Object newValue = updates.get(get(i));
+            newValues[i] = newValue != null ? newValue : oldValues.get(i);
         }
         return Tuple.from(oldValues, Tuple.from(newValues));
     }

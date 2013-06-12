@@ -1834,6 +1834,17 @@ assert_equals({ 2 }, {
                     *status;
                      });
 
+// reacts = { b, f => watches(b, { old, new => f(new) }) }
+assert_equals({ 3 }, { 
+                    status = box(0);
+                    stat(new:(Int,Int)) { put(status, new.0 + new.1) };
+                    (f, g) = boxes(0, 1);
+                    w = reacts((f,g), stat);
+                    f <- inc;
+                    g <- inc;
+                    unwatches((f,g), w);
+                    *status;
+                     });
 
 
 // unwatch : (T, X => (*T, (T, T) -> X) -> *T) = <intrinsic>
@@ -1860,6 +1871,34 @@ assert_equals({ 2 }, {
                     *status;
                 });
 
+// unwatches : <T:[*], X> (Tup(T | Box), (Tup(T), Tup(T)) -> X) -> Tup(T | Box) => <intrinsic>
+assert_equals({ 2 }, {
+                    status = box(0);
+                    stat(old, new:(Int,Int)) { put(status, new.0 + new.1) };
+                    f = box(0);
+                    g = box(0);
+                    w = watches((f, g), stat);
+                    f <- inc;
+                    g <- inc;
+                    unwatches((f, g), stat);
+                    f <- inc;
+                    g <- inc;
+                    *status;
+                });
+assert_equals({ 2 }, {
+                    status = box(0);
+                    stat(old, new:(Int,Int)) { put(status, new.0 + new.1) };
+                    f = box(0);
+                    g = box(0);
+                    w = watches((f, g), stat);
+                    f <- inc;
+                    g <- inc;
+                    apply(unwatches, ((f, g), w));
+                    f <- inc;
+                    g <- inc;
+                    *status;
+                });
+
 // watch : (T, X => (*T, (T, T) -> X) -> ((T, T) -> X)) = <intrinsic>
 assert_equals({ 2 }, {
                     status = box(0);
@@ -1877,6 +1916,28 @@ assert_equals({ 2 }, {
                     w = apply(watch, (f, stat));
                     f <- inc;
                     f <- inc;
+                    *status;
+                });
+
+// watches : { <T:[*], X> (Tup(T | Box), (Tup(T), Tup(T)) -> X) -> ((Tup(T), Tup(T)) -> X) => <intrinsic>
+assert_equals({ 2 }, {
+                    status = box(0);
+                    stat(old, new:(Int,Int)) { put(status, new.0 + new.1) };
+                    f = box(0);
+                    g = box(0);
+                    w = watches((f, g), stat);
+                    f <- inc;
+                    g <- inc;
+                    *status;
+                });
+assert_equals({ 2 }, {
+                    status = box(0);
+                    stat(old, new:(Int,Int)) { put(status, new.0 + new.1) };
+                    f = box(0);
+                    g = box(0);
+                    w = apply(watches, ((f, g), stat));
+                    f <- inc;
+                    g <- inc;
                     *status;
                 });
 
