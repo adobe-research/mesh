@@ -11,8 +11,7 @@
 package runtime.intrinsic;
 
 import com.google.common.collect.Lists;
-import runtime.rep.lambda.IntrinsicLambda;
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import runtime.rep.list.ListValue;
 import runtime.rep.list.PersistentList;
 import runtime.rep.Tuple;

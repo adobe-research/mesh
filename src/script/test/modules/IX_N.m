@@ -1,3 +1,3 @@
-import * from IX;
+import IX;
 
 a = var;

@@ -10,12 +10,10 @@
  */
 package runtime.intrinsic;
 
-import runtime.conc.ConcurrencyManager;
-import runtime.rep.lambda.IntrinsicLambda;
-import runtime.rep.lambda.Lambda;
+import runtime.sys.ConcurrencyManager;
+import runtime.rep.Lambda;
 import runtime.rep.list.ListValue;
 import runtime.rep.Tuple;
-import runtime.tran.TransactionManager;
 
 import java.util.ArrayList;
 import java.util.concurrent.Callable;

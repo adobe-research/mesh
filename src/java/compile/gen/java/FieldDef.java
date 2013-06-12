@@ -63,17 +63,17 @@ public final class FieldDef
         return initializer != null && initializer.length() > 0;
     }
 
-    public String getSource(final boolean debug, final boolean comments)
+    public String getSource(final boolean comments)
     {
-        return buildSource(true, debug, comments);
+        return buildSource(true, comments);
     }
 
     public String getUninitializedSource()
     {
-        return buildSource(false, false, false);
+        return buildSource(false, false);
     }
 
-    private String buildSource(final boolean init, final boolean debug, final boolean comments)
+    private String buildSource(final boolean init, final boolean comments)
     {
         final StringBuilder buf = new StringBuilder();
 
@@ -84,11 +84,6 @@ public final class FieldDef
                 buf.append("\t// ").
                     append(loc).
                     append("\n");
-            }
-
-            if (debug)
-            {
-                // TODO annotation?
             }
         }
 

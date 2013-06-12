@@ -8,7 +8,7 @@
  * a copy of which can be found in the LICENSE.txt file or at
  * http://opensource.org/licenses/MIT.
  */
-package runtime.rep.lambda;
+package runtime.rep;
 
 /**
  * All runtime lambdas implement this interface.

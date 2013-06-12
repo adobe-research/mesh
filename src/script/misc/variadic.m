@@ -1,6 +1,4 @@
 
-import * from std;
-
 // test variadic tuple calls using intrinsic
 // zip(lists:Tup(Each(List, <Members>)) . List(Tup(<Members>))) { ... }
 

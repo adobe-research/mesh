@@ -10,8 +10,6 @@
  */
 package runtime.intrinsic;
 
-import runtime.rep.lambda.IntrinsicLambda;
-
 /**
  * string length
  * TODO should be an overload of size(), or vice versa

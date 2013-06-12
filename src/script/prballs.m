@@ -1,6 +1,5 @@
 
-import * from std;
-import * from processing;
+import processing;
 
 //
 // bouncy balls
@@ -57,7 +56,7 @@ WALLSQUEEZE = 0.1;                                      // wall squeeze force, p
 BALLSQUEEZE = 0.01 *. circarea(MINR);                   // ball squeeze force, based on min radius
 WALLDEATH = 25;                                         // 1 in WALLDEATH chance that wall kills (slow) ball
 ELASTICITY = 0.975;//0.935;                             // collision elasticity (pct energy retained on collision)
-FRICTION = 0.00035;                                     // friction coefficient (pct velocity lost per milli)
+FRICTION = 0.0004;                                      // friction coefficient (pct velocity lost per milli)
 DECAY = 0.0001;                                         // rate of aging (pct health lost per milli)
 MORBID = 0.2;                                           // minimum health
 
@@ -623,7 +622,7 @@ drawplayers()
 {
     // do some time-related recordkeeping
     now = nanotime();
-    last = postput(lastdraw, now);
+    last = getput(lastdraw, now);
     renderfps = SECNANOS /. l2f(lminus(now, last));
 
     // draw underlays, then players, then overlays

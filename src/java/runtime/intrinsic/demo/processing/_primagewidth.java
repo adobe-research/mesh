@@ -11,8 +11,7 @@
 package runtime.intrinsic.demo.processing;
 
 import processing.core.PImage;
-import runtime.rep.lambda.IntrinsicLambda;
-import runtime.intrinsic.demo.Image;
+import runtime.intrinsic.IntrinsicLambda;
 
 /**
  * Demo support, Processing hook

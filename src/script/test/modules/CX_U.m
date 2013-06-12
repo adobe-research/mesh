@@ -1,5 +1,5 @@
 
-import * from unittest;
-import * from CX;
+import unittest;
+import CX;
 
 assert_equals({ localvar }, { localvar });

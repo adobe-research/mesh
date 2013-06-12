@@ -1,5 +1,5 @@
 
-import * from unittest;
-import * from GV;
+import unittest;
+import GV;
 
 // exports nothing

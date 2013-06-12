@@ -10,9 +10,8 @@
  */
 package runtime.intrinsic.demo.processing;
 
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Tuple;
-import runtime.intrinsic.demo.Font;
 
 /**
  * Demo support, Processing hook

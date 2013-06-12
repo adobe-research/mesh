@@ -10,7 +10,6 @@
  */
 package runtime.intrinsic;
 
-import runtime.rep.lambda.IntrinsicLambda;
 import runtime.rep.list.ListValue;
 import runtime.rep.list.PersistentList;
 import runtime.rep.Tuple;
@@ -18,7 +17,7 @@ import runtime.rep.Tuple;
 import java.util.Iterator;
 
 /**
- * the inverse of {@link Zip} (mod ragged lists)
+ * the inverse of {@link _zip} (mod ragged lists)
  *
  * @author Basil Hosmer
  */

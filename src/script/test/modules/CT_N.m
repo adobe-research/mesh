@@ -1,3 +1,3 @@
-import * from CT;
+import CT;
 
 a = var;

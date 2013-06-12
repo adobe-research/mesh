@@ -1,1 +1,1 @@
-import * from HY;
+import HY;

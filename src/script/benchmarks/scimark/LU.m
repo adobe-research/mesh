@@ -7,7 +7,6 @@
     a NxN matrix.
 */
 
-import * from std;
 export num_flops,factor;
 
 num_flops(N) {

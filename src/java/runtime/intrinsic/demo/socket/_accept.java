@@ -11,9 +11,8 @@
 package runtime.intrinsic.demo.socket;
 
 import compile.Session;
-import runtime.intrinsic.demo.ServerSocket;
-import runtime.rep.lambda.IntrinsicLambda;
-import runtime.rep.lambda.Lambda;
+import runtime.intrinsic.IntrinsicLambda;
+import runtime.rep.Lambda;
 import runtime.rep.Tuple;
 
 import java.io.*;

@@ -28,12 +28,9 @@
  </pre>
 */
 
-import * from std;
 import Random qualified;
 
-export .;
-
-num_flops(num_samples) 
+num_flops(num_samples)
 {   
     // 3 flops in x^2+y^2 and 1 flop in random routine
     i2f(num_samples) *. 4.0 

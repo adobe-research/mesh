@@ -55,22 +55,44 @@ public class ASTBuilder
         }
     }
 
+    /**
+     * import statement.
+     * syms == null indicates open import.
+     * namespace == null indicates local (unqualified) namespace,
+     * namespace == "" indicates module name as namespace.
+     */
     public static List<Statement> importStmt(
-        final Loc loc, final List<String> syms, final String from,
-        final String into)
+        final Loc loc, final List<String> syms,
+        final String module, final String namespace)
     {
-        // Note: cook parser argument
-        final String targetNamespace = "".equals(into) ? from : into;
+        final ImportStatement stmt =
+            syms == null ?
+                (namespace == null ?
+                    ImportStatement.openUnqualified(loc, module) :
+                ImportStatement.openQualified(loc, module,
+                    namespace.isEmpty() ? module : namespace)) :
+            // syms != null
+                (namespace == null ?
+                    ImportStatement.enumUnqualified(loc, syms, module) :
+                ImportStatement.enumQualified(loc, syms, module,
+                    namespace.isEmpty() ? module : namespace));
 
-        return Collections.<Statement>singletonList(
-                new ImportStatement(loc, syms, from, targetNamespace));
+        return Collections.<Statement>singletonList(stmt);
     }
 
+    /**
+     * export statement
+     * syms == ["*"] indicates open export.
+     */
     public static List<Statement> exportStmt(final Loc loc,
                                              final List<String> syms)
     {
-        return Collections.<Statement>singletonList(
-                new ExportStatement(loc, syms));
+        final ExportStatement stmt =
+            syms.size() == 1 && syms.get(0).equals("*") ?
+                ExportStatement.open(loc) :
+                ExportStatement.enumerated(loc, syms);
+
+        return Collections.<Statement>singletonList(stmt);
     }
 
     /**

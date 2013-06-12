@@ -1,11 +1,10 @@
 $load test.apply
 $clear
 
-// TODO uncomment once await/awaits are clean
-//$load test.await
-//$clear
-//$load test.awaits
-//$clear
+$load test.await
+$clear
+$load test.awaits
+$clear
 
 $load test.cbuf
 $clear
@@ -18,6 +17,21 @@ $load test.decompa
 $clear
 $load test.inlineparams
 $clear
+
+// Library testing
+$load test.lib.bench
+$clear
+$load test.lib.concutil
+$clear
+$load test.lib.inliners
+$clear
+$load test.lib.test_lang
+$clear
+$load test.lib.logging
+$clear
+$load test.lib.sort
+$clear
+
 $load test.livelock
 $clear
 $load test.msort
@@ -43,15 +57,16 @@ $load test.starvation2
 $clear
 $load test.tagpair
 $clear
-$load test.test_intrinsics
-$clear
-$load test.test_library
-$clear
 $load test.tranfuncs
 $clear
 $load test.transtress
 $clear
 $load test.type_anno
 $clear
-$load test.test_imports
+
+// TODO rework import tests per new behavior, see test/test_imports.m for spec
+// $load test.test_imports
+// $clear
+
+$load test.watches
 $quit

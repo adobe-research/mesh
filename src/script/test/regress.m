@@ -1,6 +1,5 @@
 
-import * from std;
-import * from unittest;
+import unittest;
 
 // regression tests for simple (fixed) issues.
 // issue numbers from BB repo, currently. in fix order.

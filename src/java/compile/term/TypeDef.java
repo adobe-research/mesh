@@ -117,7 +117,7 @@ public final class TypeDef extends TypeBinding
         if (baseRef.getBinding() != null)
             return Types.isNew(type);
 
-        final TypeBinding binding = scope.getModule().findType(baseRef.getName());
+        final TypeBinding binding = scope.getModule().findTypeBinding(baseRef.getName());
 
         if (binding instanceof TypeDef && ((TypeDef)binding).getValue() == Types.NEW)
         {
@@ -176,8 +176,8 @@ public final class TypeDef extends TypeBinding
 
     /**
      * Note: this is used *only* by the type checker to install
-     * a checked/quantified version of the def's rvalue. Other
-     * than this, value should be considered final.
+     * a checked/quantified version of the def's rvalue. Otherwise
+     * this method should not be called.
      */
     public void setValue(final Type value)
     {
@@ -199,15 +199,14 @@ public final class TypeDef extends TypeBinding
         return dtorLet;
     }
 
-    public boolean isUnresolvedIntrinsic()
+    public boolean isResolved()
     {
-        return value == null;
+        return value != null;
     }
 
-        
     public boolean resolveIntrinsic()
     {
-        assert isUnresolvedIntrinsic() : "Cannot resolve a non-unresolved intrinsic";
+        assert !isResolved() : "already resolved";
 
         value = Types.findIntrinsic(name);
         return value != null;

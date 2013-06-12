@@ -1,6 +1,4 @@
 
-import * from std;
-
 // Transaction system uses age-based arbitration when write contention
 // occurs, but avoids preemption, so that a transaction is inevitable
 // once all necessary resource relationships have been established.

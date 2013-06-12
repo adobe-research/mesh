@@ -1,5 +1,5 @@
 
-import * from unittest;
-import * from HW;
+import unittest;
+import HW;
 
 assert_equals({ localfoo() }, { localvar });

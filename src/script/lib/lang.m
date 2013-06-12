@@ -59,6 +59,21 @@ intrinsic type Assoc;       // experimental
 //
 
 /**
+ * Returns a list of command line arguments
+ * @return a possibly empty list of strings that were passed via the
+ * commandline
+ */
+intrinsic args() -> [String];
+
+/**
+ * Return the value of an evironment variable.
+ * @param name the name of the environment variable to query
+ * @return the value of the environment varaible, or an empty string
+ * if the named value does not exist
+ */
+intrinsic getenv(name:String) -> String;
+
+/**
  * Guarded execution. If the given condition is true, return the
  * given value immediately, otherwise run the given block and
  * return its result.
@@ -263,9 +278,28 @@ intrinsic <X, Y> pfor(x : [X], y : X -> Y) -> ();
  * @param f function to process each item in the list
  * @param n number of chunks to chop the list into in order to process in parallel
  */
-pforn(list, f, n)
+<A, B> pforn(list : [A], f : A -> B, n : Int) -> ()
 {
     pfor(chunks(list, n), { for($0, f) })
+};
+
+/**
+ * Evaluate reduce(f, v, l) in parallel, using the given number of tasks.
+ * Note that this reduce is constrained in two ways, only one of which
+ * is enforced by the type system:
+ * 1. reducer function f must take and return arguments of the same type.
+ * 2. reducer function must be associative.
+ * Computation proceeds by reducing sublists in parallel, then reducing
+ * the results of those subreductions. Argument v is used as the initial
+ * value of all reductions.
+ * @param f reducer function
+ * @param v initial value
+ * @param l list of arguments
+ * @return value produced by reducing in parallel as described above.
+ */
+<A> preducen(f : (A, A) -> A, v : A, l : [A], n : Int) -> A
+{
+    reduce(f, v, chunks(l, n) |: { reduce(f, v, $0) })
 };
 
 /**
@@ -2370,6 +2404,340 @@ intrinsic <T> update(x:*T, y:T -> T) -> (); // <-
  */
 intrinsic <T:[*]> updates(x:Tup(T | Box), y:(Tup(T) -> Tup(T))) -> ();
 
+// --------------------------------------------------------------
+
+//
+// actions on boxed values
+//
+
+/**
+ * Perform a generalized action on a boxed variable,
+ * updating its state and returning the action's result.
+ * Parameterized by an action function that takes a state
+ * value and returns a pair containing the new state and
+ * a result value.
+ *
+ * @param b boxed state variable
+ * @param f action function on a state value of type S.
+ * returning a pair of (new state, action result).
+ * @return result of action on b's state
+ */
+<S, T> act(b : *S, f : S -> (S, T)) -> T
+{
+    do {
+        (next, result) = f(own(b));
+        b := next;
+        result
+    }
+};
+
+/**
+ * Atomically update a box to new value and return its prior value.
+ * Atomic here means that we're guaranteed not to step on an update
+ * that happens between retrieving the prior value and setting the
+ * new one.
+ *
+ * Note: equivalent to <code>{ b, v => act(b, { (v, $0) }) }</code>
+ *
+ * @param b box to modify
+ * @param v new value to place in the box
+ * @return original value in the box
+ */
+getput(b, v)
+{
+    do {
+        prior = own(b);
+        b := v;
+        prior
+    }
+};
+
+/**
+ * Run update function f on current value of box b.
+ * Update b with the result, and also return it.
+ *
+ * Note: equivalent to <code>{ act(b, { v = f($0); (v, v) }) }</code>
+ *
+ * @param b box to update
+ * @param f update function
+ * @return box's new value
+ */
+preupdate(b, f)
+{
+    do {
+        new = f(own(b));
+        b := new;
+        new
+    }
+};
+
+/**
+ * Atomically run update function f on current value of box b.
+ * Update b with the result, and return b's original
+ * value.
+ *
+ * Note: equivalent to <code>{ act(b, { (f($0), $0) }) }</code>
+ *
+ * @param b box to update
+ * @param f update function
+ * @return box's prior value
+ */
+postupdate(b, f)
+{
+    do {
+        prior = own(b);
+        b := f(prior);
+        prior
+    }
+};
+
+/**
+ * Atomic pre-increment.
+ * @param b box to increment
+ * @return incremented value
+ */
+preinc(b)
+{
+    preupdate(b, inc)
+};
+
+/**
+ * Atomic post-increment.
+ * @param b box to increment
+ * @return box's original value
+ */
+postinc(b)
+{
+    postupdate(b, inc)
+};
+
+/**
+ * Atomic pre-decrement.
+ * @param b box to decrement
+ * @return decremented value
+ */
+predec(b)
+{
+    preupdate(b, dec)
+};
+
+/**
+ * Atomic post-decrement.
+ * @param b box to increment
+ * @return box's original value
+ */
+postdec(b)
+{
+    postupdate(b, dec)
+};
+
+// --------------------------------------------------------------
+
+//
+// CAS and variations.
+// In all cases, boxes are owned up front, making the
+// rest of the transaction inevitable, mod (a) outer
+// transactions and (b) box acquisition in passed
+// functions.
+//
+
+/**
+ * compare and swap. returns success
+ * @param b boxed value
+ * @param o old value
+ * @param n new value
+ * @return returns success
+ */
+cas(b, o, n)
+{
+    do {
+        own(b) == o && { b := n; true }
+    }
+};
+
+/**
+ * compare and update. cau is to update as cas is to put
+ * @param b boxed value
+ * @param o old value
+ * @param f function to update the box
+ * @return returns success
+ */
+cau(b, o, f)
+{
+    do {
+        own(b) == o && { b := f(o); true }
+    }
+};
+
+/**
+ * test and swap. returns success paired with old value
+ * @param b boxed value
+ * @param p test function
+ * @param n new value
+ * @return returns tuple of success and old value
+ */
+tas(b, p, n)
+{
+    do {
+        o = own(b);
+        (p(o) && { b := n; true }, o)
+    }
+};
+
+/**
+ * test and update. returns success paired with old value
+ * @param b boxed value
+ * @param p test function
+ * @param n function to update the box
+ * @return returns tuple of success and old value
+ */
+tau(b, p, f)
+{
+    do {
+        o = own(b);
+        (p(o) && { b := f(o); true }, o)
+    }
+};
+
+/**
+ * wait, then test and update using the same (box, pred)
+ * for wait and test. returns success paired with old value
+ * @param b boxed value
+ * @param p predicate
+ * @param f function to update the box
+ * @return returns tuple of success and old value
+ */
+wtau(b, p, f)
+{
+    await(b, p);
+    tau(b, p, f)
+};
+
+/**
+ * tuplized compare and swap
+ * @param bs tuple of boxes
+ * @param os tuple of old values to compare
+ * @param ns tuple of new values
+ * @return returns success
+ */
+cast(bs, os, ns)
+{
+    do {
+        owns(bs) == os && { bs ::= ns; true }
+    }
+};
+
+/**
+ * tuplized compare and update
+ * @param bs tuple of boxes
+ * @param os tuple of old values to compare
+ * @param f function to update the tuple values
+ * @return returns success
+ */
+caut(bs, os, f)
+{
+    do {
+        owns(bs) == os && { bs ::= f(os); true }
+    }
+};
+
+/**
+ * swap the last value in a boxed list with a new value
+ * @param s boxed list
+ * @param v new value
+ * @return previous value at the end of boxed list
+ */
+swap(s, v)
+{
+    do {
+        list = own(s);
+        prior = last(list);
+        s := append(drop(-1, list), v);
+        prior
+    }
+};
+
+/**
+ * tuplized test and swap
+ * @param bs tuple of boxes
+ * @param p function to test the tuple to see if swap should proceeed
+ * @param ns tuple of new values
+ */
+tast(bs, p, ns)
+{
+    do {
+        os = owns(bs);
+        (p(os) && { bs ::= ns; true }, os)
+    }
+};
+
+/**
+ * tuplized test and update
+ * @param bs tuple of boxes
+ * @param p function to test the tuple to see if update should proceeed
+ * @param f function to update the tuple values
+  */
+taut(bs, p, f)
+{
+    do {
+        os = owns(bs);
+        (p(os) && { bs ::= f(os); true }, os)
+    }
+};
+
+/**
+ * multiwait, then test and update using the same (boxes, pred)
+ * for wait and test. returns success paired with old values
+ * @param bs tuple of boxed values
+ * @param p predicate
+ * @param f function to update the tuple values
+ */
+wtaut(bs, p, f)
+{
+    awaits(bs, p);
+    taut(bs, p, f)
+};
+
+// ----------------------------------------------------------------------
+
+//
+// dependencies
+//
+
+/**
+ * create and return a box whose value tracks the value
+ * of the passed box, mapped through the passed function.
+ * E.g. c = dep(b, id); c tracks the value of b.
+ * @param src box to track
+ * @param f function that will be invoked with the new value of src when it is altered
+ */
+dep(src, f)
+{
+    sink = box(f(get(src)));
+    react(src, { put(sink, f($0)) });
+    sink
+};
+
+/**
+ * create and return a box whose value tracks the value
+ * of the passed boxes, mapped through the passed function.
+ * E.g. x = box(0); y = box(1); z = deps([x, y], sum);
+ *
+ * TODO should become intrinsic over tuple of boxes
+ * TODO ...has the same lost-wakeup problem as awaits(),
+ * TODO needs to be fixed analogously
+ *
+ * @param sources list of boxes to track
+ * @param f function that will be invoked with the new values of sources when they are altered
+ */
+deps(sources, f)
+{
+    sink = box(f(sources | get));
+    updater(v) { do { put(sink, f(sources | get)) } };
+    sources | { react($0, updater) };
+    sink
+};
+
 // ------------------------------------------------------------------
 
 //
@@ -2457,6 +2825,17 @@ intrinsic <T:[*]> awaits(x : Tup(T | Box), y : Tup(T) -> Bool) -> ();
 };
 
 /**
+ * reacts is like watches, but with only new values passed to watcher.
+ * @param b boxes to watch
+ * @param f function that will be invoked with the new values in boxex
+ * @return watcher function that wraps passed f, suitable for passing to unwatches()
+ */
+<A:[*],B> reacts(b:Tup(A | Box), f:(Tup(A) -> B)) -> ((Tup(A), Tup(A)) -> B)
+{
+    watches(b, { f($1) })
+};
+
+/**
  * Remove a watcher function from a box.
  * Function equality is identity, so you need to pass
  * the watcher function itself.
@@ -2467,12 +2846,30 @@ intrinsic <T:[*]> awaits(x : Tup(T | Box), y : Tup(T) -> Bool) -> ();
 intrinsic <T,X> unwatch(x:*T, y:(T, T) -> X) -> *T;
 
 /**
+ * Remove a watcher function from a box.
+ * Function equality is identity, so you need to pass
+ * the watcher function itself.
+ * @param x boxes being watched
+ * @param y function that was returned from {@link watches(x:*T, y:(T, T) -> X) -> ((T, T) -> X)}.
+ * @return box
+ */
+intrinsic <T:[*],X> unwatches(x:Tup(T | Box), y:(Tup(T), Tup(T)) -> X) -> Tup(T | Box);
+
+/**
  * Add a watcher to a box, return watcher.
  * @param x box to be watched
  * @param y function to be executed when the box value changes
  * @return a watcher function
  */
 intrinsic <T,X> watch(x:*T, y:(T, T) -> X) -> ((T, T) -> X);
+
+/**
+ * Add a watcher to a set of boxes, return watcher.
+ * @param x boxes to be watched
+ * @param y function to be executed when any of the the values change
+ * @return a watcher function (suitable for passing to unwatches)
+ */
+intrinsic <T:[*],X> watches(x:Tup(T | Box), y:(Tup(T), Tup(T)) -> X) -> ((Tup(T), Tup(T)) -> X);
 
 // ------------------------------------------------------------------
 
@@ -2526,4 +2923,39 @@ intrinsic printstr(s : String) -> ();
  * @return An integer between 0 and x - 1
  */
 intrinsic rand(x:Int) -> Int;
+
+// ------------------------------------------------------------------
+
+//
+// Misc toy I/O intrinsics, demo quality only.
+// TODO beef these up once we have variants and interfaces.
+// Then document, factor, replace intrinsic types, etc.
+//
+
+// utterly minimal file i/o--waiting for variants
+intrinsic appendfile(x:String, y:String) -> Bool;
+intrinsic readfile(x:String) -> String;
+intrinsic writefile(x:String, y:String) -> Bool;
+
+// XML parsing--ditto
+intrinsic type XNode;   // a structural record type
+intrinsic parsexml(x:String) -> XNode;
+
+// primitive server sockets, used in tests/demos
+intrinsic type ServerSocket;
+intrinsic accept(x:ServerSocket, y:String -> String) -> ();
+intrinsic close(x:ServerSocket) -> ();
+intrinsic closed(x:ServerSocket) -> Bool;
+intrinsic ssocket(x:Int) -> ServerSocket;
+
+// primitive http, used in tests/demos
+intrinsic httpget(x:String) -> String;
+intrinsic httphead(x:String) -> [String];
+
+// simple array hookup, used in some interop tests
+intrinsic type Array;
+intrinsic <T> array(x:Int, y:T) -> Array(T);
+intrinsic <T> aget(x:Array(T), y:Int) -> T;
+intrinsic <T> alen(x:Array(T)) -> Int;
+intrinsic <T> aset(x:Array(T), y:Int, z:T) -> Array(T);
 

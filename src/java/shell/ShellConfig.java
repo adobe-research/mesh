@@ -10,10 +10,11 @@
  */
 package shell;
 
-import compile.Session;
+import compile.Config;
 import compile.Loc;
+import compile.Session;
 import compile.term.ImportStatement;
-import compile.analyze.ImportResolver;
+import runtime.sys.Arguments;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,10 +28,9 @@ import java.util.List;
 public final class ShellConfig
 {
     private final List<String> scriptPath = new ArrayList<String>();
-    private final List<ImportStatement> imports = 
-        new ArrayList<ImportStatement>();
-    private final List<String> loads = new ArrayList<String>();
+    private final List<ImportStatement> imports = new ArrayList<ImportStatement>();
     private final List<String> commandFiles = new ArrayList<String>();
+    private final List<String> loadFiles = new ArrayList<String>();
     private String writePath;
     private boolean interactive = true;
     private boolean debug = false;
@@ -49,72 +49,24 @@ public final class ShellConfig
         return imports;
     }
 
-    public void listImplicitImports()
-    {
-        System.out.println("Auto-imports: ");
-        for (int i = 0; i < imports.size(); ++i) 
-            System.out.println("(" + i + ")\t" + imports.get(i).dumpAbbrev());
-    }
-
-    public void addImplicitImport(final String spec)
-    {
-        final ImportStatement stmt = ShellScriptManager.parseImportStatement(
-                Loc.INTRINSIC, "import " + spec);
-        if (stmt != null)
-        {
-            if (!ImportResolver.moduleExists(stmt.getFrom())) 
-                Session.error("Can not find module ''{0}''", stmt.getFrom());
-            else
-                imports.add(stmt);
-        }
-    }
-
-    public void clearImplicitImport(final String spec)
-    {
-        try 
-        {
-            final int position = Integer.parseInt(spec);
-            if (position >= 0 && position < imports.size())
-                imports.remove(position);
-            else
-                Session.error("No import at index {0}", position);
-        }
-        catch (NumberFormatException nfe) 
-        {
-            int matches = 0;
-            int match_position = -1;
-            for (int i = 0; i < imports.size(); ++i) 
-            {
-                if (imports.get(i).dumpAbbrev().startsWith(spec)) 
-                {
-                    ++matches;
-                    match_position = i;
-                }
-            }
-            if (matches == 1) 
-                imports.remove(match_position);
-            else if (matches == 0) 
-                Session.error("No import matches ''{0}''", spec);
-            else // matches > 1
-                Session.error("Ambiguous import specification ''{0}''", spec);
-        }
-    }
-
-    // Loads get loaded as an implicit first module in the shell, when it starts or
-    // after a $clear
-    public List<String> getLoads()
-    {
-        return loads;
-    }
-
-    private void addLoadScript(final String name)
-    {
-        loads.add(name);
-    }
-
     public List<String> getCommandFiles()
     {
         return commandFiles;
+    }
+
+    private boolean addCommandFile(final String arg)
+    {
+        return commandFiles.add(arg.substring(1));
+    }
+
+    public List<String> getLoadFiles()
+    {
+        return loadFiles;
+    }
+
+    private boolean addLoadFile(final String arg)
+    {
+        return loadFiles.add(arg);
     }
 
     public String getWritePath()
@@ -182,6 +134,7 @@ public final class ShellConfig
         this.readline = readline;
     }
 
+
     /**
      * Process command line arguments as shell config commands.
      */
@@ -200,7 +153,32 @@ public final class ShellConfig
             {
                 final String command = arg.substring(1);
 
-                if (command.equals("debug"))
+                if (command.equals("arg"))
+                {
+                    if (i < args.length - 1)
+                    {
+                        Arguments.add(args[i + 1]);
+                        i = i + 1;
+                    }
+                    else
+                    {
+                        Session.error("argument value not specified");
+                    }
+                }
+                else if (command.equals("args"))
+                {
+                    if (i < args.length - 1)
+                    {
+                        for (final String value : args[i + 1].split(","))
+                            Arguments.add(value.trim());
+                        i = i + 1;
+                    }
+                    else
+                    {
+                        Session.error("argument values not specified");
+                    }
+                }
+                else if (command.equals("debug"))
                 {
                     if (i < args.length - 1)
                     {
@@ -225,30 +203,18 @@ public final class ShellConfig
                 {
                     if (i < args.length - 1)
                     {
+                        final List<ImportStatement> imports = getImports();
+
                         for (final String script : Arrays.asList(args[i + 1].split(";")))
                         {
-                            addImplicitImport(script);
+                            imports.add(
+                                ImportStatement.openUnqualified(Loc.INTRINSIC, script));
                         }
                         i = i + 1;
                     }
                     else
                     {
                         Session.error("import scripts not specified");
-                    }
-                }
-                else if (command.equals("load"))
-                {
-                    if (i < args.length - 1)
-                    {
-                        for (final String script : Arrays.asList(args[i + 1].split(";")))
-                        {
-                            addLoadScript(script);
-                        }
-                        i = i + 1;
-                    }
-                    else
-                    {
-                        Session.error("load scripts not specified");
                     }
                 }
                 else if (command.equals("messages"))
@@ -271,7 +237,7 @@ public final class ShellConfig
                         getScriptPath().addAll(Arrays.asList(args[i + 1].split(";")));
                         for (final String path : Arrays.asList(args[i + 1].split(";")))
                         {
-                            Session.addSearchPath(path);
+                            Config.addSearchPath(path);
                         }
                         i = i + 1;
                     }
@@ -312,11 +278,30 @@ public final class ShellConfig
             }
             else if (arg.charAt(0) == '@')
             {
-                getCommandFiles().addAll(Arrays.asList(arg.substring(1).split(";")));
+                if (!loadFiles.isEmpty())
+                {
+                    Session.error(
+                        "command files and load files cannot both be specified ({0})",
+                        arg);
+                }
+                else
+                {
+                    addCommandFile(arg);
+                }
             }
             else
             {
-                Session.error("commands must start with '-'; command file references must start with '@'", arg);
+                if (!commandFiles.isEmpty())
+                {
+                    Session.error(
+                        "command files and load files cannot both be specified ({0})",
+                        arg);
+                }
+                else
+                {
+                    addLoadFile(arg);
+                    setInteractive(false);
+                }
             }
         }
 

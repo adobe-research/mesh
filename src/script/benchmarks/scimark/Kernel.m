@@ -1,6 +1,4 @@
 
-import * from std;
-
 import FFT qualified;
 import SOR qualified;
 import MonteCarlo qualified;

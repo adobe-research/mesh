@@ -11,8 +11,7 @@
 package runtime.intrinsic.demo.processing;
 
 import processing.core.PFont;
-import runtime.intrinsic.demo.Font;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Tuple;
 
 /**

@@ -15,7 +15,7 @@ import compile.module.Module;
 import compile.module.Scope;
 import compile.term.*;
 import compile.term.visit.ConstantTermReducer;
-import runtime.ConfigUtils;
+import runtime.sys.ConfigUtils;
 
 import java.util.List;
 

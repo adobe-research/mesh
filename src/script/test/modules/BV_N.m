@@ -1,3 +1,3 @@
-import * from BV;
+import BV;
 
 a = var;

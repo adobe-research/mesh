@@ -61,7 +61,10 @@ public abstract class ModuleVisitor<T> extends BindingVisitorBase<T>
     protected void processScope(final Scope scope)
     {
         processTypeDefs(scope);
-        processParamBindings(scope);
+
+        if (scope instanceof LambdaTerm)
+            processParamBindings((LambdaTerm)scope);
+
         processStatements(scope);
     }
 
@@ -74,9 +77,9 @@ public abstract class ModuleVisitor<T> extends BindingVisitorBase<T>
         }
     }
 
-    protected void processParamBindings(final Scope scope)
+    protected void processParamBindings(final LambdaTerm lambdaTerm)
     {
-        for (final ParamBinding param : scope.getParams().values())
+        for (final ParamBinding param : lambdaTerm.getParams().values())
         {
             setCurrentStatement(param);
             visitBinding(param);

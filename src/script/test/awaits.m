@@ -1,13 +1,12 @@
 
-import * from std;
-import * from unittest;
+import unittest;
 
 // task multi-wait
 
 (a, b) = (box(0), box(0));
 
 done = box(false);
-nof_threads = 4;
+nof_threads = 100;
 
 running = box(nof_threads);
 
@@ -44,7 +43,7 @@ ctask() {
 repeat(nof_threads, ctask);
 
 // dump some values into both boxes. should see "consumed" messasge for each value
-puts((a, b), (10, 10));
+puts((a, b), (400, 400));
 print("produced");
 
 // wait a while, then kill tasks

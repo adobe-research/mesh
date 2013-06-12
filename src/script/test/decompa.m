@@ -1,6 +1,5 @@
 
-import * from std;
-import * from unittest;
+import unittest;
 
 // decomposing assignment tests
 

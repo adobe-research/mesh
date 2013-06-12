@@ -1,5 +1,5 @@
 
-import * from std;
+import bench;   // benchmarking
 
 //
 // greedy word wrap.

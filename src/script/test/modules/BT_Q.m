@@ -1,5 +1,5 @@
 
-import * from unittest;
+import unittest;
 import BT qualified;
 
 assert_equals({ BT.localfoo() }, { BT.localvar });

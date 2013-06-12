@@ -10,10 +10,10 @@
  */
 package runtime.tran;
 
-import runtime.rep.lambda.Lambda;
-import runtime.rep.Tuple;
+import runtime.rep.Lambda;
+import runtime.rep.map.PersistentMap;
 
-import java.util.Set;
+import java.util.*;
 
 /**
  * Change notification event, dispatched over the set of watchers attached
@@ -23,24 +23,45 @@ import java.util.Set;
  */
 final class ChangeEvent
 {
-    final Set<Object> watchers;
-    final Tuple arg;
+    final Box[] boxes;
+    final Object[] values;
 
-    ChangeEvent(final Set<Object> watchers, final Object oldval, final Object newval)
+    ChangeEvent(final Box[] boxes, final Object[] values, final int count)
     {
-        assert watchers != null;
-        assert !watchers.isEmpty();     // performance leak only
-
-        this.watchers = watchers;
-        this.arg = Tuple.from(new Object[]{oldval, newval});
+        // Unfortunately we do need to copy these here since we've been
+        // passed references to the transaction's internal arrays and it
+        // will reuse them.
+        this.boxes = new Box[count];
+        this.values = new Object[count];
+        System.arraycopy(boxes, 0, this.boxes, 0, count);
+        System.arraycopy(values, 0, this.values, 0, count);
     }
 
     /**
-     * Invoke {@link #watchers} on (oldval, newval)
+     * Activate each watcher of all the boxes
      */
     void fire()
     {
-        for (final Object watcher : watchers)
-            ((Lambda)watcher).apply(arg);
+        // Because a watcher can span over multiple boxes, each of which may
+        // have been updated in the same transaction, we first uniquify the
+        // list of watchers
+        final Set<Watcher> watchers = new HashSet<Watcher>();
+        final Set<Lambda> calls = new HashSet<Lambda>();
+        for (final Box b : boxes)
+        {
+            final PersistentMap pm = b.getWatchers();
+            if (pm != null)
+                for (final Map.Entry<Object,Object> obj : pm.entrySet())
+                {
+                    if (!calls.contains(obj.getKey()))
+                    {
+                        calls.add((Lambda)obj.getKey());
+                        watchers.add((Watcher)obj.getValue());
+                    }
+                }
+        }
+
+        for (final Watcher watcher : watchers)
+            watcher.trigger(boxes, values);
     }
 }

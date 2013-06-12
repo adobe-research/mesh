@@ -11,8 +11,7 @@
 package runtime.intrinsic.demo.processing;
 
 import processing.core.PMatrix3D;
-import runtime.intrinsic.demo.Matrix3D;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Tuple;
 
 /**

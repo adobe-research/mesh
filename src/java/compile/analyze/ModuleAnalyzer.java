@@ -22,7 +22,7 @@ public final class ModuleAnalyzer
 {
     /**
      * Push a new module through analysis steps. On successful completion,
-     * module is ready for codegen, e.g. by {@link compile.gen.java.UnitBuilder} for JVM.
+     * module is ready for codegen, e.g. by {@link compile.gen.java.JavaUnitBuilder} for JVM.
      *
      * @param module module to be analyzed
      * @return success

@@ -1,6 +1,4 @@
 
-import * from std;
-
 //
 // dining philosophers using transactions
 //

@@ -10,8 +10,6 @@
  */
 package runtime.intrinsic;
 
-import runtime.rep.lambda.IntrinsicLambda;
-
 /**
  * exp()
  *

@@ -10,7 +10,8 @@
  */
 package compile.module;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An import or export whitelist.
@@ -19,49 +20,91 @@ import java.util.*;
  */
 public class WhiteList
 {
-    // A null entries array indicates that all symbols pass.
-    // An empty entries array indicates that no symbols psss.
-    private final List<String> entries;
+    private static final WhiteList OPEN = new WhiteList(null);
 
-    private WhiteList(final List<String> names) 
+    /**
+     * open whitelist (allows any name)
+     */
+    public static WhiteList open()
     {
-        if (names != null) 
-        {
-            this.entries = new ArrayList<String>(names.size());
-            for (final String name : names) 
-                this.entries.add(name);
-        }
-        else
-        {
-            this.entries = null;
-        }
+        return OPEN;
     }
 
-    // Factory constructors
-    public static WhiteList open() 
-    {
-        return new WhiteList(null);
-    }
-
-    public static WhiteList closed() 
-    {
-        return new WhiteList(Collections.<String>emptyList());
-    }
-
+    /**
+     * enumerated whitelist
+     */
     public static WhiteList enumerated(final List<String> names)
     {
         return new WhiteList(names);
     }
 
-    public boolean allows(final String name) 
+    //
+    // instance
+    //
+
+    /**
+     * A null entries array indicates that all symbols pass.
+     * An empty entries array indicates that no symbols psss.
+     */
+    private final List<String> entries;
+
+    /**
+     * Private constructor. entries == null indicates open list
+     */
+    private WhiteList(final List<String> entries)
     {
-        if (entries != null) 
+        this.entries = entries != null ? new ArrayList<String>(entries) : null;
+    }
+
+    /**
+     * return true iff whitelist allows name
+     */
+    public boolean allows(final String name)
+    {
+        return isOpen() || entries.contains(name);
+    }
+
+    /**
+     * return true iff whitelist is open (allows any name)
+     */
+    public boolean isOpen()
+    {
+        return entries == null;
+    }
+
+    /**
+     * return true iff whitelist is empty (allows no name)
+     */
+    public boolean isEmpty()
+    {
+        return !isOpen() && entries.isEmpty();
+    }
+
+    /**
+     * get symbol entrie, if list is not open
+     */
+    public List<String> getEntries()
+    {
+        assert !isOpen();
+        return entries;
+    }
+
+    /**
+     * true iff all our explicit entries resolve to definitions
+     * in the given module
+     */
+    public boolean isValid(final Module module)
+    {
+        if (!isOpen())
         {
-            for (final String entry : entries) 
-                if (entry.equals(name))
-                    return true;
-            return false;
+            for (final String entry : entries)
+            {
+                if (module.getLocalValueBinding(entry) == null &&
+                    module.getLocalTypeBinding(entry) == null)
+                    return false;
+            }
         }
+
         return true;
     }
 }

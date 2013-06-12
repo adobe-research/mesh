@@ -14,16 +14,16 @@ import compile.Session;
 
 /**
  * Method {@link #generate} generates all necessary Java classes for a
- * given {@link Unit}.
+ * given {@link JavaUnit}.
  *
  * @author Basil Hosmer
  */
 public final class UnitClassGenerator
 {
-    private final Unit unit;
+    private final JavaUnit unit;
     private final JavassistHelper javassist;
 
-    public UnitClassGenerator(final Unit unit)
+    public UnitClassGenerator(final JavaUnit unit)
     {
         this.unit = unit;
         this.javassist = new JavassistHelper();
@@ -37,10 +37,9 @@ public final class UnitClassGenerator
      * Nontrivial thing here is to split signature and implementation generation to avoid
      * circular refs in Javassist.
      *
-     * @param debug
      * @return
      */
-    public boolean generate(final boolean debug)
+    public boolean generate()
     {
         Session.pushErrorCount();
 
@@ -55,8 +54,8 @@ public final class UnitClassGenerator
         javassist.addClassSignature(unit.getModuleClassDef());
 
         // now fill them in
-        finishClasses(unit.getLambdaClassDefs().values(), debug);
-        javassist.finishClass(unit.getModuleClassDef(), debug);
+        finishClasses(unit.getLambdaClassDefs().values());
+        javassist.finishClass(unit.getModuleClassDef());
 
         return Session.popErrorCount() == 0;
     }
@@ -96,12 +95,12 @@ public final class UnitClassGenerator
      * <p/>
      * ClassDefs carry internal reference to the generated class objects.
      */
-    private boolean finishClasses(final Iterable<ClassDef> classDefs, final boolean debug)
+    private boolean finishClasses(final Iterable<ClassDef> classDefs)
     {
         boolean success = true;
         for (final ClassDef classDef : classDefs)
             if (classDef.getCls() == null)
-                success &= javassist.finishClass(classDef, debug) != null;
+                success &= javassist.finishClass(classDef) != null;
         return success;
     }
 }

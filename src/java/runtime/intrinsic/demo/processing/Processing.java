@@ -11,7 +11,7 @@
 package runtime.intrinsic.demo.processing;
 
 import processing.core.PApplet;
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import runtime.rep.map.MapValue;
 import runtime.rep.Symbol;
 import runtime.rep.Tuple;

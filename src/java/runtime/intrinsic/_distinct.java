@@ -11,7 +11,6 @@
 package runtime.intrinsic;
 
 import com.google.common.collect.Sets;
-import runtime.rep.lambda.IntrinsicLambda;
 import runtime.rep.list.ListValue;
 import runtime.rep.list.PersistentList;
 

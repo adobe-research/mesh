@@ -1,5 +1,5 @@
 
-import * from IX;
+import IX;
 
 a:LocalType = (0, localvar)
 

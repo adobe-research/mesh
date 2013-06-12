@@ -1,3 +1,3 @@
-import * from AW;
+import AW;
 
 a = var;

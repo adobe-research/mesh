@@ -1,5 +1,5 @@
 
-import * from unittest;
+import unittest;
 import AT qualified;
 
 assert_equals({ AT.localfoo() }, { AT.localvar });

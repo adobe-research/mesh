@@ -8,7 +8,7 @@
  * a copy of which can be found in the LICENSE.txt file or at
  * http://opensource.org/licenses/MIT.
  */
-package runtime;
+package runtime.sys;
 
 /**
  * Utilities for querying runtime configuration.
@@ -39,5 +39,14 @@ public final class ConfigUtils
         {
             return def;
         }
+    }
+
+    /**
+     * parse string property, or return default.
+     */
+    public static String parseStringProp(final String propName, final String def)
+    {
+        final String prop = System.getProperty(propName);
+        return prop == null ? def : prop;
     }
 }

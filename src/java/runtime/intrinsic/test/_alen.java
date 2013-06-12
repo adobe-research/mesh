@@ -10,8 +10,7 @@
  */
 package runtime.intrinsic.test;
 
-import runtime.intrinsic.demo.Array;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 
 /**
  * Temporary FFI to mutable typed arrays, testing inevitability.

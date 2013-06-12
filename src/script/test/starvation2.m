@@ -1,6 +1,5 @@
 
-import * from std;
-import * from unittest;
+import unittest;
 
 // Transaction system uses age-based arbitration when write contention
 // occurs, but avoids preemption, so that a transaction is inevitable

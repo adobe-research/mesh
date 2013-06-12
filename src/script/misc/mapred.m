@@ -1,8 +1,8 @@
 
+import bench;   // benchmarking
+
 // just a local impl of map-reduce harness.
 // TODO fun distributed version PENDING VARIANTS argh
-
-import * from std;
 
 <K1, V1, K2, V2, K3, V3, K4, V4>
 mapred(

@@ -1,6 +1,4 @@
 
-import * from std;
-
 // watcher provokes itself.
 // should run until b == 10000, not overflow stack.
 

@@ -1,6 +1,4 @@
 
-import * from std;
-
 // test multiple threads waiting on a single box
 
 test(n)

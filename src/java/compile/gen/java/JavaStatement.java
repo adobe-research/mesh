@@ -55,7 +55,7 @@ public final class JavaStatement
         return text;
     }
 
-    public String getSource(final boolean debug, final boolean comments)
+    public String getSource(final boolean comments)
     {
         final StringBuilder buf = new StringBuilder();
 
@@ -65,16 +65,9 @@ public final class JavaStatement
             {
                 buf.append("\t\t// ").
                     append(loc).
-                    append(statement != null ? ": " + (statement.dump() + typeInfo(statement)) : "").
+                    append(statement != null ?
+                        ": " + (statement.dump() + typeInfo(statement)) : "").
                     append("\n");
-            }
-
-            if (debug)
-            {
-                //buf.append("\t\t").
-                //    append(DebugWatcher.class.getName()).append(".setLocation(\"").
-                //    append(loc).
-                //    append("\");\n");
             }
         }
 
@@ -87,6 +80,7 @@ public final class JavaStatement
 
     private static String typeInfo(final Statement statement)
     {
-        return statement instanceof ValueStatement ? " : " + ((ValueStatement)statement).getType().dump() : "";
+        return statement instanceof ValueStatement ?
+            " : " + ((ValueStatement)statement).getType().dump() : "";
     }
 }

@@ -19,7 +19,7 @@ import compile.term.*;
  * Reference resolver. {@link #resolve} method resolves reference terms,
  * checking for in-scope forward refs. Side effects include recording value
  * dependencies in scopes, and tracking variable capture in lambdas.
- * Also resolve types name refs in type terms, both in declared type annotations
+ * Also resolves types name refs in type terms, both in declared type annotations
  * (in lets and lambdas) and in type defs. Type name resolution is done here rather
  * than in a separate pass because value and type expressions are entangled.
  *

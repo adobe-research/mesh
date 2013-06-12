@@ -10,7 +10,7 @@
  */
 package runtime.tran;
 
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import runtime.rep.Tuple;
 
 /**

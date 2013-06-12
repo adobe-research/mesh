@@ -14,7 +14,7 @@ import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import runtime.rep.Record;
 import runtime.rep.Symbol;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.list.ListValue;
 import runtime.rep.list.PersistentList;
 import runtime.rep.map.MapValue;

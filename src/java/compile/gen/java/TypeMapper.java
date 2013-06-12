@@ -16,7 +16,7 @@ import compile.type.*;
 import compile.type.kind.Kinds;
 import compile.type.visit.TypeVisitorBase;
 import runtime.rep.*;
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import runtime.rep.list.ListValue;
 import runtime.rep.map.MapValue;
 import runtime.rep.Record;

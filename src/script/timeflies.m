@@ -1,6 +1,5 @@
 
-import * from std;
-import * from processing;
+import processing;
 
 // time flies example, inspired by
 // http://blogs.msdn.com/b/jeffva/archive/2010/03/17/reactive-extensions-for-javascript-the-time-flies-like-an-arrow-sample.aspx

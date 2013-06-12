@@ -1,5 +1,5 @@
 
-import * from unittest;
-import * from AX;
+import unittest;
+import AX;
 
 a:LocalType = ( localvar, localvar );

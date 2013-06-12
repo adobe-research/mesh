@@ -1,5 +1,5 @@
 
-import * from M;
+import M;
 export *;
 
 localvar = 10;

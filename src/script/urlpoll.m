@@ -1,5 +1,5 @@
 
-import * from std;
+import concutil;    // concurrency utilities
 
 // Port of Go example http://golang.org/doc/codewalk/sharemem/, which uses
 // channels and message passing to orchestrate a fixed number of concurrent

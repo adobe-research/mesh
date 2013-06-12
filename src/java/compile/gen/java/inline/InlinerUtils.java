@@ -17,7 +17,7 @@ import compile.term.*;
 import compile.type.Type;
 import compile.type.Types;
 import compile.StringUtils;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 
 import java.util.ArrayList;
 

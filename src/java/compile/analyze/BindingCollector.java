@@ -98,7 +98,7 @@ public final class BindingCollector extends ModuleVisitor<Object>
         final String name = let.getName();
         final Scope scope = getCurrentScope();
 
-        final ValueBinding prev = scope.getValueBinding(name);
+        final ValueBinding prev = scope.getLocalValueBinding(name);
         if (prev == null)
         {
             // first in-scope appearance of this name
@@ -140,6 +140,7 @@ public final class BindingCollector extends ModuleVisitor<Object>
             scope.addLet(let);
 
             // collect bindings in declared type
+            // TODO remove
             if (let.hasDeclaredType())
                 let.getDeclaredType().collectInlineParams();
         }
@@ -165,7 +166,7 @@ public final class BindingCollector extends ModuleVisitor<Object>
     @Override
     public Object visit(final TypeDef def)
     {
-        if (def.isUnresolvedIntrinsic())
+        if (!def.isResolved())
         {
             if (!def.resolveIntrinsic())
             {
@@ -178,7 +179,7 @@ public final class BindingCollector extends ModuleVisitor<Object>
         final String name = def.getName();
         final Scope scope = getCurrentScope();
 
-        final TypeBinding prev = scope.getTypeDef(name);
+        final TypeBinding prev = scope.getLocalTypeBinding(name);
 
         if (prev != null)
         {
@@ -310,7 +311,7 @@ public final class BindingCollector extends ModuleVisitor<Object>
         final Loc loc = lambdaTerm.getLoc();
         name = name + "_" + loc.getLine() + "_" + loc.getColumn();
 
-        final ValueBinding existingBinding = lambdaTerm.getValueBinding(name);
+        final ValueBinding existingBinding = lambdaTerm.getLocalValueBinding(name);
 
         if (existingBinding == null)
         {

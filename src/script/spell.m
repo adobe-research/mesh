@@ -1,7 +1,6 @@
-
-import * from std;
-
 // http://norvig.com/spell-correct.html
+
+import bench;   // benchmarking utilities
 
 // load word sample population and count
 print("loading word counts...");

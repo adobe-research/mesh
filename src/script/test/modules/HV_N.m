@@ -1,3 +1,3 @@
-import * from HV;
+import HV;
 
 a = var;

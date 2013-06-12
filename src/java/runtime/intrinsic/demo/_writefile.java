@@ -11,7 +11,7 @@
 package runtime.intrinsic.demo;
 
 import com.google.common.io.Closeables;
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Tuple;
 
 import java.io.File;

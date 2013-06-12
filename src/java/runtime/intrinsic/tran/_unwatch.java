@@ -10,8 +10,8 @@
  */
 package runtime.intrinsic.tran;
 
-import runtime.rep.lambda.IntrinsicLambda;
-import runtime.rep.lambda.Lambda;
+import runtime.intrinsic.IntrinsicLambda;
+import runtime.rep.Lambda;
 import runtime.rep.Tuple;
 import runtime.tran.Box;
 
@@ -24,7 +24,7 @@ import runtime.tran.Box;
  */
 public final class _unwatch extends IntrinsicLambda
 {
-    public static final _unwatch INSTANCE = new _unwatch(); 
+    public static final _unwatch INSTANCE = new _unwatch();
     public static final String NAME = "unwatch";
 
     public String getName()
@@ -40,7 +40,9 @@ public final class _unwatch extends IntrinsicLambda
 
     public static Box invoke(final Box box, final Lambda watcher)
     {
+        box.acquireWriteLock();
         box.removeWatcher(watcher);
+        box.releaseWriteLock();
         return box;
     }
 }

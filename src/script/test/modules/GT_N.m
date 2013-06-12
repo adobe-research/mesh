@@ -1,3 +1,3 @@
-import * from GT;
+import GT;
 
 a = foo();

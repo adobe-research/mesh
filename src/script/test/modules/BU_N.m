@@ -1,3 +1,3 @@
-import * from BU;
+import BU;
 
 a = BU.var;

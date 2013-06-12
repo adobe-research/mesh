@@ -17,6 +17,18 @@ package compile;
  */
 public final class Pair<L, R>
 {
+    /**
+     * lets us forego explicit type params
+     */
+    public static<L, R> Pair<L, R> create(final L l, final R r)
+    {
+        return new Pair<L, R>(l, r);
+    }
+
+    //
+    // instance
+    //
+
     public L left;
     public R right;
 

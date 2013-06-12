@@ -1,6 +1,4 @@
 
-import * from std;
-
 // http server logs requests and responds with a dump of path counts
 
 // mutable server state, maps requests to counts

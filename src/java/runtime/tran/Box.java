@@ -10,13 +10,11 @@
  */
 package runtime.tran;
 
-import runtime.Logging;
-import runtime.rep.lambda.Lambda;
+import runtime.sys.Logging;
+import runtime.rep.Lambda;
 import runtime.rep.map.PersistentMap;
 
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -60,9 +58,9 @@ public final class Box
      * Set of watcher functions to be notified on value changes.
      * {@link #addWatcher} and {@link #removeWatcher} will be called
      * concurrently by e.g. {@link runtime.intrinsic.tran._watch},
-     * {@link Waiter#await}
+     * {@link Waiter#start}
      */
-    private AtomicReference<PersistentMap> watchers;
+    private PersistentMap watchers;
 
     /**
      * Note that Boxes are never without a current value.
@@ -74,7 +72,7 @@ public final class Box
         this.owner = null;
         this.queuedOwner = null;
         this.lock = new ReentrantReadWriteLock();
-        this.watchers = null;
+        this.watchers = PersistentMap.EMPTY;
 
         // behave as if owned by a transaction that created us.
         final Transaction tran = TransactionManager.getTransaction();
@@ -197,38 +195,33 @@ public final class Box
     }
 
     /**
-     * Returns current set of watchers, or null if there are none.
+     * Returns current watcher map.
      * Caler must have read or write lock.
      */
-    Set<Object> getWatchers()
+    PersistentMap getWatchers()
     {
-        if (watchers == null)
-            return null;
-
-        final PersistentMap currentWatchers = watchers.get();
-        return currentWatchers.isEmpty() ? null : currentWatchers.keySet();
+        return watchers;
     }
 
     /**
-     * Add a watcher function.
-     * Caller must have write lock.
+     * Add a watcher function, with associated cargo value to be
+     * passed as additional argument when watcher is called.
+     * Caller of this method must have write lock.
      */
-    public void addWatcher(final Lambda watcher)
+    public void addWatcher(final Lambda key, final Watcher watcher)
     {
-        if (watchers == null)
-            watchers = new AtomicReference<PersistentMap>(PersistentMap.EMPTY);
-
-        watchers.set(watchers.get().assoc(watcher, null));
+        assertWriteLock();
+        watchers = watchers.assoc(key, watcher);
     }
 
     /**
      * Remove a watcher function.
      * Caller must have write lock.
      */
-    public void removeWatcher(final Lambda watcher)
+    public void removeWatcher(final Lambda key)
     {
-        if (watchers != null)
-            watchers.set(watchers.get().unassoc(watcher));
+        assertWriteLock();
+        watchers = watchers.unassoc(key);
     }
 
     /**
@@ -362,7 +355,7 @@ public final class Box
     /**
      * Acquire box write lock, no time limit.
      */
-    void acquireWriteLock()
+    public void acquireWriteLock()
     {
         lock.writeLock().lock();
     }
@@ -370,8 +363,27 @@ public final class Box
     /**
      * Release write lock.
      */
-    void releaseWriteLock()
+    public void releaseWriteLock()
     {
         lock.writeLock().unlock();
     }
+
+    /**
+     * Assert that the current thread owns the write lock
+     */
+    void assertWriteLock()
+    {
+        assert lock.isWriteLockedByCurrentThread() :
+            "Current thread must be holding the write lock";
+    }
+
+    /**
+     * Assert that a read lock is held (by any thread)
+     */
+    void assertReadLock()
+    {
+        assert lock.getReadHoldCount() > 0 :
+            "Current thread must be holding the read lock";
+    }
+
 }

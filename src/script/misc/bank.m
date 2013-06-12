@@ -2,8 +2,6 @@
 // bank balance integrity with transactions
 //
 
-import * from std;
-
 type Account = (#id:Int, #owner:String, #balance:*Int);
 
 type AccountMap = [Int : Account];

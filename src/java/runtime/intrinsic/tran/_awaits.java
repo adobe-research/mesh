@@ -10,11 +10,12 @@
  */
 package runtime.intrinsic.tran;
 
+import runtime.intrinsic.IntrinsicLambda;
+import runtime.rep.Lambda;
 import runtime.rep.Tuple;
-import runtime.rep.lambda.IntrinsicLambda;
-import runtime.rep.lambda.Lambda;
-import runtime.tran.MultiWaiter;
+import runtime.tran.Boxes;
 import runtime.tran.TransactionManager;
+import runtime.tran.Waiter;
 
 /**
  * Transactional wait/notify against a tuple of boxes.
@@ -26,7 +27,7 @@ import runtime.tran.TransactionManager;
  */
 public final class _awaits extends IntrinsicLambda
 {
-    public static final _awaits INSTANCE = new _awaits(); 
+    public static final _awaits INSTANCE = new _awaits();
     public static final String NAME = "awaits";
 
     public String getName()
@@ -43,7 +44,10 @@ public final class _awaits extends IntrinsicLambda
     public static Tuple invoke(final Tuple boxes, final Lambda pred)
     {
         if (TransactionManager.getTransaction() == null)
-            new MultiWaiter(boxes).wait(pred);
+        {
+            final Waiter waiter = new Waiter(Boxes.from(boxes), pred);
+            waiter.start();
+        }
 
         return Tuple.UNIT;
     }

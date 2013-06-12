@@ -1,5 +1,5 @@
 
-import * from unittest;
-import * from BU;
+import unittest;
+import BU;
 
 assert_equals({ var }, { var });

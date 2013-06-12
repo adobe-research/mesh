@@ -1,6 +1,4 @@
 
-import * from std;
-
 // When a synchronous child task (e.g. a task that runs as part of a
 // parallelized operation, e.g. pmap) is
 // (a) run from within a transaction,

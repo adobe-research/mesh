@@ -10,8 +10,6 @@
  */
 package runtime.intrinsic;
 
-import runtime.rep.lambda.IntrinsicLambda;
-
 /**
  * string to long.
  * Parse failures throw currently. TODO variants.

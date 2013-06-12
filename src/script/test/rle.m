@@ -1,6 +1,5 @@
 
-import * from std;
-import * from unittest;
+import unittest;
 
 // encode list of T into sequence of (#occs, T) pairs
 encode(list) { runs(list) | { l => (size(l), first(l)) } };

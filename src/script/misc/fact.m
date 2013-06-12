@@ -1,6 +1,4 @@
 
-import guard,reduce,cyclen,range from std;
-
 // factorial
 
 n = 10;

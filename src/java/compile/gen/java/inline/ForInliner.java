@@ -15,7 +15,7 @@ import compile.term.*;
 import runtime.intrinsic._count;
 import runtime.intrinsic._index;
 import runtime.intrinsic._range;
-import runtime.rep.lambda.Lambda;
+import runtime.rep.Lambda;
 import runtime.rep.list.ListValue;
 
 import java.util.List;
@@ -101,17 +101,18 @@ public class ForInliner implements Inliner
                         {
                             endIndexExpr = "" +
                                 (((IntLiteral)startArg).getValue() +
-                                Math.abs(((IntLiteral)extentArg).getValue()));
+                                    Math.abs(((IntLiteral)extentArg).getValue()));
                         }
                         else
                         {
-                            endIndexExpr = "((" + startIndexExpr + ") + ("  +
+                            endIndexExpr = "((" + startIndexExpr + ") + (" +
                                 Math.abs(((IntLiteral)extentArg).getValue()) + "))";
                         }
                     }
                     else
                     {
-                        final String raw = "(" + fmt.formatTermAs(extentArg, int.class) + ")";
+                        final String raw =
+                            "(" + fmt.formatTermAs(extentArg, int.class) + ")";
                         endIndexExpr = "((" + startIndexExpr + ") + (" +
                             raw + " >= 0 ? " + raw + " : -" + raw + "))";
                     }

@@ -1,7 +1,4 @@
 
-import * from std;
-export .;
-
 num_flops(M, N, num_iterations) {
     i2f( (M-1) * (N-1) * num_iterations * 6)
 };

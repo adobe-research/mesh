@@ -22,7 +22,7 @@ import compile.type.Type;
  *
  * @author Basil Hosmer
  */
-public final class LetBinding extends ValueBinding
+public class LetBinding extends ValueBinding
 {
     /**
      * arbitrary, fixed-identity dummy RHS for intrinsics
@@ -89,57 +89,52 @@ public final class LetBinding extends ValueBinding
      * Used by optimizers like {@link compile.analyze.ConstantReducer}.
      * Caller is on the honor system to replace like for like.
      */
-    public void setValue(final Term value)
+    public final void setValue(final Term value)
     {
         this.value = value;
     }
 
     // ValueStatement
 
-    public Term getValue()
+    public final Term getValue()
     {
         return value;
     }
 
     // Binding
 
-    public boolean isLet()
+    public final boolean isLet()
     {
         return true;
     }
 
-    public Scope getScope()
+    public final Scope getScope()
     {
         return scope;
     }
 
-    public void setScope(final Scope scope)
+    public final void setScope(final Scope scope)
     {
         this.scope = scope;
     }
 
     // Typed
 
-    public Type getType()
+    public final Type getType()
     {
         return type;
     }
 
-    public void setType(final Type type)
+    public final void setType(final Type type)
     {
         this.type = type;
     }
 
     // Statement
 
-    public String dump()
+    public final String dump()
     {
-        return dump(this.name);
-    }
-
-    public String dump(final String name) 
-    {
-        final StringBuilder buf = new StringBuilder(name);
+        final StringBuilder buf = new StringBuilder(this.name);
 
         if (hasDeclaredType())
             buf.append(" : ").append(declaredType.dump());

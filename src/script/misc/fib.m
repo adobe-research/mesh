@@ -1,7 +1,5 @@
 // fibonacci
 
-import std;
-
 // recurse
 fib0(n) {
     guard(n < 2, n, { fib0(n - 1) + fib0(n - 2) })

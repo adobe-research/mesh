@@ -10,7 +10,7 @@
  */
 package runtime.intrinsic.demo;
 
-import runtime.rep.lambda.IntrinsicLambda;
+import runtime.intrinsic.IntrinsicLambda;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

@@ -8,7 +8,7 @@
  * a copy of which can be found in the LICENSE.txt file or at
  * http://opensource.org/licenses/MIT.
  */
-package runtime.conc;
+package runtime.sys;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

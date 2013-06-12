@@ -1,6 +1,5 @@
 
-import * from std;
-import * from unittest;
+import unittest;
 
 // nominal types are created with the New() type constructor.
 // type Nom = New(T) where T is a type expr

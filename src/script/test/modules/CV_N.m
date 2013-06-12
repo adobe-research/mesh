@@ -1,3 +1,3 @@
-import * from CV;
+import CV;
 
 a = var;
