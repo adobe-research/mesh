@@ -86,7 +86,7 @@ public class Import
         final String base = checkQName(qname);
 
         return base != null && module.isExported(base) ?
-            module.findTypeBinding(base) : null;
+            module.getLocalTypeBinding(base) : null;
     }
 
     /**

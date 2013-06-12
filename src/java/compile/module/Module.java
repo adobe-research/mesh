@@ -46,7 +46,9 @@ public class Module extends AbstractScope
     private WhiteList exports;
 
     /**
-     * derived on demand from imports--cached
+     * aggregate list of imported modules, derived on demand
+     * from {@link #unqualifiedImports} and {@link #qualifiedImports}
+     * and cached.
      */
     private List<Module> importedModules;
 
@@ -211,7 +213,8 @@ public class Module extends AbstractScope
     {
         if (NameUtils.isQualified(qname))
         {
-            // qualified name must be imported (currently)
+            // qualified name must be imported (currently): look in
+            // modules imported into our namespace, if any
             for (final Import imp : getNamespaceImports(NameUtils.qualifier(qname)))
             {
                 final ValueBinding binding = imp.findValueBinding(qname);
@@ -253,7 +256,8 @@ public class Module extends AbstractScope
     {
         if (NameUtils.isQualified(qname))
         {
-            // qualified name must (currently) be imported
+            // qualified name must be imported (currently): look in
+            // modules imported into our namespace, if any
             for (final Import imp : getNamespaceImports(NameUtils.qualifier(qname)))
             {
                 final TypeBinding binding = imp.findTypeBinding(qname);

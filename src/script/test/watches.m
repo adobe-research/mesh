@@ -1,6 +1,5 @@
 // Test multiwaiters using watches/unwatches
 
-import std;
 import unittest;
 
 // First do a quick little test to verify watch and watches can be applied
