@@ -23,13 +23,18 @@ import java.util.*;
  */
 final class ChangeEvent
 {
-    final Map<Box,Object> updates;
+    final Box[] boxes;
+    final Object[] values;
 
     ChangeEvent(final Box[] boxes, final Object[] values, final int count)
     {
-        this.updates = new HashMap<Box,Object>();
-        for (int i = 0; i < count; ++i)
-            updates.put(boxes[i], values[i]);
+        // Unfortunately we do need to copy these here since we've been
+        // passed references to the transaction's internal arrays and it
+        // will reuse them.
+        this.boxes = new Box[count];
+        this.values = new Object[count];
+        System.arraycopy(boxes, 0, this.boxes, 0, count);
+        System.arraycopy(values, 0, this.values, 0, count);
     }
 
     /**
@@ -41,15 +46,22 @@ final class ChangeEvent
         // have been updated in the same transaction, we first uniquify the
         // list of watchers
         final Set<Watcher> watchers = new HashSet<Watcher>();
-        for (final Box b : updates.keySet())
+        final Set<Lambda> calls = new HashSet<Lambda>();
+        for (final Box b : boxes)
         {
             final PersistentMap pm = b.getWatchers();
             if (pm != null)
-                for (final Object obj : pm.keySet())
-                    watchers.add((Watcher)obj);
+                for (final Map.Entry<Object,Object> obj : pm.entrySet())
+                {
+                    if (!calls.contains(obj.getKey()))
+                    {
+                        calls.add((Lambda)obj.getKey());
+                        watchers.add((Watcher)obj.getValue());
+                    }
+                }
         }
 
         for (final Watcher watcher : watchers)
-            watcher.trigger(updates);
+            watcher.trigger(boxes, values);
     }
 }
