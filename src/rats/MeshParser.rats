@@ -448,9 +448,9 @@ transient compile.Pair<Term, Term> Pair
 // Import and export statement helpers
 //
 
-// designates target namespace for import:
-// 1. "into <namespace>" for explicit namespace,
-// 2. "qualified" for namespace named after module
+// An import may optionally designate:
+// 1. "into <namespace>", specifying an explicit namespace,
+// 2. "qualified", specifying a namespace named after the module.
 //
 transient String ImportQualifier
     = IntoKeyword name:Id
@@ -458,8 +458,9 @@ transient String ImportQualifier
     / QualifiedKeyword
         { yyValue = ""; } ;
 
-// An import may explicitly give the names of definitions to
-// be imported from the specified module.
+// An import may explicitly specify
+// 1. a list of unqualified symbol names
+// 2. '()', meaning nothing.
 //
 transient List<String> ImportSymbolList
     = h:Id t:(Comma Id)*
@@ -468,9 +469,8 @@ transient List<String> ImportSymbolList
         { yyValue = empty(); } ;
 
 // An export may explicitly specify
-// 1. a list of definition names
-// 2. '.', meaning not just local definitions, as opposed to
-// both local defs and all unqualified imported defs
+// 1. a list of local definition names
+// 2. '*', meaning all local definitions
 // 3. '()', meaning nothing.
 //
 transient List<String> ExportSymbolList
@@ -481,14 +481,14 @@ transient List<String> ExportSymbolList
     / LeftParen RightParen
         { yyValue = empty(); } ;
 
-// A QName (qualified name) is a sequence of simple names
-// separated by dots. In expr positions, qualified names
-// are parsed as a record address expression, and possibly
-// converted to qnames later. We only need the rule below
-// in places where a (possibly qualified) name is legal
-// but a record address expression is not. Currently these
-// are a) module names in import statements, and b) type
-// names in type expressions.
+// A QName (qualified name) is a sequence of ids separated
+// by dots. In expr positions, a qualified name is parsed
+// as a record address expression, and possibly converted
+// to a qname later. We only need the rule below for places
+// where a possibly qualified name is legal, but a record
+// address expression is not. Currently these are
+// 1. module names in import statements,
+// 2. type names in type expressions.
 //
 String QName
     = name:Id '.' spec:QName

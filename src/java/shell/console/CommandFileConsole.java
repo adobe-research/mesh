@@ -54,7 +54,7 @@ class CommandFileConsole extends Console
             }
             catch (Exception e)
             {
-                Session.error("Unabled to read command file {0}", files[currentFile]);
+                Session.error("Unable to read command file {0}", files[currentFile]);
             }
         }
     }

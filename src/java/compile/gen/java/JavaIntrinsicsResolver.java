@@ -52,12 +52,12 @@ public final class JavaIntrinsicsResolver implements IntrinsicsResolver.Impl
     }
 
 
-    public IntrinsicLambda resolve(final LetBinding let)
+    public synchronized IntrinsicLambda resolve(final LetBinding let)
     {
         return verifiedIntrinsics.get(let);
     }
 
-    public String verify(final LetBinding let)
+    public synchronized String verify(final LetBinding let)
     {
         final IntrinsicLambda lambda = verifiedIntrinsics.get(let);
         if (lambda != null)

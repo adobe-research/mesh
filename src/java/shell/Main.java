@@ -13,6 +13,7 @@ package shell;
 import com.google.common.collect.Sets;
 import compile.*;
 import compile.Compiler;
+import compile.analyze.ImportResolver;
 import compile.gen.UnitBuilder;
 import compile.gen.Unit;
 import compile.module.Import;
@@ -45,15 +46,11 @@ public final class Main
 
     public Main(final ShellConfig shellConfig)
     {
-        this(shellConfig, new FileServices(shellConfig));
-    }
-
-    public Main(final ShellConfig shellConfig, final FileServices fileServices)
-    {
         this.shellConfig = shellConfig;
-        this.fileServices = fileServices;
-        this.shellScriptManager = new ShellScriptManager(Config.newUnitManager());
-        this.console = Console.create(shellConfig, shellScriptManager,
+        this.fileServices = new FileServices(shellConfig);
+        this.shellScriptManager = new ShellScriptManager();
+        this.console = Console.create(
+            shellConfig, shellScriptManager,
             fileServices, shellConfig.getCommandFiles());
     }
 
@@ -65,8 +62,15 @@ public final class Main
         Session.pushErrorCount();
         Session.setMessageLevel(shellConfig.getMessageLevel());
 
+        for (final String file : shellConfig.getLoadFiles())
+        {
+            loadFile(file);
+        }
+
         if (shellConfig.getInteractive())
+        {
             interactive();
+        }
 
         final int errorCount = Session.popErrorCount() + Logging.getErrorCount();
 
@@ -148,16 +152,24 @@ public final class Main
     }
 
     /**
-     * Process commands.
-     * TODO unify with ShellConfig command line processing, clean up generally
+     * Process command string. '$' has been removed,
+     * command may be empty.
+     * Return true to continue, false to quit shell.
+     * TODO tighten up parsing--currently extra args ignored, etc.
+     * TODO factor common stuff with ShellConfig command line processing
      */
     private boolean evalCommand(final String command)
     {
-        final String[] words = command.split(" ");
-        final String first = words[0];
         boolean result = true;
 
-        if (first.equals("b") || first.equals("block"))
+        final String[] words = command.split(" ");
+        final String first = words[0];
+
+        if (first.isEmpty())
+        {
+            Session.error("no command specified");
+        }
+        else if (first.equals("b") || first.equals("block"))
         {
             result = cmdToggleBlockMode();
         }
@@ -267,10 +279,10 @@ public final class Main
         "",
         "Commands:",
         "",
-        "$b / $block            enter block (multi-line) input mode, $b again on",
+        "$b / $block            enter block (multi-line) input mode. $b again on",
         "                       empty line to commit",
         "",
-        "$c / $clear            clear variable bindings",
+        "$c / $clear            clear definitions",
         "",
         "$d / $debug            toggle runtime debug messages",
         "",
@@ -279,11 +291,12 @@ public final class Main
         "$i / $import           print current import list. The import list provides",
         "                       definitions to interactive shell input.",
         "                       Optional args:",
-        "             <spec>    add <spec> to import list. <spec> is standard import",
-        "                       statement syntax. Note that this command will attempt to",
-        "                       locate and initialize the specified module immediately.",
-        "             -<spec>   removes <spec> from import list",
-        "             -<pos>    removes import list item at given position",
+        "           <spec>      add <spec> to import list. <spec> is standard import",
+        "                       statement syntax. Note that this command will not attempt",
+        "                       to load the specified module until the next interactive",
+        "                       input is evaluated.",
+        "           -<spec>     removes <spec> from import list",
+        "           -<pos>      removes import list item at given position",
         "",
         "$l / $load <module>    load and run a script. A file pathname is created by",
         "                       replacing dot with the file separator and appending a",
@@ -298,24 +311,26 @@ public final class Main
         "",
         "$t / $type <expr>      print the type of <expr>",
         "",
-        "$u / $unit             print unit details (including generated source, if available)",
-        "                       for most recent unit compilation attempt (failed or successful).",
+        "$u / $unit             print unit details (including generated source, if available).",
         "                       A unit is the compilation product of an interactive statement,",
-        "                       or loaded or imported script.",
+        "                       or loaded or imported script. Without arguments, details are",
+        "                       printed for most recent unit compilation attempt (failed or ",
+        "                       successful).",
         "                       Optional args:",
         "           ?           print unit history, most recent first",
-        "           !           print transitive closure of most recent unit and all its imports",
+        "           !           print transitive closure of most recent unit and all of its",
+        "                       imports (except language support implicits)",
         "           <module>    print unit for module <module>",
-        "           <module>!   ...and all its imports",
-        "           *           print all units",
+        "           <module>!   ...and all of its imports (except language support implicits)",
+        "           *           print all units, including language support implicits",
         "",
         "$v / $vars             print variable bindings. Without arguments, all available",
         "                       qualified and unqualified bindings are included.",
         "                       Optional args:",
-        "           .           print variables defined in the most recent interactive,",
+        "           ?           list inhabited namespaces",
+        "           !           print only variables defined in the most recent interactive",
         "                       input or loaded script",
-        "           ?           list inhabited namespaces and the modules inhabiting them",
-        "           <module>    print variable definitions from module <module>",
+        "           <namespace> print only variables defined in namespace <namespace>",
         "",
         "$w / $write            write binaries to <cwd>/ws, or to path specified",
         "                       on the command line with -writepath",
@@ -359,30 +374,99 @@ public final class Main
         if (words.length == 1)
         {
             // $import => list 'em
-            shellConfig.listImplicitImports();
+            listImplicitImports();
+            return;
         }
-        else if (words.length == 2 && words[1].equals("?"))
+
+        final String spec = StringUtils.join(
+            Arrays.asList(words).subList(1, words.length), " ");
+
+        if (spec.startsWith("-"))
         {
-            // $import ? => list 'em
-            shellConfig.listImplicitImports();
-        }
-        else if (words[1].equals("-"))
-        {
-            // $import - x, y, z => remove x, y, z from import list
-            final List<String> specPart =
-                Arrays.asList(words).subList(2, words.length);
-            final String spec = StringUtils.join(specPart, " ");
-            shellConfig.clearImplicitImport(spec);
+            // $import -<spec> => remove <spec> from import list
+            clearImplicitImport(spec.substring(1));
         }
         else
         {
-            // $import + x, y, z => add x, y, z to import list
-            // $import x, y, z => ditto
-            final int specStart = words.length > 2 && words[1].equals("+") ? 2 : 1;
-            final List<String> specPart =
-                Arrays.asList(words).subList(specStart, words.length);
-            final String spec = StringUtils.join(specPart, " ");
-            shellConfig.addImplicitImport(spec);
+            // $import <spec> => add <spec> to import list
+            addImplicitImport(spec);
+        }
+    }
+
+    /**
+     *
+     */
+    private void listImplicitImports()
+    {
+        final List<ImportStatement> imports = shellConfig.getImports();
+
+        if (imports.isEmpty())
+        {
+            System.out.println("import list is empty");
+            return;
+        }
+
+        System.out.println("import list: ");
+        for (int i = 0; i < imports.size(); ++i)
+        {
+            System.out.println(i + ". " + imports.get(i).dumpAbbrev());
+        }
+    }
+
+    /**
+     *
+     */
+    private void clearImplicitImport(final String spec)
+    {
+        final List<ImportStatement> imports = shellConfig.getImports();
+
+        try
+        {
+            final int position = Integer.parseInt(spec);
+            if (position >= 0 && position < imports.size())
+                imports.remove(position);
+            else
+                Session.error("No import at position {0}", position);
+        }
+        catch (NumberFormatException nfe)
+        {
+            int matches = 0;
+            int match_position = -1;
+            for (int i = 0; i < imports.size(); ++i)
+            {
+                if (imports.get(i).dumpAbbrev().startsWith(spec))
+                {
+                    ++matches;
+                    match_position = i;
+                }
+            }
+            if (matches == 1)
+                imports.remove(match_position);
+            else if (matches == 0)
+                Session.error("No import matches ''{0}''", spec);
+            else // matches > 1
+                Session.error("Ambiguous import specification ''{0}''", spec);
+        }
+    }
+
+    /**
+     *
+     */
+    private void addImplicitImport(final String spec)
+    {
+        final ImportStatement stmt =
+            ShellScriptManager.parseImportSpec(Loc.INTRINSIC, spec);
+
+        if (stmt != null)
+        {
+            if (!ImportResolver.moduleExists(stmt.getModuleName()))
+                Session.error("Cannot find module ''{0}''", stmt.getModuleName());
+            else
+                shellConfig.getImports().add(stmt);
+        }
+        else
+        {
+            Session.error("invalid import specification ''{0}''", spec);
         }
     }
 
@@ -391,10 +475,18 @@ public final class Main
      */
     private void cmdLoadScript(final String[] words)
     {
-        if (words.length > 1)
-            loadFile(words[1]);
-        else
-            Session.error("script file not specified");
+        switch(words.length)
+        {
+            case 1:
+                Session.error("script file not specified");
+                break;
+            case 2:
+                loadFile(words[1]);
+                break;
+            default:
+                Session.error("extra arguments after module name {0}", words[1]);
+                break;
+        }
     }
 
     /**
@@ -411,8 +503,6 @@ public final class Main
             {
                 final Loc loc = new Loc(file.getPath());
                 final Reader r = fileServices.getReader(file);
-                final boolean debug = shellConfig.getDebug();
-                final List<ImportStatement> imports = shellConfig.getImports();
 
                 shellScriptManager.loadScript(loc, r);
 

@@ -11,10 +11,8 @@
 package shell;
 
 import com.google.common.collect.Lists;
+import compile.*;
 import compile.Compiler;
-import compile.Loc;
-import compile.NameUtils;
-import compile.Session;
 import compile.gen.Unit;
 import compile.gen.UnitManager;
 import compile.module.Module;
@@ -36,21 +34,20 @@ import java.util.*;
  */
 public final class ShellScriptManager
 {
-    //private int seq;
-    private Map<String, Integer> loadCounts;
-    private List<Unit> unitHistory;
-    private List<ImportStatement> historyImports;
-    private UnitManager unitManager;
+    private final UnitManager unitManager;
+    private final Map<String, Integer> loadCounts;
+    private final List<Unit> unitHistory;
+    private final List<ImportStatement> historyImports;
 
     /**
      *
      */
-    public ShellScriptManager(final UnitManager unitManager)
+    public ShellScriptManager()
     {
+        this.unitManager = Config.newUnitManager();
         this.loadCounts = new HashMap<String, Integer>();
         this.unitHistory = new ArrayList<Unit>();
         this.historyImports = new ArrayList<ImportStatement>();
-        this.unitManager = unitManager;
     }
 
     /**
@@ -228,20 +225,22 @@ public final class ShellScriptManager
 
         Compiler.clearUnitDictionary();
 
-        this.unitHistory = new ArrayList<Unit>();
-        this.historyImports = new ArrayList<ImportStatement>();
+        this.unitHistory.clear();
+        this.historyImports.clear();
 
         unitManager.resetInternals();
     }
 
     /**
-     * Attempt to parse an import statement from passed text
+     * Attempt to build an import statement from passed spec
      */
-    public static ImportStatement parseImportStatement(
-        final Loc loc, final String text)
+    public static ImportStatement parseImportSpec(
+        final Loc loc, final String spec)
     {
+        final StringReader reader = new StringReader("import " + spec);
+
         final List<Statement> statements =
-            RatsScriptParser.parseScript(new StringReader(text), loc);
+            RatsScriptParser.parseScript(reader, loc);
 
         if (statements != null && statements.size() == 1 &&
             statements.get(0) instanceof ImportStatement)
