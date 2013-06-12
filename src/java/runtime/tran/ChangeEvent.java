@@ -11,10 +11,9 @@
 package runtime.tran;
 
 import runtime.rep.Lambda;
-import runtime.rep.Tuple;
 import runtime.rep.map.PersistentMap;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * Change notification event, dispatched over the set of watchers attached
@@ -24,36 +23,45 @@ import java.util.Map;
  */
 final class ChangeEvent
 {
-    final PersistentMap watchers;
-    final Tuple valpair;
+    final Box[] boxes;
+    final Object[] values;
 
-    ChangeEvent(final PersistentMap watchers,
-        final Object oldval, final Object newval)
+    ChangeEvent(final Box[] boxes, final Object[] values, final int count)
     {
-        assert watchers != null;
-        assert !watchers.isEmpty();     // performance leak only
-
-        this.watchers = watchers;
-        this.valpair = Tuple.from(oldval, newval);
+        // Unfortunately we do need to copy these here since we've been
+        // passed references to the transaction's internal arrays and it
+        // will reuse them.
+        this.boxes = new Box[count];
+        this.values = new Object[count];
+        System.arraycopy(boxes, 0, this.boxes, 0, count);
+        System.arraycopy(values, 0, this.values, 0, count);
     }
 
     /**
-     * Apply each watcher function in {@link #watchers} to either
-     * (oldval, newval) or ((oldval, newval), cargo), depending on
-     * whether the watcher is associated with a non-null caargo value.
-     * NOTE: currently we take non-null cargo to mean that lambda is
-     * of type ((V, V), C) -> X, rather than the standard (V, V) -> X.
-     * Currently this capability is used only by MultiWaiter.
-     * TODO consider surfacing this as part of the watcher API
+     * Activate each watcher of all the boxes
      */
     void fire()
     {
-        for (final Map.Entry<Object, Object> entry : watchers.entrySet())
+        // Because a watcher can span over multiple boxes, each of which may
+        // have been updated in the same transaction, we first uniquify the
+        // list of watchers
+        final Set<Watcher> watchers = new HashSet<Watcher>();
+        final Set<Lambda> calls = new HashSet<Lambda>();
+        for (final Box b : boxes)
         {
-            final Lambda watcher = (Lambda)entry.getKey();
-            final Object cargo = entry.getValue();
-
-            watcher.apply(cargo != null ? Tuple.from(valpair, cargo) : valpair);
+            final PersistentMap pm = b.getWatchers();
+            if (pm != null)
+                for (final Map.Entry<Object,Object> obj : pm.entrySet())
+                {
+                    if (!calls.contains(obj.getKey()))
+                    {
+                        calls.add((Lambda)obj.getKey());
+                        watchers.add((Watcher)obj.getValue());
+                    }
+                }
         }
+
+        for (final Watcher watcher : watchers)
+            watcher.trigger(boxes, values);
     }
 }

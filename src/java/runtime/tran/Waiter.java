@@ -17,23 +17,22 @@ import runtime.sys.Logging;
 import java.util.LinkedList;
 
 /**
- * Used by {@link runtime.intrinsic.tran._await}. For a given box,
- * our method {@link #await(runtime.rep.Lambda)} implements
- * wait(box, pred) by by attaching ourselves as a watcher to the box,
- * then doing a thread wait until pred(newval) returns true on box commit.
- * (We remove ourselves from the box's watcher list before returning.)
+ * Used by {@link runtime.intrinsic.tran._await} and
+ * {@link runtime.intrinsic.tran._awaits}. For a given box (or set of boxes),
+ * we implement await(box(es), pred) by attaching ourselves as a watcher to the
+ * box(es), then doing a thread wait until pred(newval) returns true on box commit.
+ * (We remove ourselves from the boxs' watcher list before returning.)
  *
  * @author Basil Hosmer
  */
-public final class Waiter implements Lambda
+public final class Waiter extends Watcher implements Lambda
 {
-    private final Box box;
-    private final LinkedList<Object> updates;
+    private LinkedList<Object> updates;
 
-    public Waiter(final Box box)
+    public Waiter(final Boxes boxes, final Lambda pred)
     {
-        this.box = box;
-        this.updates = new LinkedList<Object>();
+        super(boxes, pred);
+        updates = new LinkedList<Object>();
     }
 
     /**
@@ -41,65 +40,50 @@ public final class Waiter implements Lambda
      * ourselves as a watcher to our box, then doing a thread wait until
      * pred(newval) returns true.
      */
-    public void await(final Lambda pred)
+    public void start()
     {
-        // hold box's write lock while we install ourselves
-        boolean locked = true;
-        box.acquireWriteLock();
+        boxes.acquireWriteLocks();
+        stash = boxes.getValues();
 
         try
         {
             // if pred passes current value, release read lock and
             // don't wait the thread. otherwise, set up and add a
             // box watcher lambda while we still have the read lock.
-
-            if (!(Boolean)pred.apply(box.getValue()))
+            if (!(Boolean)action.apply(stash))
             {
                 try
                 {
-                    // Note: once we synchronize on ourselves, any calls from
-                    // a committing transaction to our (synchronized) apply()
-                    // will block.
-
+                    // Note: once we synchronize on ourselves, any calls from a
+                    // committing transaction to our (synchronized)
+                    // commitAction() will block.
                     synchronized (this)
                     {
-                        // add ourselves as a watcher on this box
-                        box.addWatcher(this);
+                        // add ourselves as a watcher on these boxes
+                        boxes.addWatcher(this, this);
 
-                        //Logging.info("added watcher, count = {0}", box.getWatchers().size());
+                        // when we release the lock, box updates will start to
+                        // flow again. but because we're in a synchronized
+                        // block, post-commit calls to commitAction() will
+                        // continue to block until we go into our wait().
 
-                        // when we release the lock, box updates will start
-                        // to flow again. but because we're in a synchronized block,
-                        // post-commit calls to our apply() will continue to block
-                        // until we go into our wait().
+                        boxes.releaseWriteLocks();
 
-                        box.releaseWriteLock();
-                        locked = false;
-
-                        Object newValue;
+                        Object newValues;
                         do
                         {
-                            if (updates.isEmpty())
+                            while (updates.isEmpty())
                                 wait();
 
-                            newValue = updates.remove();
+                            newValues = updates.remove();
                         }
-                        while (!(Boolean)pred.apply(newValue));
-
-                        //Logging.info("out of loop");
+                        while (!(Boolean)action.apply(newValues));
 
                         // btw this here is why watchers is a versioned structure.
                         // We're probably in the middle of iterating through the
-                        // watchers in runWatchers()
-                        locked = true;
-                        box.acquireWriteLock();
-                        box.removeWatcher(this);
-
-                        //final Set<Object> watchers = box.getWatchers();
-                        //Logging.info("removed watcher, count = {0}", watchers == null ? 0 : watchers.size());
-
-                        box.releaseWriteLock();
-                        locked = false;
+                        // watchers.
+                        boxes.acquireWriteLocks();
+                        boxes.removeWatcher(this);
                     }
                 }
                 catch (InterruptedException e)
@@ -110,33 +94,39 @@ public final class Waiter implements Lambda
         }
         finally
         {
-            if (locked)
-                box.releaseWriteLock();
+            boxes.releaseWriteLocks();
         }
     }
 
-    // Lambda impl
-
     /**
-     * As a watcher, apply() will get an (old, new) value pair when a new value
-     * is committed to our box. At that point ew enqueue the new value and call
-     * {@link #notify}, which will wake up the waiting thread to test the
-     * wait predicate against the new value(s).
-     * Note: our apply() is synchronized so we don't lose calls during setup -
-     * see {@link #await}.
+     * As a watcher, commitAction() will get an (old, new) value pair when a
+     * new value is committed to our box. At that point ew enqueue the new
+     * value and call {@link #notify}, which will wake up the waiting thread to
+     * test the wait predicate against the new value(s).
      */
-    synchronized public Object apply(final Object values)
+    public void commitAction(final Tuple args)
     {
-        final Tuple args = (Tuple)values;
-        final Object oldValue = args.get(0);
-        final Object newValue = args.get(1);
-
-        if (updates.isEmpty() || !oldValue.equals(newValue))
+        synchronized (this)
         {
-            updates.add(newValue);
-            notify();
-        }
+            final Object oldValues = args.get(0);
+            final Object newValues = args.get(1);
 
+            if (updates.isEmpty() || !oldValues.equals(newValues))
+            {
+                updates.add(newValues);
+                notify();
+            }
+        }
+    }
+
+    //
+    // Lambda
+    //
+
+    public Object apply(final Object obj)
+    {
+        // Only here so that Waiter can be it's own key in a box's watcher set
+        assert false : "This should not be called";
         return null;
     }
 }

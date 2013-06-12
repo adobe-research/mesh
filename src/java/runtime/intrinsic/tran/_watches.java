@@ -13,19 +13,18 @@ package runtime.intrinsic.tran;
 import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Lambda;
 import runtime.rep.Tuple;
-import runtime.tran.Box;
 import runtime.tran.Boxes;
 import runtime.tran.Watcher;
 
 /**
- * Add a watcher to a box, return watcher.
+ * Add a watcher to a tuple of boxes, return watcher.
  *
- * @author Basil Hosmer
+ * @author Keith McGuigan
  */
-public final class _watch extends IntrinsicLambda
+public final class _watches extends IntrinsicLambda
 {
-    public static final _watch INSTANCE = new _watch();
-    public static final String NAME = "watch";
+    public static final _watches INSTANCE = new _watches();
+    public static final String NAME = "watches";
 
     public String getName()
     {
@@ -35,12 +34,12 @@ public final class _watch extends IntrinsicLambda
     public Object apply(final Object arg)
     {
         final Tuple args = (Tuple)arg;
-        return invoke((Box)args.get(0), (Lambda)args.get(1));
+        return invoke((Tuple)args.get(0), (Lambda)args.get(1));
     }
 
-    public static Lambda invoke(final Box box, final Lambda action)
+    public static Lambda invoke(final Tuple boxes, final Lambda action)
     {
-        final Watcher watcher = new Watcher(Boxes.from(box), action);
+        final Watcher watcher = new Watcher(Boxes.from(boxes), action);
         watcher.start();
         return action;
     }

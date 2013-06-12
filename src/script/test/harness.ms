@@ -66,5 +66,7 @@ $clear
 
 // TODO rework import tests per new behavior, see test/test_imports.m for spec
 // $load test.test_imports
+// $clear
 
+$load test.watches
 $quit
