@@ -171,8 +171,8 @@ assert_equals({ 1 }, {
 assert_equals({ 3 }, {
                     x = box(0);
                     y = box(1);
-                    z = deps([x, y], sum);
-                    x := 2; // z should now be sum(2, 1)
+                    z = deps((x, y), plus);
+                    x := 2; // z should now be plus(2, 1)
                     *z;
                     });
 

@@ -58,7 +58,7 @@ public final class Box
      * Set of watcher functions to be notified on value changes.
      * {@link #addWatcher} and {@link #removeWatcher} will be called
      * concurrently by e.g. {@link runtime.intrinsic.tran._watch},
-     * {@link Waiter#await}
+     * {@link Waiter#start}
      */
     private PersistentMap watchers;
 
@@ -208,30 +208,20 @@ public final class Box
      * passed as additional argument when watcher is called.
      * Caller of this method must have write lock.
      */
-    public void addWatcher(final Lambda watcher, final Object cargo)
-    {
-        assert cargo != null;
-        assertWriteLock();
-        watchers = watchers.assoc(watcher, cargo);
-    }
-
-    /**
-     * Add a watcher function, with no associated value.
-     * Caller must have write lock.
-     */
-    public void addWatcher(final Lambda watcher)
+    public void addWatcher(final Lambda key, final Watcher watcher)
     {
         assertWriteLock();
-        watchers = watchers.assoc(watcher, null);
+        watchers = watchers.assoc(key, watcher);
     }
 
     /**
      * Remove a watcher function.
      * Caller must have write lock.
      */
-    public void removeWatcher(final Lambda watcher)
+    public void removeWatcher(final Lambda key)
     {
-        watchers = watchers.unassoc(watcher);
+        assertWriteLock();
+        watchers = watchers.unassoc(key);
     }
 
     /**

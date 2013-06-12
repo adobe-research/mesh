@@ -2472,6 +2472,17 @@ intrinsic <T:[*]> awaits(x : Tup(T | Box), y : Tup(T) -> Bool) -> ();
 };
 
 /**
+ * reacts is like watches, but with only new values passed to watcher.
+ * @param b boxes to watch
+ * @param f function that will be invoked with the new values in boxex
+ * @return watcher function that wraps passed f, suitable for passing to unwatches()
+ */
+<A:[*],B> reacts(b:Tup(A | Box), f:(Tup(A) -> B)) -> ((Tup(A), Tup(A)) -> B)
+{
+    watches(b, { f($1) })
+};
+
+/**
  * Remove a watcher function from a box.
  * Function equality is identity, so you need to pass
  * the watcher function itself.
@@ -2482,12 +2493,30 @@ intrinsic <T:[*]> awaits(x : Tup(T | Box), y : Tup(T) -> Bool) -> ();
 intrinsic <T,X> unwatch(x:*T, y:(T, T) -> X) -> *T;
 
 /**
+ * Remove a watcher function from a box.
+ * Function equality is identity, so you need to pass
+ * the watcher function itself.
+ * @param x boxes being watched
+ * @param y function that was returned from {@link watches(x:*T, y:(T, T) -> X) -> ((T, T) -> X)}.
+ * @return box
+ */
+intrinsic <T:[*],X> unwatches(x:Tup(T | Box), y:(Tup(T), Tup(T)) -> X) -> Tup(T | Box);
+
+/**
  * Add a watcher to a box, return watcher.
  * @param x box to be watched
  * @param y function to be executed when the box value changes
  * @return a watcher function
  */
 intrinsic <T,X> watch(x:*T, y:(T, T) -> X) -> ((T, T) -> X);
+
+/**
+ * Add a watcher to a set of boxes, return watcher.
+ * @param x boxes to be watched
+ * @param y function to be executed when any of the the values change
+ * @return a watcher function (suitable for passing to unwatches)
+ */
+intrinsic <T:[*],X> watches(x:Tup(T | Box), y:(Tup(T), Tup(T)) -> X) -> ((Tup(T), Tup(T)) -> X);
 
 // ------------------------------------------------------------------
 
