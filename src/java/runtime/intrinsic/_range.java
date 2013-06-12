@@ -37,6 +37,6 @@ public final class _range extends IntrinsicLambda
 
     public static ListValue invoke(final int start, final int extent)
     {
-        return IntRange.create(start, start + extent);
+        return IntRange.create(start, start + (extent >= 0 ? extent : -extent));
     }
 }

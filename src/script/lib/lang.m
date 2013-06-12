@@ -1796,7 +1796,7 @@ intrinsic <T> rest(x:[T]) -> [T];
  */
 reverse(list) {
     n = size(list);
-    mapll(range(n - 1, -n), list)
+    index(list) | { list[n - 1 - $0] }
 };
 
 /**
