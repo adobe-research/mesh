@@ -150,6 +150,7 @@ public class ForInliner implements Inliner
                 bodyLambda.getParams().keySet().iterator().next());
 
             final String body = InlinerUtils.formatBlockStmts(fmt, bodyArg, false);
+            assert body != null;
 
             return "{ final int $n = " + endIndexExpr + "; " +
                 "for(int $i = " + startIndexExpr + "; $i < $n; $i++) " +

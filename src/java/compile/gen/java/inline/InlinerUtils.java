@@ -30,22 +30,18 @@ import java.util.ArrayList;
 public class InlinerUtils
 {
     /**
-     * Convenience wrapper for {@link #formatBlockStmts(compile.gen.java.StatementFormatter, compile.term.Term, boolean)},
-     * passes true for final param (fallbackToCall).
-     */
-    static String formatBlockStmts(final StatementFormatter fmt, final Term block)
-    {
-        return formatBlockStmts(fmt, block, true);
-    }
-
-    /**
-     * Try to inline the body of a block (a ()->T lambda), for use as a block body
-     * in target code. If successful, a string containing the generated code is
-     * returned, otherwise null.
+     * Try to inline the body of a block-typed term (a ()->T lambda),
+     * for use as a block body in target code. If successful, a string
+     * containing the generated code is returned, otherwise null.
      *
-     * Inlining succeeds if the term {@link #derefToLambda dereferences to a lambda},
-     * or failing that if the fallbackToCall param is true, in which case a single
-     * statement containing a call to the lambda is returned.
+     * Inlining succeeds if the term {@link #derefToLambda dereferences to
+     * a lambda}, or failing that if the fallbackToCall param is true and
+     * the term {@link #isImmediate is immediate}, meaning that obtaining
+     * its value involves no computation*. In this case a single statement
+     * containing a call to the lambda is returned. (The term must be immediate
+     * because use-cases may place the returned call in conditional code, which
+     * would alter the semantics of the original if there were computation
+     * involved.)
      *
      * So given a block <pre><code>
      *     f = { a(1); b(2); c(3) }
@@ -58,7 +54,7 @@ public class InlinerUtils
      * </code></pre>
      *
      * The fallback allows us to inline control flow even when arguments can't be
-     * dereferenced to lambda literals, eg <pre><code>
+     * statically dereferenced to lambda literals, eg <pre><code>
      *     if(c, t, f) => if (c) { t(); } else { f(); }
      * </code></pre>
      * ...which empirically seems worth it.
@@ -78,7 +74,7 @@ public class InlinerUtils
         // fallback call to block if desired
         final String call;
         {
-            if (fallbackToCall)
+            if (fallbackToCall && isImmediate(block))
             {
                 final Term body = new ApplyTerm(loc, block, TupleTerm.UNIT);
                 body.setType(resultType);
@@ -116,12 +112,12 @@ public class InlinerUtils
     }
 
     /**
-     * Convenience wrapper for {@link #formatBlockStmts(compile.gen.java.StatementFormatter, compile.term.Term, boolean)},
-     * passes true for fallbackToCall.
+     * true iff obtaining the value of the given term at runtime
+     * is guaranteed not to involve computation. Conservative
      */
-    static String formatBlockExpr(final StatementFormatter fmt, final Term block)
+    private static boolean isImmediate(final Term term)
     {
-        return formatBlockExpr(fmt, block, true);
+        return term instanceof RefTerm || term instanceof LambdaTerm;
     }
 
     /**
@@ -129,10 +125,10 @@ public class InlinerUtils
      * If successful, a string containing the generated code is
      * returned, otherwise null.
      *
-     * See {@link #formatBlockStmts(compile.gen.java.StatementFormatter, compile.term.Term, boolean)}
-     * for general details. An important difference here is that the
-     * expression (rather than statement) context prevents us from
-     * generating code containing multiple statements.
+     * First criterion for success concerns the term itself, as described
+     * in {@link #formatBlockStmts}. In an expression context, we also
+     * require that the body of a successfully dereferenced block consist
+     * of a single expression in generated code.
      */
     static String formatBlockExpr(final StatementFormatter fmt,
         final Term block, final boolean fallbackToCall)
@@ -146,15 +142,17 @@ public class InlinerUtils
         body.setType(resultType);
 
         final String call;
-        if (fallbackToCall)
         {
-            call = fmt.formatTermAs(body, resultType);
-        }
-        else
-        {
-            // note: still visit body to ensure codegen
-            fmt.formatTermAs(body, resultType);
-            call = null;
+            if (fallbackToCall && isImmediate(block))
+            {
+                call = fmt.formatTermAs(body, resultType);
+            }
+            else
+            {
+                // note: still visit body to ensure codegen
+                fmt.formatTermAs(body, resultType);
+                call = null;
+            }
         }
 
         // try to deref to a lambda literal, otherwise fall back
@@ -164,24 +162,22 @@ public class InlinerUtils
 
         // If dereferenced block consists of a single statement,
         // generate body code, otherwise fall back to call (or null).
-        if (blockDeref.getNonResultStatements().isEmpty())
-        {
-            // generate an expr from a single-statement lambda.
-            // formatter might not be in an expression context, so force it
-            // TODO add API to do this more cleanly
-            final boolean save = fmt.getInExpr();
-            fmt.setInExpr(true);
+        if (!blockDeref.getNonResultStatements().isEmpty())
+            return call;
 
-            final Term resultTerm = blockDeref.getResultStatement().getValue();
+        // generate an expr from a single-statement lambda.
+        // formatter might not be in an expression context, so force it
+        // TODO add API to do this more cleanly
+        final boolean save = fmt.getInExpr();
+        fmt.setInExpr(true);
 
-            final String bodyFmt = fmt.formatTermAs(resultTerm, resultType);
+        final Term resultTerm = blockDeref.getResultStatement().getValue();
 
-            fmt.setInExpr(save);
+        final String bodyFmt = fmt.formatTermAs(resultTerm, resultType);
 
-            return bodyFmt;
-        }
+        fmt.setInExpr(save);
 
-        return call;
+        return bodyFmt;
     }
 
     /**
