@@ -18,7 +18,7 @@ import compile.term.TupleTerm;
 import java.util.List;
 
 /**
- * Try inlining calls to {@link runtime.intrinsic.And}.
+ * Try inlining calls to {@link runtime.intrinsic._and}.
  *
  * @author Basil Hosmer
  */
@@ -34,13 +34,18 @@ public class AndInliner implements Inliner
         final String inlined;
         if (stmtsOkay)
         {
-            final String r = InlinerUtils.formatBlockStmts(fmt, args.get(1));
+            final String r = InlinerUtils.formatBlockStmts(fmt, args.get(1), true);
+            if (r == null)
+                return null;
 
             inlined = "if (" + l + ") { " + r + "; }";
         }
         else
         {
-            final String r = InlinerUtils.formatBlockExpr(fmt, args.get(1));
+            final String r = InlinerUtils.formatBlockExpr(fmt, args.get(1), true);
+            if (r == null)
+                return null;
+
             final String expr = "((" + l + ") && (" + r + "))";
 
             inlined = fmt.fixup(apply.getLoc(), expr, boolean.class);

@@ -19,7 +19,7 @@ import compile.type.Type;
 import java.util.List;
 
 /**
- * Try inlining calls to {@link runtime.intrinsic.Guard}.
+ * Try inlining calls to {@link runtime.intrinsic._guard}.
  *
  * @author Basil Hosmer
  */
@@ -41,13 +41,18 @@ public class GuardInliner implements Inliner
         final String inlined;
         if (stmtsOkay)
         {
-            final String block = InlinerUtils.formatBlockStmts(fmt, args.get(2));
+            final String block = InlinerUtils.formatBlockStmts(fmt, args.get(2), true);
+            if (block == null)
+                return null;
 
             inlined = "if (" + c + ") { " + def + "; } else { " + block + "; }";
         }
         else
         {
-            final String block = InlinerUtils.formatBlockExpr(fmt, args.get(2));
+            final String block = InlinerUtils.formatBlockExpr(fmt, args.get(2), true);
+            if (block == null)
+                return null;
+
             final String expr = "((" + c + ") ? (" + def + ") : (" + block + "))";
 
             inlined = fmt.fixup(apply.getLoc(), expr, applyType);

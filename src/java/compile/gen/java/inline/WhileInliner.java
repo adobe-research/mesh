@@ -18,7 +18,7 @@ import compile.term.TupleTerm;
 import java.util.List;
 
 /**
- * Try inlining calls to {@link runtime.intrinsic.While}.
+ * Try inlining calls to {@link runtime.intrinsic._while}.
  *
  * @author Basil Hosmer
  */

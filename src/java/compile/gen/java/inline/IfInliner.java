@@ -34,15 +34,25 @@ public class IfInliner implements Inliner
         final String inlined;
         if (stmtsOkay)
         {
-            final String t = InlinerUtils.formatBlockStmts(fmt, args.get(1));
-            final String f = InlinerUtils.formatBlockStmts(fmt, args.get(2));
+            final String t = InlinerUtils.formatBlockStmts(fmt, args.get(1), true);
+            if (t == null)
+                return null;
+
+            final String f = InlinerUtils.formatBlockStmts(fmt, args.get(2), true);
+            if (f == null)
+                return null;
 
             inlined = "if (" + c + ") { " + t + "; } else { " + f + "; }";
         }
         else
         {
-            final String t = InlinerUtils.formatBlockExpr(fmt, args.get(1));
-            final String f = InlinerUtils.formatBlockExpr(fmt, args.get(2));
+            final String t = InlinerUtils.formatBlockExpr(fmt, args.get(1), true);
+            if (t == null)
+                return null;
+
+            final String f = InlinerUtils.formatBlockExpr(fmt, args.get(2), true);
+            if (f == null)
+                return null;
 
             final String expr = "((" + c + ") ? (" + t + ") : (" + f + "))";
 

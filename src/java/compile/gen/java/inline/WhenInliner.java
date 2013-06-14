@@ -19,7 +19,7 @@ import compile.type.Types;
 import java.util.List;
 
 /**
- * Try inlining calls to {@link runtime.intrinsic.When}.
+ * Try inlining calls to {@link runtime.intrinsic._when}.
  *
  * @author Basil Hosmer
  */
@@ -34,9 +34,11 @@ public class WhenInliner implements Inliner
 
         final List<Term> args = ((TupleTerm)apply.getArg()).getItems();
         final String c = fmt.formatTermAs(args.get(0), boolean.class);
-        final String ufmt = fmt.formatTermAs(TupleTerm.UNIT, Types.unit());
 
-        final String block = InlinerUtils.formatBlockStmts(fmt, args.get(1));
+        final String block = InlinerUtils.formatBlockStmts(fmt, args.get(1), true);
+        if (block == null)
+            return null;
+
         return "if (" + c + ") { " + block + "; }";
     }
 }
