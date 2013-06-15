@@ -542,27 +542,13 @@ public final class Main
      */
     private void cmdPrintTypes(final String input)
     {
-        final int comment = input.indexOf("//");
-        final String exprs;
-        final List<String> comps;
-        if (comment >= 0)
-        {
-            exprs = input.substring(0, comment);
-            comps = Arrays.asList(input.substring(comment + 2).split(";"));
-        }
-        else
-        {
-            exprs = input;
-            comps = null;
-        }
-
-        if (exprs.length() > 0)
+        if (input.length() > 0)
         {
             Session.pushErrorCount();
 
             final Map<String, String> dumps =
                 shellScriptManager.dumpTypes(new Loc("<shell>"),
-                    new StringReader(exprs), shellConfig.getImports());
+                    new StringReader(input), shellConfig.getImports());
 
             if (Session.popErrorCount() == 0)
             {
@@ -574,49 +560,7 @@ public final class Main
 
                     System.out.println(valueDump + " : " + typeDump);
 
-                    if (comps != null)
-                    {
-                        final String comp = comps.size() > i ? comps.get(i).trim() : null;
-                        if (!typeDump.equals(comp))
-                        {
-                            Session.error(SHELL_LOC,
-                                "COMPARE ERROR $t: expected ''{0}'', got ''{1}''",
-                                comp, typeDump);
-                            compareErrors++;
-                        }
-                        else
-                        {
-                            Session.debug(SHELL_LOC,
-                                "$t ''{0}'' expected and got ''{1}''",
-                                valueDump, comp);
-                        }
-                    }
-
                     i++;
-                }
-            }
-            else
-            {
-                final String errorMsg = Session.getLastMessage();
-                if (comps != null)
-                {
-                    // TODO need @ERR token
-                    final String comp = comps.get(0).trim();
-
-                    if (comp.isEmpty() || !errorMsg.endsWith(comp))
-                    {
-                        Session.error(SHELL_LOC,
-                            "COMPARE ERROR $t: expected ''{0}'', got ''{1}''",
-                            comp, errorMsg);
-
-                        compareErrors++;
-                    }
-                    else if (Session.isDebug())
-                    {
-                        Session.debug(SHELL_LOC,
-                            "$t ''{0}'' expected and got ''{1}''",
-                            exprs.trim(), comp);
-                    }
                 }
             }
         }

@@ -12,6 +12,7 @@ package runtime.rep.list;
 
 import runtime.rep.Lambda;
 import runtime.rep.map.MapValue;
+import runtime.sys.ConfigUtils;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -24,6 +25,22 @@ import java.util.NoSuchElementException;
 public final class ChainedLists implements ListValue
 {
     /**
+     * Max list size to actually create new flat list--
+     * otherwise we virtualize over the original sublists
+     */
+    private static final int FLAT_MAX_SIZE =
+        ConfigUtils.parseIntProp(ChainedLists.class.getName() +
+            ".FLAT_MAX_SIZE", PersistentList.NODE_SIZE);
+
+    /**
+     * Max sublist average size to actually create new flat list--
+     * otherwise we virtualize over the original sublists
+     */
+    private static final int FLAT_MAX_SUBLIST_AVG =
+        ConfigUtils.parseIntProp(ChainedLists.class.getName() +
+            ".FLAT_MAX_SUBLIST_AVG", 2);
+
+    /**
      * take advantage of some degenerate cases
      */
     public static ListValue create(final ListValue lists)
@@ -35,46 +52,68 @@ public final class ChainedLists implements ListValue
             return ChainedListPair.create(
                 (ListValue)lists.get(0), (ListValue)lists.get(1));
 
-        int size = 0;
+        //int size = 0;
         boolean isreg = true;
 
         int necount = 0;
         int nefirst = -1;
 
+        int size = 0;
         final int bases[] = new int[nlists + 1];
         final int stride;
         {
-            int i = 0;
-            int lastsize = 0;
+            final Iterator<Object> iter = lists.iterator();
 
-            for (final Object list : lists)
+            if (iter.hasNext())
             {
-                bases[i] = size;
+                // first
+                bases[0] = 0;
 
-                final int cursize = ((ListValue)list).size();
-                final int nextbase = size + cursize;
+                final ListValue first = (ListValue)iter.next();
+                final int firstsize = first.size();
 
-                if (nextbase > size)
+                if (firstsize > 0)
                 {
-                    necount++;
-
-                    if (nefirst == -1)
-                        nefirst = i;
-
-                    if (i == 0)
-                        lastsize = cursize;
-                    else if (cursize != lastsize)
-                        isreg = false;
-
-                    size = nextbase;
+                    necount = 1;
+                    nefirst = 0;
                 }
 
-                i++;
+                size = firstsize;
+
+                // next
+                int i = 1;
+                while (iter.hasNext())
+                {
+                    bases[i] = size;
+
+                    final ListValue next = (ListValue)iter.next();
+                    final int nextsize = next.size();
+
+                    if (nextsize > 0)
+                    {
+                        necount++;
+
+                        if (nefirst == -1)
+                            nefirst = i;
+
+                        if (nextsize != firstsize)
+                            isreg = false;
+
+                        size += nextsize;
+                    }
+
+                    i++;
+                }
+
+                // last
+                bases[i] = size;
+                stride = isreg ? firstsize : -1;
             }
-
-            bases[i] = size;
-
-            stride = isreg ? lastsize : -1;
+            else
+            {
+                // empty
+                stride = 0;
+            }
         }
 
         switch (necount)
@@ -87,15 +126,49 @@ public final class ChainedLists implements ListValue
 
             default:
             {
-                if (necount == nlists)
+                if (!isreg &&
+                    size <= FLAT_MAX_SIZE &&
+                    necount / size <= FLAT_MAX_SUBLIST_AVG)
                 {
+                    // if a list is irregular, below the threshold size, and has
+                    // an average sublist size below the threshold size, then we
+                    // actually make a new flat list and copy the elements.
+
+                    final PersistentList flat = PersistentList.alloc(size);
+
+                    int i = 0;
+                    int j = 0;
+
+                    for (final Object list : lists)
+                    {
+                        if (bases[i + 1] > bases[i])
+                        {
+                            for (final Object obj : (ListValue)list)
+                                flat.updateUnsafe(j++, obj);
+                        }
+
+                        i++;
+                    }
+
+                    return flat;
+                }
+                else if (necount == nlists)
+                {
+                    // no empty sublists, create a matrix or chained list
+                    // directly over incoming list of lists.
                     // note: we took care of the pair case up top
+
                     return isreg ? new MatrixList(lists, stride) :
                         new ChainedLists(lists, bases);
-
                 }
                 else
                 {
+                    // empty sublists: make a compressed list of lists and
+                    // create new chain or matrix over the.
+                    // TODO could try only compressing if there are more
+                    // empties than a certain threshold, I guess... main
+                    // reason to compress is better get() performance
+
                     final PersistentList nelists =
                         PersistentList.alloc(necount);
 

@@ -14,18 +14,17 @@ import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Lambda;
 import runtime.rep.Tuple;
 import runtime.tran.Box;
+import runtime.tran.TransactionManager;
 
 /**
- * Remove a watcher function from a box.
- * Function equality is identity, so you need to pass
- * the watcher function itself.
+ * Add a watcher to a box, return watcher.
  *
  * @author Basil Hosmer
  */
-public final class _unwatch extends IntrinsicLambda
+public final class _react extends IntrinsicLambda
 {
-    public static final _unwatch INSTANCE = new _unwatch();
-    public static final String NAME = "unwatch";
+    public static final _react INSTANCE = new _react();
+    public static final String NAME = "react";
 
     public String getName()
     {
@@ -38,11 +37,18 @@ public final class _unwatch extends IntrinsicLambda
         return invoke((Box)args.get(0), (Lambda)args.get(1));
     }
 
-    public static Box invoke(final Box box, final Lambda watcher)
+    public static Lambda invoke(final Box box, final Lambda reactor)
     {
-        box.acquireWriteLock();
-        box.removeWatcher(watcher);
-        box.releaseWriteLock();
-        return box;
+        TransactionManager.apply(new Lambda()
+        {
+            public Object apply(final Object unit)
+            {
+                TransactionManager.own(box);
+                box.addReactor(reactor);
+                return null;
+            }
+        });
+
+        return reactor;
     }
 }

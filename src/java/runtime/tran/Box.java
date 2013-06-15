@@ -10,9 +10,9 @@
  */
 package runtime.tran;
 
-import runtime.sys.Logging;
 import runtime.rep.Lambda;
 import runtime.rep.map.PersistentMap;
+import runtime.sys.Logging;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -56,11 +56,8 @@ public final class Box
 
     /**
      * Set of watcher functions to be notified on value changes.
-     * {@link #addWatcher} and {@link #removeWatcher} will be called
-     * concurrently by e.g. {@link runtime.intrinsic.tran._watch},
-     * {@link Waiter#start}
      */
-    private PersistentMap watchers;
+    private PersistentMap reactors;
 
     /**
      * Note that Boxes are never without a current value.
@@ -72,7 +69,7 @@ public final class Box
         this.owner = null;
         this.queuedOwner = null;
         this.lock = new ReentrantReadWriteLock();
-        this.watchers = PersistentMap.EMPTY;
+        this.reactors = PersistentMap.EMPTY;
 
         // behave as if owned by a transaction that created us.
         final Transaction tran = TransactionManager.getTransaction();
@@ -198,30 +195,29 @@ public final class Box
      * Returns current watcher map.
      * Caler must have read or write lock.
      */
-    PersistentMap getWatchers()
+    PersistentMap getReactors()
     {
-        return watchers;
+        return reactors;
     }
 
     /**
-     * Add a watcher function, with associated cargo value to be
-     * passed as additional argument when watcher is called.
-     * Caller of this method must have write lock.
+     * Add a reactor function, with no associated value.
+     * Call must occur within a transaction in the current thread.
      */
-    public void addWatcher(final Lambda key, final Watcher watcher)
+    public void addReactor(final Lambda reactor)
     {
-        assertWriteLock();
-        watchers = watchers.assoc(key, watcher);
+        assertOwned();
+        reactors = reactors.assoc(reactor, null);
     }
 
     /**
-     * Remove a watcher function.
-     * Caller must have write lock.
+     * Remove a reactor function.
+     * Call must occur within a transaction in the current thread.
      */
-    public void removeWatcher(final Lambda key)
+    public void removeReactor(final Lambda reactor)
     {
-        assertWriteLock();
-        watchers = watchers.unassoc(key);
+        assertOwned();
+        reactors = reactors.unassoc(reactor);
     }
 
     /**
@@ -371,19 +367,10 @@ public final class Box
     /**
      * Assert that the current thread owns the write lock
      */
-    void assertWriteLock()
+    void assertOwned()
     {
-        assert lock.isWriteLockedByCurrentThread() :
-            "Current thread must be holding the write lock";
+        assert TransactionManager.inTransaction() &&
+            owner == TransactionManager.getTransaction().attempt :
+            "box must be owned by transaction in current thread";
     }
-
-    /**
-     * Assert that a read lock is held (by any thread)
-     */
-    void assertReadLock()
-    {
-        assert lock.getReadHoldCount() > 0 :
-            "Current thread must be holding the read lock";
-    }
-
 }

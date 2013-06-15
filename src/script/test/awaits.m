@@ -13,6 +13,7 @@ running = box(nof_threads);
 ctask() {
     spawn {
         print(taskid(), "started");
+
         while({!get(done)}, {
             sleep(rand(100));
 
@@ -24,7 +25,7 @@ ctask() {
 
             // respond
             (*done &&
-                { print(taskid(), "done"); true}) ||
+                { print(taskid(), "done"); true }) ||
             { !choice &&
                 { tau(a, {$0 > 0}, dec).0 } &&
                 { print(taskid(), "consumed a, boxes:", a, b); true } } ||
@@ -35,6 +36,8 @@ ctask() {
               false
             }
         });
+
+        // decrement running task count
         update(running, dec);
     }
 };
@@ -46,7 +49,7 @@ repeat(nof_threads, ctask);
 puts((a, b), (400, 400));
 print("produced");
 
-// wait a while, then kill tasks
+// wait a while, then set kill switch, then wait until they've all exited
 sleep(1000);
 put(done, true);
 await(running, { $0 == 0 });

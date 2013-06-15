@@ -66,13 +66,31 @@ public class Compiler
         if (unit == null)
             return null;
 
-        compiler.unitDictionary.add(unit);
+        getThreadLocal().unitDictionary.add(unit);
         return unit;
     }
 
     /**
+     * Build a module from script input obtained via gien reader.
+     * Extra imports are prepended to parsed input.
+     * Built module or null is returned.
+     */
+    public static Module analyzeScript(
+        final Loc loc, final Reader reader, final String name,
+        final List<ImportStatement> imports)
+    {
+        final List<Statement> stmts = RatsScriptParser.parseScript(reader, loc);
+        if (stmts == null)
+            return null;
+
+        return getThreadLocal().buildModule(loc, name, prependImports(imports, stmts));
+    }
+
+    /**
      * Compile a unit from shell input. Shell input differs from standard
-     * script code as described in {@link #analyzeShellInput}.
+     * script code in two ways: a) unbound-value statements are implicitly
+     * wrapped in a print() call. b) an extra list of imports is prepended,
+     * supplying the shell input with definitions introduced interactively.
      * Unit or null is returned. Like units compiled from scripts, a
      * successfully compiled unit is cached in {@link #unitDictionary}
      */
@@ -80,11 +98,16 @@ public class Compiler
         final Loc loc, final Reader reader, final String name,
         final List<ImportStatement> imports)
     {
-        final Module module = analyzeShellInput(loc, reader, name, imports);
-        if (module == null)
+        final List<Statement> stmts = RatsShellScriptParser.parseScript(reader, loc);
+        if (stmts == null)
             return null;
 
         final Compiler compiler = getThreadLocal();
+
+        final Module module =
+            compiler.buildModule(loc, name, prependImports(imports, stmts));
+        if (module == null)
+            return null;
 
         final Unit unit = UnitBuilder.build(module, compiler.unitDictionary);
         if (unit == null)
@@ -93,24 +116,6 @@ public class Compiler
         // add unit to session-wide dictionary and return
         compiler.unitDictionary.add(unit);
         return unit;
-    }
-
-    /**
-     * Build a module from shell input text. Shell input differs from
-     * standard script input in two ways: a) unbound-value statements
-     * are implicitly wrapped in a print() call. b) an extra list of
-     * imports is prepended, supplying the shell input with definitions
-     * introduced interactively. Built module or null is returned.
-     */
-    public static Module analyzeShellInput(
-        final Loc loc, final Reader reader, final String name,
-        final List<ImportStatement> imports)
-    {
-        final List<Statement> stmts = RatsShellScriptParser.parseScript(reader, loc);
-        if (stmts == null)
-            return null;
-
-        return getThreadLocal().buildModule(loc, name, prependImports(imports, stmts));
     }
 
     /**

@@ -122,11 +122,11 @@ cycle(phil:*Phil, retryMillis:Int, eatMillis:Int, thinkMillis:Int)
 };
 
 // print status based on delta between old, new Phil states
-status(old:Phil, new:Phil)
+status(p : Phil)
 {
-    print(new.name,
-        iif(new.eating, "starts eating", "back to thinking"),
-        "food:", new.food)
+    print(p.name,
+        iif(p.eating, "starts eating", "back to thinking"),
+        "food:", p.food)
 };
 
 // ----------------------------------
@@ -158,7 +158,7 @@ init_phil(name, forkix)
 phils:[*Phil] = zip(names, count(nphils)) | init_phil;
 
 // set watcher to print status on phil state change
-for(phils, { watch($0, status) });
+for(phils, { react($0, status) });
 
 // start a task running cycle() on the given phil
 startPhil(p:*Phil) { spawn { cycle(p, 5, 100, 100) } };

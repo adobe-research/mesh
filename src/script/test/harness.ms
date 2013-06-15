@@ -68,5 +68,4 @@ $clear
 // $load test.test_imports
 // $clear
 
-$load test.watches
 $quit

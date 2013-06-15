@@ -12,9 +12,11 @@ package runtime.tran;
 
 import runtime.rep.Lambda;
 import runtime.rep.Tuple;
+import runtime.rep.map.PersistentMap;
 import runtime.sys.ConfigUtils;
 import runtime.sys.Logging;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -126,12 +128,6 @@ final class Transaction
     private int pinnedCount = 0;
     private Box[] pinned = new Box[PINNED_CHUNK_SIZE];
 
-    /**
-     * used to provide multiwatcher/waiter functions access
-     * to current commit set, via {@link #getUpdatedStash()}
-     */
-    private Box[] updatedStash = null;
-
     //
     // TransactionManager API
     //
@@ -185,7 +181,7 @@ final class Transaction
     private Object run(final Box box, final Lambda f, final Object val)
     {
         // events to be fired after a successful commit.
-        ChangeEvent event = null;
+        ArrayList<ChangeEvent> events = null;
 
         // holds the result of the transactional operation, per above
         Object result = null;
@@ -277,7 +273,7 @@ final class Transaction
                             put(box, val);
 
                 // commit box updates and collect change events
-                event = commit();
+                events = commit();
 
                 // all done, proceed to finally for cleanup
                 retry = false;
@@ -326,37 +322,11 @@ final class Transaction
                     MAX_ATTEMPTS);
 
         // fire accumulated change events
-        if (event != null)
-            event.fire();
+        if (events != null)
+            fireEvents(events);
 
         // return user function's result
         return result;
-    }
-
-    /**
-     * stashes a copy of the current {@link #updated} box array
-     * to {@link #updatedStash}.
-     */
-    private void stashUpdated()
-    {
-        updatedStash = Arrays.copyOf(updated, updated.length);
-    }
-
-    /**
-     * clear {@link #updatedStash}
-     */
-    private void unstashUpdated()
-    {
-        updatedStash = null;
-    }
-
-    /**
-     * package local: provides {@link #updatedStash} access to
-     * multiwatcher/waiter functions
-     */
-    Box[] getUpdatedStash()
-    {
-        return updatedStash;
     }
 
     /**
@@ -403,7 +373,7 @@ final class Transaction
      * so we are not guaranteed to run exactly the watchers present
      * at commit time.
      */
-    private ChangeEvent commit()
+    private ArrayList<ChangeEvent> commit()
     {
         final int n = updatedCount;
 
@@ -415,27 +385,31 @@ final class Transaction
 
         final long commitTick = getTick();
 
-        boolean needsChangeEvent = false;
+        ArrayList<ChangeEvent> events = null;
 
         for (int i = 0; i < n; i++)
         {
             final Box box = updated[i];
 
-            final Object newValue = updates[i];
-            assert newValue != null;
+            final Object value = updates[i];
+            assert value != null;
 
-            box.commit(newValue, commitTick);
+            box.commit(value, commitTick);
 
-            needsChangeEvent |= box.getWatchers() != null;
+            final PersistentMap reactors = box.getReactors();
+            if (reactors != null)
+            {
+                if (events == null)
+                    events = new ArrayList<ChangeEvent>();
+
+                events.add(new ChangeEvent(reactors, value));
+            }
         }
 
         for (int j = n - 1; j >= 0; j--)
             updated[j].releaseWriteLock();
 
-        if (needsChangeEvent)
-            return new ChangeEvent(updated, updates, updatedCount);
-        else
-            return null;
+        return events;
     }
 
     /**
@@ -471,6 +445,18 @@ final class Transaction
         catch (InterruptedException ignored)
         {
         }
+    }
+
+    /**
+     * Run watcher functions collected during commit.
+     * Watchers are currently run on the transaction's
+     * thread.
+     * TODO formalize whether that's a guarantee or not.
+     */
+    private static void fireEvents(final ArrayList<ChangeEvent> events)
+    {
+        for (final ChangeEvent event : events)
+            event.fire();
     }
 
     /**

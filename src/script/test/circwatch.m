@@ -5,8 +5,8 @@
 b = box(0);
 done = box(false);
 
-watch(b, { o, n =>
-    print(taskid(), o, n, b);
+react(b, { v =>
+    print(taskid(), v, b);
     when(n < 10000, { update(b, inc) });
     when(n == 10000, { put(done, true) })
 });

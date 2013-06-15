@@ -39,7 +39,7 @@ public class ForInliner implements Inliner
         final Term iterArg = args.get(0);
         final Term bodyArg = args.get(1);
 
-        // To inline down to a for loop, we need to know a) that iterArg is
+        // To inline down to a for loop, a) we need to know that iterArg is
         // a list of contiguous integers, b) we need to be able to express
         // the list's initial and final values, and c) we need to know the
         // sign of their difference, to establish loop direction.

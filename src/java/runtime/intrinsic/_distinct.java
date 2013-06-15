@@ -10,21 +10,21 @@
  */
 package runtime.intrinsic;
 
-import com.google.common.collect.Sets;
 import runtime.rep.list.ListValue;
 import runtime.rep.list.PersistentList;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * Return sublist of unique items from list.
- * Like {@link Unique}, but order preserving.
+ * Like {@link _unique}, but order preserving.
  *
  * @author Basil Hosmer
  */
 public final class _distinct extends IntrinsicLambda
 {
-    public static final _distinct INSTANCE = new _distinct(); 
+    public static final _distinct INSTANCE = new _distinct();
     public static final String NAME = "distinct";
 
     public String getName()
@@ -40,7 +40,7 @@ public final class _distinct extends IntrinsicLambda
     public static ListValue invoke(final ListValue list)
     {
         ListValue result = PersistentList.EMPTY;
-        final Set<Object> items = Sets.newHashSet();
+        final Set<Object> items = new HashSet<Object>();
 
         for (final Object item : list)
         {

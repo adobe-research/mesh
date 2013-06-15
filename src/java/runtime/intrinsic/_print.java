@@ -13,7 +13,7 @@ package runtime.intrinsic;
 import runtime.rep.Tuple;
 
 /**
- * print(x) == {@link PrintStr printstr}({@link ToStr tostr}(x))
+ * print(x) == {@link _printstr}({@link _tostr}(x))
  *
  * @author Basil Hosmer
  */
