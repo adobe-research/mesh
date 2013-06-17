@@ -103,7 +103,7 @@ intrinsic <T> if(c : Bool, y : () -> T, z : () -> T) -> T;
 {
     n = size(cases);
     c = cycle(0, { i => i < n && { !cases[i].0() } }, inc);
-    if(c == n, default, cases[c].1)
+    if(c == n, default, { cases[c].1() })
 };
 
 /**
