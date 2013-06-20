@@ -2730,11 +2730,11 @@ intrinsic taskid() -> Long;
 /**
  * Transactional wait/notify.
  * await(box, pred) puts current task into wait state until/unless
- * pred(get(box)) returns true. pred(v) is called each time a value
- * is committed to box b.
+ * pred(*box) returns true. pred is called exactly once for each
+ * value committed to box.
  *
  * Note that in the presence of concurrent modifications to b, there
- * is no guarantee that *b == v remains true at the time p(v) runs.
+ * is no guarantee that *b  == v remains true at the time p(v) runs.
  * I.e., the call to p(v) occurs *after* the transaction that commits
  * v to b.
  *
@@ -2744,17 +2744,17 @@ intrinsic taskid() -> Long;
 intrinsic <T> await(b : *T, p : T -> Bool) -> ();
 
 /**
- * Transactional wait/notify.
- * awaits((boxes), pred) puts current thread into wait state
- * until/unless pred(gets(boxes)) returns true. pred() is
- * called each time a value is committed to one of the boxes.
+ * Transactional wait/notify on multiple boxes.
+ * awaits(boxes, preds) puts current thread into wait state
+ * until/unless p(*b) returns true for some b in boxes and
+ * corresponding p in preds. p(*b) is called exactly once
+ * for each value committed to b.
  *
  * TODO describe (non)guarantee
  *
  * @param bs tuple of boxes
  * @param p predicate
  */
-// intrinsic <Ts:[*]> awaits(bs : Tup(Ts | Box), p : Tup(Ts) -> Bool) -> ();
 intrinsic <Ts:[*]> awaits(bs : Tup(Ts | Box), p : Tup(Ts | Pred)) -> ();
 
 /**
