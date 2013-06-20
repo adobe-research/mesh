@@ -298,7 +298,7 @@ public final class LambdaClassGenerator extends ClassGenerator
         // if lambda returns unit, add a final unit-returning statement.
         // this allows CG inliner to generate imperative form of original
         // final statement
-        if (resultType.equals(Types.unit()))
+        if (resultType.equals(Types.UNIT))
         {
             final UnboundTerm result = lambdaTerm.getResultStatement();
 

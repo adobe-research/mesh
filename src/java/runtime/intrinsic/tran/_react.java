@@ -17,7 +17,7 @@ import runtime.tran.Box;
 import runtime.tran.TransactionManager;
 
 /**
- * Add a watcher to a box, return watcher.
+ * Add a reactor to a box and return it.
  *
  * @author Basil Hosmer
  */

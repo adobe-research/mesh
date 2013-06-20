@@ -28,7 +28,7 @@ produce(c, q, n, f)
 {
     nf(l) { size(l) < n };
     while({*c}, {
-        awaits((c, q), { b, l => !b || {nf(l)} });
+        awaits((c, q), (not, nf));
         when(*c, {
             v = f();
             while({*c && {
@@ -58,7 +58,7 @@ consume(c, q, f)
 {
     ne(l) { size(l) > 0 };
     while({*c}, {
-        awaits((c, q), { b, l => !b || {ne(l)} });
+        awaits((c, q), (not, ne));
         when(*c, {
             (b, l) = tau(q, ne, rest);
             when(b, { f(first(l)) })

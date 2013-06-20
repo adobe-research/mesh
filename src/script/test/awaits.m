@@ -18,7 +18,12 @@ ctask() {
             sleep(rand(100));
 
             // wait until done or some box is > 0
-            awaits((done, a, b), { b, i, j => b || { i + j > 0 } });
+            // awaits((done, a, b), { b, i, j => b || { i + j > 0 } });
+            awaits((done, a, b), (
+                { $0 },
+                { $0 > 0 },
+                { $0 > 0 }
+            ));
 
             // choose which box to consume from
             choice = rand(100) > 50;

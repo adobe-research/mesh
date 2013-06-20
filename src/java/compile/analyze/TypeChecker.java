@@ -543,7 +543,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
             final Type type = lambda.getType();
 
             // check that functions from unit don't have a declared param
-            if (Types.funParam(type) == Types.unit())
+            if (Types.funParam(type) == Types.UNIT)
             {
                 if (lambda.getParams().size() > 0)
                 {
@@ -1242,7 +1242,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                         "structure addressing argument {0} is not constant",
                         arg.dump());
 
-                    resultType = Types.unit();
+                    resultType = Types.UNIT;
                 }
                 else if (Types.isRec(baseType))
                 {
@@ -1269,7 +1269,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                             Session.error(arg.getLoc(), "invalid key {0} for record {1}",
                                 argDeref.dump(), base.dump());
 
-                            resultType = Types.unit();
+                            resultType = Types.UNIT;
                         }
                     }
                     else
@@ -1279,7 +1279,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                             errorFormat(keyBaseType).dump(),
                             errorFormat(argType).dump());
 
-                        resultType = Types.unit();
+                        resultType = Types.UNIT;
                     }
                 }
                 else if (Types.isTup(baseType))
@@ -1296,7 +1296,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                             "address argument is of type {0}, must be of type Int",
                             errorFormat(argType).dump());
 
-                        resultType = Types.unit();
+                        resultType = Types.UNIT;
                     }
                     else
                     {
@@ -1316,7 +1316,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                                 .error(arg.getLoc(), "invalid position {0} for tuple {1}",
                                     argDeref.dump(), base.dump());
 
-                            resultType = Types.unit();
+                            resultType = Types.UNIT;
                         }
                     }
                 }
@@ -1328,7 +1328,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                             "address argument is of type {0}, must be of type Int",
                             errorFormat(argType).dump());
 
-                        resultType = Types.unit();
+                        resultType = Types.UNIT;
                     }
                     else
                     {
@@ -1361,7 +1361,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
 
             default:
             {
-                resultType = Types.unit();
+                resultType = Types.UNIT;
                 assert false;
             }
         }

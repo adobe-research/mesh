@@ -10,10 +10,9 @@
  */
 package compile;
 
-import com.google.common.collect.Lists;
 import compile.analyze.ModuleAnalyzer;
-import compile.gen.UnitBuilder;
 import compile.gen.Unit;
+import compile.gen.UnitBuilder;
 import compile.gen.UnitDictionary;
 import compile.module.Module;
 import compile.parse.RatsScriptParser;
@@ -22,7 +21,9 @@ import compile.term.ImportStatement;
 import compile.term.Statement;
 
 import java.io.Reader;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Compiler top-level entry points.

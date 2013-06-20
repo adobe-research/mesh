@@ -116,10 +116,9 @@ public final class TypeReducer extends TypeTransformerBase
 
                     if (keyEnum.getSize() != valTypeList.size())
                     {
-                        if (Session.isDebug())
-                            Session.debug(loc,
-                                "Assoc: size mismatch between type map key enum {0}, val type list {1}",
-                                keyType.dump(), valTypes.dump());
+                        Session.error(loc,
+                            "Assoc: size mismatch between type map key enum {0}, val type list {1}",
+                            keyType.dump(), valTypes.dump());
 
                         return null;
                     }

@@ -51,13 +51,7 @@ public final class _await extends IntrinsicLambda
     }
 
     /**
-     * For a given box,
-     * our method {@link #await(runtime.rep.Lambda)} implements
-     * await(box, pred) by by attaching ourselves as a watcher to the box,
-     * then doing a thread wait until pred(val) returns true on box commit.
-     * (We remove ourselves from the box's watcher list before returning.)
      *
-     * @author Basil Hosmer
      */
     private static final class Waiter implements Lambda
     {
@@ -78,8 +72,7 @@ public final class _await extends IntrinsicLambda
         public synchronized void await(final Lambda pred)
         {
             // within a transaction, test predicate and (if it doesn't pass)
-            // add ourselves as a reactor. Because our apply queues updates,
-            // we're guaranteed not to lose any between our commit and
+            // add ourselves as a reactor.
 
             if ((Boolean)TransactionManager.apply(new Lambda() {
 
@@ -104,11 +97,11 @@ public final class _await extends IntrinsicLambda
                 Object val;
                 do
                 {
-                    if (updates.isEmpty())
+                    while (updates.isEmpty())
                     {
                         try
                         {
-                                wait();
+                            wait();
                         }
                         catch (InterruptedException e)
                         {

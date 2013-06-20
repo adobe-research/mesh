@@ -23,22 +23,6 @@ import java.util.*;
  */
 public final class Types
 {
-    /**
-     * Unit type is the 0-width tuple.
-     * Accessed through {@link #unit} and initialized lazily
-     */
-
-    public static Type unit()
-    {
-        /*
-        if (UNIT == null)
-            UNIT = tup();
-
-        return UNIT;
-        */
-        return UNIT;
-    }
-
     // TODO: consider getting rid of these statics and using the IntrinsicType
     // instances directily.
     //
@@ -82,6 +66,9 @@ public final class Types
 
     public static final TypeCons ASSOC = findIntrinsicCons("Assoc");
 
+    /**
+     * Unit is the 0-tuple, an application of the Tup type constructor
+     */
     public static final Type UNIT = findIntrinsic("Unit");
 
     /**

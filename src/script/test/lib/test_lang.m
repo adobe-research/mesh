@@ -1769,48 +1769,27 @@ assert_equals({ 5 }, {
                     *awaitdata;
                     });
 
-// awaits : (T.. => (Tup(Box @ T), Tup(T) -> Bool) -> ()) = <intrinsic>
-assert_equals({ 10 }, {
+// awaits
+assert_equals({ true }, {
                     awaitdata1 = box(0);
                     awaitdata2 = box(0);
 
                     spawn { while({ *awaitdata1 < 5 }, { sleep(rand(100)); awaitdata1 <- inc }); };
                     spawn { while({ *awaitdata2 < 5 }, { sleep(rand(100)); awaitdata2 <- inc }); };
 
-                    awaits( (awaitdata1, awaitdata2), {
-                                        a, b => a+b == 10;
-                                        });
-                    *awaitdata1 + *awaitdata2;
+                    awaits((awaitdata1, awaitdata2), ({ $0 == 5 }, { $0 == 5 }));
+                    *awaitdata1 == 5 || { *awaitdata2 == 5 }
                     });
-/* FIXME: This test does not work properly
-assert_equals({ 10 }, {
+
+assert_equals({ true }, {
                     awaitdata1 = box(0);
                     awaitdata2 = box(0);
 
                     spawn { while({ *awaitdata1 < 5 }, { sleep(rand(100)); awaitdata1 <- inc }); };
                     spawn { while({ *awaitdata2 < 5 }, { sleep(rand(100)); awaitdata2 <- inc }); };
 
-                    do {
-                        awaits( (awaitdata1, awaitdata2), {
-                                        a, b => a+b == 10;
-                                        });
-                        };
-                    *awaitdata1 + *awaitdata2;
-                    });
-*/
-assert_equals({ 10 }, {
-                    awaitdata1 = box(0);
-                    awaitdata2 = box(0);
-
-                    spawn { while({ *awaitdata1 < 5 }, { sleep(rand(100)); awaitdata1 <- inc }); };
-                    spawn { while({ *awaitdata2 < 5 }, { sleep(rand(100)); awaitdata2 <- inc }); };
-
-                    apply(awaits,   (
-                                    (awaitdata1, awaitdata2), {
-                                        a, b => a+b == 10;
-                                        })
-                                    );
-                    *awaitdata1 + *awaitdata2;
+                    apply(awaits, ((awaitdata1, awaitdata2), ({ $0 == 5 }, { $0 == 5 })));
+                    *awaitdata1 == 5 || { *awaitdata2 == 5 }
                     });
 
 // react : <T, X> (*T, T -> X) -> (T -> X)

@@ -51,6 +51,8 @@ intrinsic type TMap;        // type-level map: TMap(<type list>, <type construct
 intrinsic type Index;       // experimental
 intrinsic type Assoc;       // experimental
 
+type Pred(T) = T -> Bool;
+
 
 // ------------------------------------------------------------------
 
@@ -2752,7 +2754,8 @@ intrinsic <T> await(b : *T, p : T -> Bool) -> ();
  * @param bs tuple of boxes
  * @param p predicate
  */
-intrinsic <Ts:[*]> awaits(bs : Tup(Ts | Box), p : Tup(Ts) -> Bool) -> ();
+// intrinsic <Ts:[*]> awaits(bs : Tup(Ts | Box), p : Tup(Ts) -> Bool) -> ();
+intrinsic <Ts:[*]> awaits(bs : Tup(Ts | Box), p : Tup(Ts | Pred)) -> ();
 
 /**
  * Attach a reactor to a box. reactor is called whenever a value is

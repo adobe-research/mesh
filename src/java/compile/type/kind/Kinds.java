@@ -66,7 +66,7 @@ public class Kinds
         new ArrowKind(new TupleKind(STAR_LIST, STAR_LIST), STAR_LIST);
 
     // associates *values* of a key type with a list of value *types*.
-    // what we want really is an enum kind for the first argument.
+    // TODO what we want really is an enum kind for the first argument.
     public static ArrowKind TYPE_ASSOC_KIND =
         new ArrowKind(new TupleKind(STAR, STAR_LIST), STAR_MAP);
 
