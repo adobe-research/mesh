@@ -37,9 +37,7 @@ public final class _logerror extends IntrinsicLambda
 
     public static Tuple invoke(final Object obj)
     {
-        // Need to escape the {} in the log message as we want them treated as strings
-        // not as FormatElements for the MessageFormat.
-        Logging.error(_tostr.invoke(obj).replaceAll("[{]", "'{'").replaceAll("[{]", "'}'"));
+        Logging.error("{0}", _tostr.invoke(obj));
         return Tuple.UNIT;
     }
 }

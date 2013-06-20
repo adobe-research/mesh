@@ -149,11 +149,11 @@ public final class _awaits extends IntrinsicLambda
             {
                 public Object apply(final Object val)
                 {
-                    updates.add(val);
-                    indexes.add(index);
-
                     synchronized (MultiWaiter.this)
                     {
+                        updates.add(val);
+                        indexes.add(index);
+
                         MultiWaiter.this.notify();
                     }
 

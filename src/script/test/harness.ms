@@ -9,8 +9,8 @@ $clear
 $load test.cbuf
 $clear
 
-// TODO uncomment or remove permanently
-//$load test.circwatch
+// TODO reinstate once we guard for self-provoking reactors
+//$load test.circreact
 //$clear
 
 $load test.decompa
