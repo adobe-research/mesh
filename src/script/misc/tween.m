@@ -70,12 +70,12 @@ tween(box, goal, duration, twf)
 
 //
 // establish a tweening dependency between source and sink boxes.
-// returns watch function, which can be unwatch()ed on source
+// returns reactor function, which can be unreact()ed on source
 //
 twdep(source, sink, duration, twf)
 {
-    tw(oldv, newv) { tween(sink, newv, duration, twf) };
-    watch(source, tw);
+    tw(v) { tween(sink, v, duration, twf) };
+    react(source, tw);
     tw
 };
 

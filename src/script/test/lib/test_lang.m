@@ -1721,15 +1721,6 @@ assert_equals({ 1 }, {
                     *track;
                     });
 
-// deps = { sources, f => sink = box(f(map(sources, get))); updater = { v => do({ put(sink, f(map(sources, get))); () }); () }; map(sources, { $0_305_15 => react($0_305_15, updater) }); sink }
-assert_equals({ 3 }, {
-                    x = box(0);
-                    y = box(1);
-                    z = deps([x, y], sum);
-                    x := 2; // z should now be sum(2, 1)
-                    *z;
-                    });
-
 // async = { f, cb => spawn({ cb(f()) }); () }
 // TODO
 
@@ -1778,168 +1769,74 @@ assert_equals({ 5 }, {
                     *awaitdata;
                     });
 
-// awaits : (T.. => (Tup(Box @ T), Tup(T) -> Bool) -> ()) = <intrinsic>
-assert_equals({ 10 }, {
+// awaits
+assert_equals({ true }, {
                     awaitdata1 = box(0);
                     awaitdata2 = box(0);
 
                     spawn { while({ *awaitdata1 < 5 }, { sleep(rand(100)); awaitdata1 <- inc }); };
                     spawn { while({ *awaitdata2 < 5 }, { sleep(rand(100)); awaitdata2 <- inc }); };
 
-                    awaits( (awaitdata1, awaitdata2), {
-                                        a, b => a+b == 10;
-                                        });
-                    *awaitdata1 + *awaitdata2;
+                    awaits((awaitdata1, awaitdata2), ({ $0 == 5 }, { $0 == 5 }));
+                    *awaitdata1 == 5 || { *awaitdata2 == 5 }
                     });
-/* FIXME: This test does not work properly
-assert_equals({ 10 }, {
+
+assert_equals({ true }, {
                     awaitdata1 = box(0);
                     awaitdata2 = box(0);
 
                     spawn { while({ *awaitdata1 < 5 }, { sleep(rand(100)); awaitdata1 <- inc }); };
                     spawn { while({ *awaitdata2 < 5 }, { sleep(rand(100)); awaitdata2 <- inc }); };
 
-                    do {
-                        awaits( (awaitdata1, awaitdata2), {
-                                        a, b => a+b == 10;
-                                        });
-                        };
-                    *awaitdata1 + *awaitdata2;
-                    });
-*/
-assert_equals({ 10 }, {
-                    awaitdata1 = box(0);
-                    awaitdata2 = box(0);
-
-                    spawn { while({ *awaitdata1 < 5 }, { sleep(rand(100)); awaitdata1 <- inc }); };
-                    spawn { while({ *awaitdata2 < 5 }, { sleep(rand(100)); awaitdata2 <- inc }); };
-
-                    apply(awaits,   (
-                                    (awaitdata1, awaitdata2), {
-                                        a, b => a+b == 10;
-                                        })
-                                    );
-                    *awaitdata1 + *awaitdata2;
+                    apply(awaits, ((awaitdata1, awaitdata2), ({ $0 == 5 }, { $0 == 5 })));
+                    *awaitdata1 == 5 || { *awaitdata2 == 5 }
                     });
 
-// react = { b, f => watch(b, { old, new => f(new) }) }
+// react : <T, X> (*T, T -> X) -> (T -> X)
 assert_equals({ 2 }, { 
                     status = box(0);
-                    stat(new) { put(status, new) };
+                    stat(v) { put(status, v) };
                     f = box(0);
                     w = react(f, stat);
                     f <- inc;
                     f <- inc;
-                    unwatch(f, w);
+                    unreact(f, w);
                     *status;
                      });
-
-// reacts = { b, f => watches(b, { old, new => f(new) }) }
-assert_equals({ 3 }, { 
-                    status = box(0);
-                    stat(new:(Int,Int)) { put(status, new.0 + new.1) };
-                    (f, g) = boxes(0, 1);
-                    w = reacts((f,g), stat);
-                    f <- inc;
-                    g <- inc;
-                    unwatches((f,g), w);
-                    *status;
-                     });
-
-
-// unwatch : (T, X => (*T, (T, T) -> X) -> *T) = <intrinsic>
 assert_equals({ 2 }, {
                     status = box(0);
-                    stat(old, new) { put(status, new) };
+                    stat(v) { put(status, v) };
                     f = box(0);
-                    w = watch(f, stat);
-                    f <- inc;
-                    f <- inc;
-                    unwatch(f, w);
-                    f <- inc;
-                    *status;
-                });
-assert_equals({ 2 }, {
-                    status = box(0);
-                    stat(old, new) { put(status, new) };
-                    f = box(0);
-                    w = watch(f, stat);
-                    f <- inc;
-                    f <- inc;
-                    apply(unwatch, (f, w));
-                    f <- inc;
-                    *status;
-                });
-
-// unwatches : <T:[*], X> (Tup(T | Box), (Tup(T), Tup(T)) -> X) -> Tup(T | Box) => <intrinsic>
-assert_equals({ 2 }, {
-                    status = box(0);
-                    stat(old, new:(Int,Int)) { put(status, new.0 + new.1) };
-                    f = box(0);
-                    g = box(0);
-                    w = watches((f, g), stat);
-                    f <- inc;
-                    g <- inc;
-                    unwatches((f, g), stat);
-                    f <- inc;
-                    g <- inc;
-                    *status;
-                });
-assert_equals({ 2 }, {
-                    status = box(0);
-                    stat(old, new:(Int,Int)) { put(status, new.0 + new.1) };
-                    f = box(0);
-                    g = box(0);
-                    w = watches((f, g), stat);
-                    f <- inc;
-                    g <- inc;
-                    apply(unwatches, ((f, g), w));
-                    f <- inc;
-                    g <- inc;
-                    *status;
-                });
-
-// watch : (T, X => (*T, (T, T) -> X) -> ((T, T) -> X)) = <intrinsic>
-assert_equals({ 2 }, {
-                    status = box(0);
-                    stat(old, new) { put(status, new) };
-                    f = box(0);
-                    w = watch(f, stat);
-                    f <- inc;
-                    f <- inc;
-                    *status;
-                });
-assert_equals({ 2 }, {
-                    status = box(0);
-                    stat(old, new) { put(status, new) };
-                    f = box(0);
-                    w = apply(watch, (f, stat));
+                    w = apply(react, (f, stat));
                     f <- inc;
                     f <- inc;
                     *status;
                 });
 
-// watches : { <T:[*], X> (Tup(T | Box), (Tup(T), Tup(T)) -> X) -> ((Tup(T), Tup(T)) -> X) => <intrinsic>
+// unreact : <T, X> (*T, T -> X) -> *T
 assert_equals({ 2 }, {
                     status = box(0);
-                    stat(old, new:(Int,Int)) { put(status, new.0 + new.1) };
+                    stat(v) { put(status, v) };
                     f = box(0);
-                    g = box(0);
-                    w = watches((f, g), stat);
+                    w = react(f, stat);
                     f <- inc;
-                    g <- inc;
+                    f <- inc;
+                    unreact(f, w);
+                    f <- inc;
                     *status;
                 });
 assert_equals({ 2 }, {
                     status = box(0);
-                    stat(old, new:(Int,Int)) { put(status, new.0 + new.1) };
+                    stat(v) { put(status, v) };
                     f = box(0);
-                    g = box(0);
-                    w = apply(watches, ((f, g), stat));
+                    w = react(f, stat);
                     f <- inc;
-                    g <- inc;
+                    f <- inc;
+                    apply(unreact, (f, w));
+                    f <- inc;
                     *status;
                 });
+
 
 // assert : (Bool, String) -> () = <intrinsic>
 assert(true, "no error");

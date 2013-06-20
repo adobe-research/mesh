@@ -186,9 +186,7 @@ public final class ShellScriptManager
         final List<ImportStatement> imports = Lists.newArrayList(historyImports);
         imports.addAll(shellImports);
 
-        final Module module = compile.Compiler.analyzeShellInput(
-            loc, reader, "typecheck", imports);
-
+        final Module module = Compiler.analyzeScript(loc, reader, "typecheck", imports);
         if (module != null)
         {
             for (final TypeDef typeDef : module.getTypeDefs().values())

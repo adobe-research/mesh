@@ -202,7 +202,7 @@ compute(cells:[Int], check:[Int], regions:[[Int]])
     newcells = evolve(cells, setcells, [(dying, DYING), (off, OFF), (on, ON)]);
 
     // new checklist is all changed cells, and neighbors of newly ON cells
-    newcheck = unique(flatten([off, dying, on] + mapll(on, regions)));
+    newcheck = unique(flatten([off, dying, on]) + flatten(mapll(on, regions)));
 
     // return new cells and checklist
     (newcells, newcheck)

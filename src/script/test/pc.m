@@ -45,5 +45,5 @@ pc := false;
 await(q, empty);
 cc := false;
 
-// unwatch the queue
-unwatch(q, qw);
+// detach reactor from the queue
+unreact(q, qw);

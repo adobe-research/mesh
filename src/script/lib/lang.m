@@ -51,19 +51,14 @@ intrinsic type TMap;        // type-level map: TMap(<type list>, <type construct
 intrinsic type Index;       // experimental
 intrinsic type Assoc;       // experimental
 
+type Pred(T) = T -> Bool;
+
 
 // ------------------------------------------------------------------
 
 //
 // conditional execution
 //
-
-/**
- * Returns a list of command line arguments
- * @return a possibly empty list of strings that were passed via the
- * commandline
- */
-intrinsic args() -> [String];
 
 /**
  * Return the value of an evironment variable.
@@ -2546,7 +2541,7 @@ postdec(b)
  * @param b boxed value
  * @param o old value
  * @param n new value
- * @return returns success
+ * @return success
  */
 cas(b, o, n)
 {
@@ -2556,11 +2551,25 @@ cas(b, o, n)
 };
 
 /**
+ * tuplized compare and swap
+ * @param bs tuple of boxes
+ * @param os tuple of old values to compare
+ * @param ns tuple of new values
+ * @return success
+ */
+cast(bs, os, ns)
+{
+    do {
+        owns(bs) == os && { bs ::= ns; true }
+    }
+};
+
+/**
  * compare and update. cau is to update as cas is to put
  * @param b boxed value
  * @param o old value
  * @param f function to update the box
- * @return returns success
+ * @return success
  */
 cau(b, o, f)
 {
@@ -2570,11 +2579,25 @@ cau(b, o, f)
 };
 
 /**
+ * tuplized compare and update
+ * @param bs tuple of boxes
+ * @param os tuple of old values to compare
+ * @param f function to update the tuple values
+ * @return success
+ */
+caut(bs, os, f)
+{
+    do {
+        owns(bs) == os && { bs ::= f(os); true }
+    }
+};
+
+/**
  * test and swap. returns success paired with old value
  * @param b boxed value
  * @param p test function
  * @param n new value
- * @return returns tuple of success and old value
+ * @return pair of success and old value (TODO variant)
  */
 tas(b, p, n)
 {
@@ -2589,7 +2612,7 @@ tas(b, p, n)
  * @param b boxed value
  * @param p test function
  * @param n function to update the box
- * @return returns tuple of success and old value
+ * @return pair of success and old value (TODO variant)
  */
 tau(b, p, f)
 {
@@ -2600,68 +2623,11 @@ tau(b, p, f)
 };
 
 /**
- * wait, then test and update using the same (box, pred)
- * for wait and test. returns success paired with old value
- * @param b boxed value
- * @param p predicate
- * @param f function to update the box
- * @return returns tuple of success and old value
- */
-wtau(b, p, f)
-{
-    await(b, p);
-    tau(b, p, f)
-};
-
-/**
- * tuplized compare and swap
- * @param bs tuple of boxes
- * @param os tuple of old values to compare
- * @param ns tuple of new values
- * @return returns success
- */
-cast(bs, os, ns)
-{
-    do {
-        owns(bs) == os && { bs ::= ns; true }
-    }
-};
-
-/**
- * tuplized compare and update
- * @param bs tuple of boxes
- * @param os tuple of old values to compare
- * @param f function to update the tuple values
- * @return returns success
- */
-caut(bs, os, f)
-{
-    do {
-        owns(bs) == os && { bs ::= f(os); true }
-    }
-};
-
-/**
- * swap the last value in a boxed list with a new value
- * @param s boxed list
- * @param v new value
- * @return previous value at the end of boxed list
- */
-swap(s, v)
-{
-    do {
-        list = own(s);
-        prior = last(list);
-        s := append(drop(-1, list), v);
-        prior
-    }
-};
-
-/**
  * tuplized test and swap
  * @param bs tuple of boxes
  * @param p function to test the tuple to see if swap should proceeed
  * @param ns tuple of new values
+ * @return pair of success and old value (TODO variant)
  */
 tast(bs, p, ns)
 {
@@ -2676,6 +2642,7 @@ tast(bs, p, ns)
  * @param bs tuple of boxes
  * @param p function to test the tuple to see if update should proceeed
  * @param f function to update the tuple values
+ * @return pair of success and old value (TODO variant)
   */
 taut(bs, p, f)
 {
@@ -2683,19 +2650,6 @@ taut(bs, p, f)
         os = owns(bs);
         (p(os) && { bs ::= f(os); true }, os)
     }
-};
-
-/**
- * multiwait, then test and update using the same (boxes, pred)
- * for wait and test. returns success paired with old values
- * @param bs tuple of boxed values
- * @param p predicate
- * @param f function to update the tuple values
- */
-wtaut(bs, p, f)
-{
-    awaits(bs, p);
-    taut(bs, p, f)
 };
 
 // ----------------------------------------------------------------------
@@ -2715,26 +2669,6 @@ dep(src, f)
 {
     sink = box(f(get(src)));
     react(src, { put(sink, f($0)) });
-    sink
-};
-
-/**
- * create and return a box whose value tracks the value
- * of the passed boxes, mapped through the passed function.
- * E.g. x = box(0); y = box(1); z = deps([x, y], sum);
- *
- * TODO should become intrinsic over tuple of boxes
- * TODO ...has the same lost-wakeup problem as awaits(),
- * TODO needs to be fixed analogously
- *
- * @param sources list of boxes to track
- * @param f function that will be invoked with the new values of sources when they are altered
- */
-deps(sources, f)
-{
-    sink = box(f(sources | get));
-    updater(v) { do { put(sink, f(sources | get)) } };
-    sources | { react($0, updater) };
     sink
 };
 
@@ -2795,90 +2729,70 @@ intrinsic taskid() -> Long;
 
 /**
  * Transactional wait/notify.
- * await(box, pred) puts current thread into wait state
- * until/unless pred(get(box)) returns true. pred() is
- * called each time a value is committed to box.
- * @param x box
- * @param y predicate
+ * await(box, pred) puts current task into wait state until/unless
+ * pred(get(box)) returns true. pred(v) is called each time a value
+ * is committed to box b.
+ *
+ * Note that in the presence of concurrent modifications to b, there
+ * is no guarantee that *b == v remains true at the time p(v) runs.
+ * I.e., the call to p(v) occurs *after* the transaction that commits
+ * v to b.
+ *
+ * @param b box
+ * @param p predicate
  */
-intrinsic <T> await(x : *T, y : T -> Bool) -> ();
+intrinsic <T> await(b : *T, p : T -> Bool) -> ();
 
 /**
  * Transactional wait/notify.
  * awaits((boxes), pred) puts current thread into wait state
  * until/unless pred(gets(boxes)) returns true. pred() is
  * called each time a value is committed to one of the boxes.
- * @param x tuple of boxes
- * @param y predicate
+ *
+ * TODO describe (non)guarantee
+ *
+ * @param bs tuple of boxes
+ * @param p predicate
  */
-intrinsic <T:[*]> awaits(x : Tup(T | Box), y : Tup(T) -> Bool) -> ();
+// intrinsic <Ts:[*]> awaits(bs : Tup(Ts | Box), p : Tup(Ts) -> Bool) -> ();
+intrinsic <Ts:[*]> awaits(bs : Tup(Ts | Box), p : Tup(Ts | Pred)) -> ();
 
 /**
- * react is like watch, but with only new value passed to watcher.
- * @param b box to watch
- * @param f function that will be invoked with the new value in box
- * @return watcher function that wraps passed f, suitable for passing to unwatch()
+ * Attach a reactor to a box. reactor is called whenever a value is
+ * committed to the box. Note:
+ * 1. A particular function r may be associated with a box b only once.
+ * repeated calls to react(b, r) have no effect.
+ * 2. To detach a reactor r from box b, call unreact(b, r).
+ * @param b box to attach reactor to
+ * @param r reactor function that will be invoked with the new value in box
+ * @return reactor function r
  */
-<A, B> react(b : *A, f : A -> B) -> (A, A) -> B
-{
-    watch(b, { f($1) })
-};
+intrinsic <T, X> react(b : *T, r : T -> X) -> (T -> X);
 
 /**
- * reacts is like watches, but with only new values passed to watcher.
- * @param b boxes to watch
- * @param f function that will be invoked with the new values in boxex
- * @return watcher function that wraps passed f, suitable for passing to unwatches()
+ * Detach a reactor function from a box.
+ * Note that function equality is identity.
+ * If passed r is not currently attached to b, call will have no effect.
+ * @param b box
+ * @param r reactor function e.g. as returned from {@link react}.
+ * @return b
  */
-<A:[*],B> reacts(b:Tup(A | Box), f:(Tup(A) -> B)) -> ((Tup(A), Tup(A)) -> B)
-{
-    watches(b, { f($1) })
-};
-
-/**
- * Remove a watcher function from a box.
- * Function equality is identity, so you need to pass
- * the watcher function itself.
- * @param x box being watched
- * @param y function that was returned from {@link watch(x:*T, y:(T, T) -> X) -> ((T, T) -> X)}.
- * @return box
- */
-intrinsic <T,X> unwatch(x:*T, y:(T, T) -> X) -> *T;
-
-/**
- * Remove a watcher function from a box.
- * Function equality is identity, so you need to pass
- * the watcher function itself.
- * @param x boxes being watched
- * @param y function that was returned from {@link watches(x:*T, y:(T, T) -> X) -> ((T, T) -> X)}.
- * @return box
- */
-intrinsic <T:[*],X> unwatches(x:Tup(T | Box), y:(Tup(T), Tup(T)) -> X) -> Tup(T | Box);
-
-/**
- * Add a watcher to a box, return watcher.
- * @param x box to be watched
- * @param y function to be executed when the box value changes
- * @return a watcher function
- */
-intrinsic <T,X> watch(x:*T, y:(T, T) -> X) -> ((T, T) -> X);
-
-/**
- * Add a watcher to a set of boxes, return watcher.
- * @param x boxes to be watched
- * @param y function to be executed when any of the the values change
- * @return a watcher function (suitable for passing to unwatches)
- */
-intrinsic <T:[*],X> watches(x:Tup(T | Box), y:(Tup(T), Tup(T)) -> X) -> ((Tup(T), Tup(T)) -> X);
+intrinsic <T, X> unreact(b : *T, r : T -> X) -> *T;
 
 // ------------------------------------------------------------------
 
 //
 // system functions
 // just a little random assortment at present.
-// lots of system functionality needs variants and interfaces, and
-// currently only exists in toy form in ../io.m
+// TODO lots of system functionality once we have variants and interfaces
 //
+
+/**
+ * Returns a list of command line arguments
+ * @return a possibly empty list of strings that were passed via the
+ * commandline
+ */
+intrinsic args() -> [String];
 
 /**
  * Throw an error with message if argument is false

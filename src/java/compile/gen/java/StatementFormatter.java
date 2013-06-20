@@ -1176,7 +1176,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         final Loc loc = apply.getLoc();
 
         final Term base = apply.getBase();
-        final Type baseType = base.getType();
+        final Type baseType = base.getType().eval();
         assert Types.isFun(baseType);
 
         final Term arg = apply.getArg();

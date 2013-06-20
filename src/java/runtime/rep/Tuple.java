@@ -69,6 +69,16 @@ public final class Tuple
         return items[i];
     }
 
+    /**
+     * CAUTION: internal use only, caller must ensure
+     * no unintended aliasing etc.
+     */
+    public void set(final int i, final Object v)
+    {
+        items[i] = v;
+        hash = 0;
+    }
+
     @Override
     public final boolean equals(final Object o)
     {

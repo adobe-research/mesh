@@ -14,7 +14,6 @@ import compile.gen.java.StatementFormatter;
 import compile.term.ApplyTerm;
 import compile.term.Term;
 import compile.term.TupleTerm;
-import compile.type.Types;
 
 import java.util.List;
 

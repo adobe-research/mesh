@@ -172,13 +172,18 @@ public final class TypeMapper extends TypeVisitorBase<Class<?>>
         if (c != null)
             return c;
 
+        // TODO systematize the lifetimes of type transforms:
+        // What this code tests is the presence of unevaluated type
+        // transforms at CG time. There's nothing fundamentally wrong
+        // with finding them here--mostly we don't want to spend a lot
+        // of time reevaluating them in ad-hoc ways.
+        /*
         final Type base = app.getBase().deref();
-
-        // TODO under what circumstances is this really ok?
         if (base instanceof TypeCons && ((TypeCons)base).getBody() != null)
             Session.error(app.getLoc(),
                 "internal error: undigested type function in CG: {0}",
                 app.dump());
+                */
 
         return Object.class;
     }

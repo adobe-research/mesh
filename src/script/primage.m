@@ -470,7 +470,7 @@ setup()
     react(corner, { _ => ensurethumbs() });
 
     // clear image data when tag changes
-    watch(tag, { old, new => when(old != new, reset) });
+    react(tag, { _ => reset() });
     ()
 };
 

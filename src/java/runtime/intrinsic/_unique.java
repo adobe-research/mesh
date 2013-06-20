@@ -24,7 +24,7 @@ import java.util.Set;
  */
 public final class _unique extends IntrinsicLambda
 {
-    public static final _unique INSTANCE = new _unique(); 
+    public static final _unique INSTANCE = new _unique();
     public static final String NAME = "unique";
 
     public String getName()

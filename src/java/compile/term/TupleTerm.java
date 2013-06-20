@@ -28,7 +28,7 @@ public final class TupleTerm extends PositionalTerm
 
     static
     {
-        UNIT.setType(Types.unit());
+        UNIT.setType(Types.UNIT);
     }
 
     public TupleTerm(final Loc loc, final List<Term> items)

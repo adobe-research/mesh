@@ -13,55 +13,29 @@ package runtime.tran;
 import runtime.rep.Lambda;
 import runtime.rep.map.PersistentMap;
 
-import java.util.*;
-
 /**
- * Change notification event, dispatched over the set of watchers attached
+ * Change event, dispatched over the set of reactors attached
  * to a box at the time of a successful commit.
  *
  * @author Basil Hosmer
  */
 final class ChangeEvent
 {
-    final Box[] boxes;
-    final Object[] values;
+    final PersistentMap reactors;
+    final Object val;
 
-    ChangeEvent(final Box[] boxes, final Object[] values, final int count)
+    ChangeEvent(final PersistentMap reactors, final Object val)
     {
-        // Unfortunately we do need to copy these here since we've been
-        // passed references to the transaction's internal arrays and it
-        // will reuse them.
-        this.boxes = new Box[count];
-        this.values = new Object[count];
-        System.arraycopy(boxes, 0, this.boxes, 0, count);
-        System.arraycopy(values, 0, this.values, 0, count);
+        this.reactors = reactors;
+        this.val = val;
     }
 
     /**
-     * Activate each watcher of all the boxes
+     * Apply {@link #reactors} to {@link #val}
      */
     void fire()
     {
-        // Because a watcher can span over multiple boxes, each of which may
-        // have been updated in the same transaction, we first uniquify the
-        // list of watchers
-        final Set<Watcher> watchers = new HashSet<Watcher>();
-        final Set<Lambda> calls = new HashSet<Lambda>();
-        for (final Box b : boxes)
-        {
-            final PersistentMap pm = b.getWatchers();
-            if (pm != null)
-                for (final Map.Entry<Object,Object> obj : pm.entrySet())
-                {
-                    if (!calls.contains(obj.getKey()))
-                    {
-                        calls.add((Lambda)obj.getKey());
-                        watchers.add((Watcher)obj.getValue());
-                    }
-                }
-        }
-
-        for (final Watcher watcher : watchers)
-            watcher.trigger(boxes, values);
+        for (final Object reactor : reactors.keySet())
+            ((Lambda)reactor).apply(val);
     }
 }

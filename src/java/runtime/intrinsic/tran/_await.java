@@ -13,7 +13,10 @@ package runtime.intrinsic.tran;
 import runtime.intrinsic.IntrinsicLambda;
 import runtime.rep.Lambda;
 import runtime.rep.Tuple;
+import runtime.sys.Logging;
 import runtime.tran.*;
+
+import java.util.LinkedList;
 
 /**
  * Transactional wait/notify.
@@ -42,11 +45,100 @@ public final class _await extends IntrinsicLambda
     public static Tuple invoke(final Box box, final Lambda pred)
     {
         if (TransactionManager.getTransaction() == null)
-        {
-            final Waiter waiter = new Waiter(Boxes.from(box), pred);
-            waiter.start();
-        }
+            new Waiter(box).await(pred);
 
         return Tuple.UNIT;
+    }
+
+    /**
+     *
+     */
+    private static final class Waiter implements Lambda
+    {
+        private final Box box;
+        private LinkedList<Object> updates;
+
+        public Waiter(final Box box)
+        {
+            this.box = box;
+            this.updates = null;
+        }
+
+        /**
+         * For our box and a given pred, implement wait(box, pred) by attaching
+         * ourselves as a watcher to our box, then doing a thread wait until
+         * pred(newval) returns true.
+         */
+        public synchronized void await(final Lambda pred)
+        {
+            // within a transaction, test predicate and (if it doesn't pass)
+            // add ourselves as a reactor.
+
+            if ((Boolean)TransactionManager.apply(new Lambda() {
+
+                public Object apply(final Object unit)
+                {
+                    TransactionManager.own(box);
+
+                    if (!(Boolean)pred.apply(box.getValue()))
+                    {
+                        updates = new LinkedList<Object>();
+                        box.addReactor(Waiter.this);
+                        return true;
+                    }
+
+                    return false;
+                }
+            }))
+            {
+                // predicate failed--go into wait loop.
+                // note that any updates that happened between adding ourselves and
+                // this code have been queued in updates
+                Object val;
+                do
+                {
+                    while (updates.isEmpty())
+                    {
+                        try
+                        {
+                            wait();
+                        }
+                        catch (InterruptedException e)
+                        {
+                            Logging.warning("interrupted during wait()");
+                        }
+                    }
+
+                    val = updates.remove();
+                }
+                while (!(Boolean)pred.apply(val));
+
+                // remove ourselves
+                TransactionManager.apply(new Lambda() {
+
+                    public Object apply(final Object unit)
+                    {
+                        TransactionManager.own(box);
+                        box.removeReactor(Waiter.this);
+                        return null;
+                    }
+                });
+            }
+        }
+
+        // Lambda impl
+
+        /**
+         * As a reactor, apply() will get called when a new value is
+         * committed to our box. At that point we enqueue the new value
+         * and call {@link #notify}, which will wake up the waiting thread
+         * to test the wait predicate against the new value(s).
+         */
+        public synchronized Object apply(final Object val)
+        {
+            updates.add(val);
+            notify();
+            return null;
+        }
     }
 }
