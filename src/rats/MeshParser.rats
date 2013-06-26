@@ -198,11 +198,11 @@ transient Object Verb
 
 //
 // An infix op is either an ordinary binary op, or
-// a base expression preceded by a single quote
+// a base expression preceded by a backquote
 // (latter is experimental)
 //
 transient Object InfixOp
-    = <InfixFunc> "'" e:BaseExpr
+    = <InfixFunc> "`" e:BaseExpr
         { yyValue = e; }
 
     / op:BinaryOp
