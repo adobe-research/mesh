@@ -36,6 +36,8 @@ final class ChangeEvent
     void fire()
     {
         for (final Object reactor : reactors.keySet())
+        {
             ((Lambda)reactor).apply(val);
+        }
     }
 }

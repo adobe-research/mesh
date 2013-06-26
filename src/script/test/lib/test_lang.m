@@ -1778,7 +1778,12 @@ assert_equals({ true }, {
                     spawn { while({ *awaitdata2 < 5 }, { sleep(rand(100)); awaitdata2 <- inc }); };
 
                     awaits((awaitdata1, awaitdata2), ({ $0 == 5 }, { $0 == 5 }));
-                    *awaitdata1 == 5 || { *awaitdata2 == 5 }
+                    result = *awaitdata1 == 5 || { *awaitdata2 == 5 };
+
+                    // wait for bump threads to finish before returning
+                    sleep(500);
+
+                    result
                     });
 
 assert_equals({ true }, {
@@ -1789,7 +1794,12 @@ assert_equals({ true }, {
                     spawn { while({ *awaitdata2 < 5 }, { sleep(rand(100)); awaitdata2 <- inc }); };
 
                     apply(awaits, ((awaitdata1, awaitdata2), ({ $0 == 5 }, { $0 == 5 })));
-                    *awaitdata1 == 5 || { *awaitdata2 == 5 }
+                    result = *awaitdata1 == 5 || { *awaitdata2 == 5 };
+
+                    // wait for bump threads to finish before returning
+                    sleep(500);
+
+                    result
                     });
 
 // react : <T, X> (*T, T -> X) -> (T -> X)

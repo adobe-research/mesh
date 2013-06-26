@@ -397,7 +397,7 @@ final class Transaction
             box.commit(value, commitTick);
 
             final PersistentMap reactors = box.getReactors();
-            if (reactors != null)
+            if (!reactors.isEmpty())
             {
                 if (events == null)
                     events = new ArrayList<ChangeEvent>();
@@ -449,14 +449,18 @@ final class Transaction
 
     /**
      * Run watcher functions collected during commit.
-     * Watchers are currently run on the transaction's
-     * thread.
-     * TODO formalize whether that's a guarantee or not.
+     * Watchers are currently run on the transaction's current thread.
+     * This permits synchronous reactivity (and makes reactivity in general
+     * easier to reason about) but risks stack overflow when events themselves
+     * have transactions that spawn events, etc.
+     * TODO formalize whether same-thread reactions is a guarantee or not.
      */
     private static void fireEvents(final ArrayList<ChangeEvent> events)
     {
         for (final ChangeEvent event : events)
+        {
             event.fire();
+        }
     }
 
     /**
@@ -504,7 +508,8 @@ final class Transaction
             System.arraycopy(updated, 0, newUpdated, 0, updatedCount);
             updated = newUpdated;
 
-            final Object[] newUpdates = new Object[updatedCount + UPDATED_CHUNK_SIZE];
+            final Object[] newUpdates =
+                new Object[updatedCount + UPDATED_CHUNK_SIZE];
             System.arraycopy(updates, 0, newUpdates, 0, updatedCount);
             updates = newUpdates;
         }
@@ -612,7 +617,8 @@ final class Transaction
 
         // no value available that far back, must retry
         if (Logging.isDebug())
-            Logging.debug("value as of transaction start not available, retrying ({0})",
+            Logging.debug(
+                "value as of transaction start not available, retrying ({0})",
                 box.toString());
 
         throw TransactionManager.GENERIC_RETRY;
