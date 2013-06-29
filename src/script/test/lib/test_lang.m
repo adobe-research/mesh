@@ -1811,7 +1811,11 @@ assert_equals({ 2 }, {
                     w = react(f, stat);
                     f <- inc;
                     f <- inc;
-                    sleep(100); // wait for reaction to complete, it's async
+
+                    timeout = box(false);
+                    spawn { sleep(10000); timeout := true };
+                    awaits((timeout, status), (id, { $0 == 2 }));
+
                     unreact(f, w);
                     *status;
                      });
@@ -1822,7 +1826,11 @@ assert_equals({ 2 }, {
                     w = apply(react, (f, stat));
                     f <- inc;
                     f <- inc;
-                    sleep(100); // wait for reaction to complete, it's async
+
+                    timeout = box(false);
+                    spawn { sleep(10000); timeout := true };
+                    awaits((timeout, status), (id, { $0 == 2 }));
+
                     *status;
                 });
 
@@ -1834,7 +1842,11 @@ assert_equals({ 2 }, {
                     w = react(f, stat);
                     f <- inc;
                     f <- inc;
-                    sleep(100); // wait for reaction to complete, it's async
+
+                    timeout = box(false);
+                    spawn { sleep(10000); timeout := true };
+                    awaits((timeout, status), (id, { $0 == 2 }));
+
                     unreact(f, w);
                     f <- inc;
                     *status;
@@ -1846,7 +1858,11 @@ assert_equals({ 2 }, {
                     w = react(f, stat);
                     f <- inc;
                     f <- inc;
-                    sleep(100); // wait for reaction to complete, it's async
+
+                    timeout = box(false);
+                    spawn { sleep(10000); timeout := true };
+                    awaits((timeout, status), (id, { $0 == 2 }));
+
                     apply(unreact, (f, w));
                     f <- inc;
                     *status;
