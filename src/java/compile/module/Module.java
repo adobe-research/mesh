@@ -46,13 +46,6 @@ public class Module extends AbstractScope
     private WhiteList exports;
 
     /**
-     * aggregate list of imported modules, derived on demand
-     * from {@link #unqualifiedImports} and {@link #qualifiedImports}
-     * and cached.
-     */
-    private List<Module> importedModules;
-
-    /**
      *
      */
     public Module(final Loc loc, final String name, final List<Statement> body)
@@ -63,7 +56,6 @@ public class Module extends AbstractScope
         this.qualifiedImports = new LinkedHashMap<String, List<Import>>();
         this.exports = WhiteList.open();
 
-        this.importedModules = null;
     }
 
     /**
@@ -92,34 +84,6 @@ public class Module extends AbstractScope
     }
 
     /**
-     * Return flat set of imported modules, derived from from our imports.
-     * Note: cached.
-     */
-    public List<Module> getImportedModules()
-    {
-        // return cached list if available
-        if (this.importedModules != null)
-            return this.importedModules;
-
-        // build list
-        final List<Module> importedModules = new ArrayList<Module>();
-        {
-            // unqualified
-            for (final Import imp : unqualifiedImports)
-                importedModules.add(imp.getModule());
-
-            // qualified by namespace
-            for (final List<Import> imports : this.qualifiedImports.values())
-                for (final Import imp : imports)
-                    importedModules.add(imp.getModule());
-        }
-
-        // cache and return
-        this.importedModules = importedModules;
-        return importedModules;
-    }
-
-    /**
      * Note: import order is reversed within per-namespace lists,
      * so that the contents of later importList occlude the contents
      * of earlier ones.
@@ -127,7 +91,6 @@ public class Module extends AbstractScope
     public void addImport(final Import imp)
     {
         // invalidate cache
-        importedModules = null;
 
         if (imp.isQualified())
         {
@@ -153,7 +116,7 @@ public class Module extends AbstractScope
         else
         {
             assert !unqualifiedImports.contains(imp);
-            unqualifiedImports.add(imp);
+            unqualifiedImports.add(0, imp);
         }
     }
 

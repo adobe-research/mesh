@@ -656,8 +656,18 @@ public final class Main
     {
         dumpUnit(unit, false);
 
-        for (final Module imported : unit.getModule().getImportedModules())
-            dumpUnitsAndImports(Compiler.getUnitDictionary().getUnit(imported));
+        final Module module = unit.getModule();
+
+        System.out.println("--- UNQUALIFIED IMPORTS ---");
+        for (final Import imp : module.getUnqualifiedImports())
+            dumpUnitsAndImports(Compiler.getUnitDictionary().getUnit(imp.getModule()));
+
+        for (final String ns : module.getNamespaces())
+        {
+            System.out.println("--- NAMESPACE " + ns + " IMPORTS ---");
+            for (final Import imp : module.getNamespaceImports(ns))
+                dumpUnitsAndImports(Compiler.getUnitDictionary().getUnit(imp.getModule()));
+        }
     }
 
     /**

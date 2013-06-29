@@ -1718,6 +1718,7 @@ assert_equals({ 1 }, {
                     src = box(0);
                     track = dep(src, id);
                     src <- inc;
+                    sleep(100); // wait for reaction to complete, it's async
                     *track;
                     });
 
@@ -1810,6 +1811,7 @@ assert_equals({ 2 }, {
                     w = react(f, stat);
                     f <- inc;
                     f <- inc;
+                    sleep(100); // wait for reaction to complete, it's async
                     unreact(f, w);
                     *status;
                      });
@@ -1820,6 +1822,7 @@ assert_equals({ 2 }, {
                     w = apply(react, (f, stat));
                     f <- inc;
                     f <- inc;
+                    sleep(100); // wait for reaction to complete, it's async
                     *status;
                 });
 
@@ -1831,6 +1834,7 @@ assert_equals({ 2 }, {
                     w = react(f, stat);
                     f <- inc;
                     f <- inc;
+                    sleep(100); // wait for reaction to complete, it's async
                     unreact(f, w);
                     f <- inc;
                     *status;
@@ -1842,6 +1846,7 @@ assert_equals({ 2 }, {
                     w = react(f, stat);
                     f <- inc;
                     f <- inc;
+                    sleep(100); // wait for reaction to complete, it's async
                     apply(unreact, (f, w));
                     f <- inc;
                     *status;
