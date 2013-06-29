@@ -7,12 +7,13 @@ import logging;
 
 assert_equals(expected, actual)
 {
-    if(expected() == actual(), {
+    (e, a) = (expected(), actual());
+    if(e == a, {
         print(strcat(["[PASSED] ", tostr(expected), " == ", tostr(actual)]));
         true
     }, {
         logerror(strcat(["[FAILED] ", tostr(expected), " == ", tostr(actual),
-            " Expected: ", tostr(expected()), " Actual: ", tostr(actual())]));
+            " Expected: ", tostr(e), " Actual: ", tostr(a)]));
         false
     })
 };

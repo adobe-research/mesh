@@ -1,6 +1,6 @@
 
 // reactor provokes itself.
-// currently overflows stack, need strategy
+// should not overflow stack.
 
 b = box(0);
 done = box(false);
