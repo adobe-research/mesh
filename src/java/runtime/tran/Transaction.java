@@ -13,6 +13,7 @@ package runtime.tran;
 import runtime.rep.Lambda;
 import runtime.rep.Tuple;
 import runtime.rep.map.PersistentMap;
+import runtime.sys.ConcurrencyManager;
 import runtime.sys.ConfigUtils;
 import runtime.sys.Logging;
 
@@ -181,7 +182,7 @@ final class Transaction
     private Object run(final Box box, final Lambda f, final Object val)
     {
         // events to be fired after a successful commit.
-        ArrayList<ChangeEvent> events = null;
+        ArrayList<CommitEvent> events = null;
 
         // holds the result of the transactional operation, per above
         Object result = null;
@@ -373,7 +374,7 @@ final class Transaction
      * so we are not guaranteed to run exactly the watchers present
      * at commit time.
      */
-    private ArrayList<ChangeEvent> commit()
+    private ArrayList<CommitEvent> commit()
     {
         final int n = updatedCount;
 
@@ -385,7 +386,7 @@ final class Transaction
 
         final long commitTick = getTick();
 
-        ArrayList<ChangeEvent> events = null;
+        ArrayList<CommitEvent> events = null;
 
         for (int i = 0; i < n; i++)
         {
@@ -400,9 +401,9 @@ final class Transaction
             if (!reactors.isEmpty())
             {
                 if (events == null)
-                    events = new ArrayList<ChangeEvent>();
+                    events = new ArrayList<CommitEvent>();
 
-                events.add(new ChangeEvent(reactors, value));
+                events.add(new CommitEvent(reactors, value));
             }
         }
 
@@ -448,19 +449,23 @@ final class Transaction
     }
 
     /**
-     * Run watcher functions collected during commit.
-     * Watchers are currently run on the transaction's current thread.
-     * This permits synchronous reactivity (and makes reactivity in general
-     * easier to reason about) but risks stack overflow when events themselves
-     * have transactions that spawn events, etc.
-     * TODO formalize whether same-thread reactions is a guarantee or not.
+     * Run events collected during commit.
+     * Note that watchers are not run on the committing transaction's
+     * thread. Currently they're all run on a single event-dispatcher
+     * thread, but this is not guaranteed.
      */
-    private static void fireEvents(final ArrayList<ChangeEvent> events)
+    private static void fireEvents(final ArrayList<CommitEvent> events)
     {
-        for (final ChangeEvent event : events)
+        ConcurrencyManager.execute(new Runnable()
         {
-            event.fire();
-        }
+            public void run()
+            {
+                for (final CommitEvent event : events)
+                {
+                    event.fire();
+                }
+            }
+        });
     }
 
     /**

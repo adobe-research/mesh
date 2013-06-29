@@ -19,12 +19,12 @@ import runtime.rep.map.PersistentMap;
  *
  * @author Basil Hosmer
  */
-final class ChangeEvent
+final class CommitEvent
 {
     final PersistentMap reactors;
     final Object val;
 
-    ChangeEvent(final PersistentMap reactors, final Object val)
+    CommitEvent(final PersistentMap reactors, final Object val)
     {
         this.reactors = reactors;
         this.val = val;
