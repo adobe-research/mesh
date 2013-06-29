@@ -1806,14 +1806,14 @@ assert_equals({ true }, {
 // react : <T, X> (*T, T -> X) -> (T -> X)
 assert_equals({ 2 }, { 
                     status = box(0);
-                    stat(v) { put(status, v) };
+                    stat(v) { status <- { max($0, v) } };
                     f = box(0);
                     w = react(f, stat);
                     f <- inc;
                     f <- inc;
 
                     timeout = box(false);
-                    spawn { sleep(10000); timeout := true };
+                    spawn { sleep(100); timeout := true };
                     awaits((timeout, status), (id, { $0 == 2 }));
 
                     unreact(f, w);
@@ -1821,14 +1821,14 @@ assert_equals({ 2 }, {
                      });
 assert_equals({ 2 }, {
                     status = box(0);
-                    stat(v) { put(status, v) };
+                    stat(v) { status <- { max($0, v) } };
                     f = box(0);
                     w = apply(react, (f, stat));
                     f <- inc;
                     f <- inc;
 
                     timeout = box(false);
-                    spawn { sleep(10000); timeout := true };
+                    spawn { sleep(100); timeout := true };
                     awaits((timeout, status), (id, { $0 == 2 }));
 
                     *status;
@@ -1837,14 +1837,14 @@ assert_equals({ 2 }, {
 // unreact : <T, X> (*T, T -> X) -> *T
 assert_equals({ 2 }, {
                     status = box(0);
-                    stat(v) { put(status, v) };
+                    stat(v) { status <- { max($0, v) } };
                     f = box(0);
                     w = react(f, stat);
                     f <- inc;
                     f <- inc;
 
                     timeout = box(false);
-                    spawn { sleep(10000); timeout := true };
+                    spawn { sleep(100); timeout := true };
                     awaits((timeout, status), (id, { $0 == 2 }));
 
                     unreact(f, w);
@@ -1853,14 +1853,14 @@ assert_equals({ 2 }, {
                 });
 assert_equals({ 2 }, {
                     status = box(0);
-                    stat(v) { put(status, v) };
+                    stat(v) { status <- { max($0, v) } };
                     f = box(0);
                     w = react(f, stat);
                     f <- inc;
                     f <- inc;
 
                     timeout = box(false);
-                    spawn { sleep(10000); timeout := true };
+                    spawn { sleep(100); timeout := true };
                     awaits((timeout, status), (id, { $0 == 2 }));
 
                     apply(unreact, (f, w));
