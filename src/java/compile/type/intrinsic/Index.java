@@ -10,21 +10,15 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
+import compile.type.Type;
+import compile.type.TypeCons;
 import compile.type.kind.Kinds;
-import compile.type.IntrinsicType;
 
 /**
  *
  */
-public final class Index extends IntrinsicType
+public final class Index
 {
-    public final static java.lang.String NAME = Index.class.getSimpleName();
-
-    public final static Index INSTANCE = new Index();
-
-    private Index()
-    {
-        super(NAME, new TypeCons(NAME, Kinds.TYPE_INDEX_KIND));
-    }
+    public final static Type INSTANCE =
+        new TypeCons(Index.class.getSimpleName(), Kinds.TYPE_INDEX_KIND);
 }

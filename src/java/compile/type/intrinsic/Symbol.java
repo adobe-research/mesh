@@ -10,20 +10,13 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
-import compile.type.IntrinsicType;
+import compile.type.Type;
+import compile.type.TypeCons;
 
 /**
- * 
+ *
  */
-public final class Symbol extends IntrinsicType
+public final class Symbol
 {
-    public final static java.lang.String NAME = Symbol.class.getSimpleName();
-
-    public final static Symbol INSTANCE = new Symbol();
-
-    private Symbol() 
-    {
-        super(NAME, new TypeCons(NAME));
-    }
+    public final static Type INSTANCE = new TypeCons(Symbol.class.getSimpleName());
 }

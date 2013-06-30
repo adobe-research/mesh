@@ -10,21 +10,15 @@
  */
 package runtime.intrinsic.demo;
 
-import compile.type.*;
+import compile.type.Type;
+import compile.type.TypeCons;
 import compile.type.kind.Kinds;
-import compile.type.IntrinsicType;
 
 /**
  * Array - generic type for intrinsics that take and return java Arrays
  */
-public final class Array extends IntrinsicType
+public final class Array
 {
-    public final static String NAME = Array.class.getSimpleName();
-
-    public final static Array INSTANCE = new Array();
-
-    private Array()
-    {
-        super(NAME, new TypeCons(NAME, Kinds.UNARY_CONS));
-    }
+    public final static Type INSTANCE =
+        new TypeCons(Array.class.getSimpleName(), Kinds.UNARY_CONS);
 }

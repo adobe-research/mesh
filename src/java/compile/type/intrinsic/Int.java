@@ -10,20 +10,13 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
-import compile.type.IntrinsicType;
+import compile.type.Type;
+import compile.type.TypeCons;
 
 /**
  * 32-bit Integer type
  */
-public final class Int extends IntrinsicType
+public final class Int
 {
-    public final static java.lang.String NAME = Int.class.getSimpleName();
-
-    public final static Int INSTANCE = new Int();
-
-    private Int()
-    {
-        super(NAME, new TypeCons(NAME));
-    }
+    public final static Type INSTANCE = new TypeCons(Int.class.getSimpleName());
 }

@@ -10,20 +10,13 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
-import compile.type.IntrinsicType;
+import compile.type.Type;
+import compile.type.TypeCons;
 
 /**
  * true/false boolean
  */
-public final class Bool extends IntrinsicType
+public final class Bool
 {
-    public final static java.lang.String NAME = Bool.class.getSimpleName();
-
-    public final static Bool INSTANCE = new Bool();
-
-    private Bool() 
-    {
-        super(NAME, new TypeCons(NAME));
-    }
+    public final static Type INSTANCE = new TypeCons(Bool.class.getSimpleName());
 }
