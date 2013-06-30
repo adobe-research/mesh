@@ -10,20 +10,13 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
-import compile.type.IntrinsicType;
+import compile.type.Type;
+import compile.type.TypeCons;
 
 /**
  * 64-bit integer value
  */
-public final class Long extends IntrinsicType
+public final class Long
 {
-    public final static java.lang.String NAME = Long.class.getSimpleName();
-
-    public final static Long INSTANCE = new Long();
-
-    private Long()
-    {
-        super(NAME, new TypeCons(NAME));
-    }
+    public final static Type INSTANCE = new TypeCons(Long.class.getSimpleName());
 }

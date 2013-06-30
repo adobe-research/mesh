@@ -10,21 +10,15 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
+import compile.type.Type;
+import compile.type.TypeCons;
 import compile.type.kind.Kinds;
-import compile.type.IntrinsicType;
 
 /**
  *
  */
-public final class TMap extends IntrinsicType
+public final class TMap
 {
-    public final static java.lang.String NAME = TMap.class.getSimpleName();
-
-    public final static TMap INSTANCE = new TMap();
-
-    private TMap()
-    {
-        super(NAME, new TypeCons(NAME, Kinds.TYPE_MAP_KIND));
-    }
+    public final static Type INSTANCE =
+        new TypeCons(TMap.class.getSimpleName(), Kinds.TYPE_MAP_KIND);
 }

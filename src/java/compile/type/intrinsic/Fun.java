@@ -10,21 +10,15 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
+import compile.type.Type;
+import compile.type.TypeCons;
 import compile.type.kind.Kinds;
-import compile.type.IntrinsicType;
 
 /**
- *
+ * Function type constructor
  */
-public final class Fun extends IntrinsicType
+public final class Fun
 {
-    public final static java.lang.String NAME = Fun.class.getSimpleName();
-
-    public final static Fun INSTANCE = new Fun();
-
-    private Fun()
-    {
-        super(NAME, new TypeCons(NAME, Kinds.BINARY_CONS));
-    }
+    public final static Type INSTANCE =
+        new TypeCons(Fun.class.getSimpleName(), Kinds.BINARY_CONS);
 }

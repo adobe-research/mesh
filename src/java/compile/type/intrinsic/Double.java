@@ -10,20 +10,13 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
-import compile.type.IntrinsicType;
+import compile.type.Type;
+import compile.type.TypeCons;
 
 /**
  * 64-bit floating-point value
  */
-public final class Double extends IntrinsicType
+public final class Double
 {
-    public final static java.lang.String NAME = Double.class.getSimpleName();
-
-    public final static Double INSTANCE = new Double();
-
-    private Double()
-    {
-        super(NAME, new TypeCons(NAME));
-    }
+    public final static Type INSTANCE = new TypeCons(Double.class.getSimpleName());
 }

@@ -12,19 +12,12 @@ package compile.type.intrinsic;
 
 import compile.type.*;
 import compile.type.kind.Kinds;
-import compile.type.IntrinsicType;
 
 /**
  *
  */
-public final class Map extends IntrinsicType
+public final class Map
 {
-    public final static java.lang.String NAME = Map.class.getSimpleName();
-
-    public final static Map INSTANCE = new Map();
-
-    private Map()
-    {
-        super(NAME, new TypeCons(NAME, Kinds.BINARY_CONS));
-    }
+    public final static Type INSTANCE =
+        new TypeCons(Map.class.getSimpleName(), Kinds.BINARY_CONS);
 }

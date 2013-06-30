@@ -10,23 +10,15 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
+import compile.type.Type;
+import compile.type.TypeCons;
 import compile.type.kind.Kinds;
-import compile.type.IntrinsicType;
 
 /**
- * Superclass for intrinsic types
  *
- * @author Keith McGuigan
  */
-public final class Box extends IntrinsicType
+public final class Box
 {
-    public final static java.lang.String NAME = Box.class.getSimpleName();
-
-    public final static Box INSTANCE = new Box();
-
-    private Box()
-    {
-        super(NAME, new TypeCons(NAME, Kinds.UNARY_CONS));
-    }
+    public final static Type INSTANCE =
+        new TypeCons(Box.class.getSimpleName(), Kinds.UNARY_CONS);
 }
