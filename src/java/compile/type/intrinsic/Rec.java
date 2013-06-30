@@ -10,21 +10,15 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
+import compile.type.Type;
+import compile.type.TypeCons;
 import compile.type.kind.Kinds;
-import compile.type.IntrinsicType;
 
 /**
  *
  */
-public final class Rec extends IntrinsicType
+public final class Rec
 {
-    public final static java.lang.String NAME = Rec.class.getSimpleName();
-
-    public final static Rec INSTANCE = new Rec();
-
-    private Rec()
-    {
-        super(NAME, new TypeCons(NAME, Kinds.MAP_CONS));
-    }
+    public final static Type INSTANCE =
+        new TypeCons(Rec.class.getSimpleName(), Kinds.MAP_CONS);
 }

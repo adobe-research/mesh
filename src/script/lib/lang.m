@@ -2856,7 +2856,7 @@ intrinsic type XNode;   // a structural record type
 intrinsic parsexml(x:String) -> XNode;
 
 // primitive server sockets, used in tests/demos
-intrinsic type ServerSocket;
+type ServerSocket = New(Opaque);
 intrinsic accept(x:ServerSocket, y:String -> String) -> ();
 intrinsic close(x:ServerSocket) -> ();
 intrinsic closed(x:ServerSocket) -> Bool;

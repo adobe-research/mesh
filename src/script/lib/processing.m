@@ -9,10 +9,9 @@
 //
 
 // processing FFI types
-// TODO replace with New(Opaque) typedefs
-intrinsic type Font;
-intrinsic type Image;
-intrinsic type Matrix3D;
+type Font = New(Opaque);
+type Image = New(Opaque);
+type Matrix3D = New(Opaque);
 
 intrinsic hsb2rgb(h : Double, s : Double, b : Double) -> Int;
 intrinsic rgb2hsb(rgb : Int) -> (Double, Double, Double);

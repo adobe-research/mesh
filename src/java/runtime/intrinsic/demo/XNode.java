@@ -15,30 +15,24 @@ import compile.analyze.KindChecker;
 import compile.term.SymbolLiteral;
 import compile.term.Term;
 import compile.type.*;
-import compile.type.IntrinsicType;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  *
  */
-public final class XNode extends IntrinsicType
+public final class XNode
 {
-    public final static String NAME = XNode.class.getSimpleName();
-
-    public final static XNode INSTANCE = new XNode();
-
-    private XNode()
-    {
-        super(NAME, initType());
-    }
+    public final static Type INSTANCE = initType();
 
     /**
      * XNode - structural type for XML node representation.
      * This one differs from the others here because (a) it's a structural
      * type, not an opaque type, (b) it has a self-reference, which makes
      * the Java that hacks it together more complicated, and (c) its key
-     * names are exposed for use by {@link compile.type.demo.ParseXml}.
+     * names are exposed for use by {@link runtime.intrinsic.demo._parsexml}.
      * TODO this should be a source-level type def, used by a source-level
      * prototype of ParseXml (but will still need to be accessible from the
      * XNode-building implementation code).
@@ -63,7 +57,8 @@ public final class XNode extends IntrinsicType
 
         final Type attrsType = Types.map(Types.SYMBOL, Types.STRING);
 
-        final TypeRef xnodeTypeRef = new TypeRef(Loc.INTRINSIC, NAME);
+        final TypeRef xnodeTypeRef = new TypeRef(Loc.INTRINSIC,
+            XNode.class.getSimpleName());
 
         final Type elemsType = Types.list(xnodeTypeRef);
 
@@ -76,7 +71,7 @@ public final class XNode extends IntrinsicType
 
         xnodeType.collectInlineParams();
 
-        KindChecker.check(xnodeType); 
+        KindChecker.check(xnodeType);
 
         return xnodeType;
     }

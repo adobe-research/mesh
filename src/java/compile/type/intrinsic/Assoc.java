@@ -10,21 +10,15 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
+import compile.type.Type;
+import compile.type.TypeCons;
 import compile.type.kind.Kinds;
-import compile.type.IntrinsicType;
 
 /**
  *
  */
-public final class Assoc extends IntrinsicType
+public final class Assoc
 {
-    public final static java.lang.String NAME = Assoc.class.getSimpleName();
-
-    public final static Assoc INSTANCE = new Assoc();
-
-    private Assoc()
-    {
-        super(NAME, new TypeCons(NAME, Kinds.TYPE_ASSOC_KIND));
-    }
+    public final static Type INSTANCE =
+        new TypeCons(Assoc.class.getSimpleName(), Kinds.TYPE_ASSOC_KIND);
 }

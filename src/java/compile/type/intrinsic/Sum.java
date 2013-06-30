@@ -10,21 +10,15 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
+import compile.type.Type;
+import compile.type.TypeCons;
 import compile.type.kind.Kinds;
-import compile.type.IntrinsicType;
 
 /**
  *
  */
-public final class Sum extends IntrinsicType
+public final class Sum
 {
-    public final static java.lang.String NAME = Sum.class.getSimpleName();
-
-    public final static Sum INSTANCE = new Sum();
-
-    private Sum()
-    {
-        super(NAME, new TypeCons(NAME, Kinds.MAP_CONS));
-    }
+    public final static Type INSTANCE =
+        new TypeCons(Sum.class.getSimpleName(), Kinds.MAP_CONS);
 }

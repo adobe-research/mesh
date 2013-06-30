@@ -11,6 +11,7 @@
 package compile.type;
 
 import compile.Loc;
+import compile.gen.java.Constants;
 import compile.term.*;
 
 import java.lang.reflect.Field;
@@ -616,9 +617,8 @@ public final class Types
             try
             {
                 final Class<?> cls = Class.forName(clsName);
-                final Field instanceField = cls.getField(IntrinsicType.INSTANCE_FIELD_NAME);
-                final IntrinsicType intrinsic = (IntrinsicType)instanceField.get(null);
-                final Type type = intrinsic.getType();
+                final Field instanceField = cls.getField(Constants.INSTANCE);
+                final Type type = (Type)instanceField.get(null);
 
                 assert type != null : "Type canot be null";
                 return type;

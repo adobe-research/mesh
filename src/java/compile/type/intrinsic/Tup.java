@@ -10,21 +10,15 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
+import compile.type.Type;
+import compile.type.TypeCons;
 import compile.type.kind.Kinds;
-import compile.type.IntrinsicType;
 
 /**
  *
  */
-public final class Tup extends IntrinsicType
+public final class Tup
 {
-    public final static java.lang.String NAME = Tup.class.getSimpleName();
-
-    public final static Tup INSTANCE = new Tup();
-
-    private Tup()
-    {
-        super(NAME, new TypeCons(NAME, Kinds.LIST_CONS));
-    }
+    public final static Type INSTANCE =
+        new TypeCons(Tup.class.getSimpleName(), Kinds.LIST_CONS);
 }

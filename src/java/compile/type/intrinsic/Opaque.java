@@ -10,20 +10,13 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
-import compile.type.IntrinsicType;
+import compile.type.Type;
+import compile.type.TypeCons;
 
 /**
- * 
+ *
  */
-public final class Opaque extends IntrinsicType
+public final class Opaque
 {
-    public final static java.lang.String NAME = Opaque.class.getSimpleName();
-
-    public final static Opaque INSTANCE = new Opaque();
-
-    private Opaque() 
-    {
-        super(NAME, new TypeCons(NAME));
-    }
+    public final static Type INSTANCE = new TypeCons(Opaque.class.getSimpleName());
 }

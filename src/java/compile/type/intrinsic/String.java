@@ -10,20 +10,13 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
-import compile.type.IntrinsicType;
+import compile.type.Type;
+import compile.type.TypeCons;
 
 /**
- * 
+ *
  */
-public final class String extends IntrinsicType
+public final class String
 {
-    public final static java.lang.String NAME = String.class.getSimpleName();
-    
-    public final static String INSTANCE = new String();
-
-    private String() 
-    {
-        super(NAME, new TypeCons(NAME));
-    }
+    public final static Type INSTANCE = new TypeCons(String.class.getSimpleName());
 }

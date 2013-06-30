@@ -10,20 +10,13 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
-import compile.type.IntrinsicType;
+import compile.type.Type;
+import compile.type.TypeCons;
 
 /**
  * 32-bit floating-point value
  */
-public final class Float extends IntrinsicType
+public final class Float
 {
-    public final static java.lang.String NAME = Float.class.getSimpleName();
-
-    public final static Float INSTANCE = new Float();
-
-    private Float()
-    {
-        super(NAME, new TypeCons(NAME));
-    }
+    public final static Type INSTANCE = new TypeCons(Float.class.getSimpleName());
 }

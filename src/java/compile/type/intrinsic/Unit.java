@@ -10,20 +10,13 @@
  */
 package compile.type.intrinsic;
 
-import compile.type.*;
-import compile.type.IntrinsicType;
+import compile.type.Type;
+import compile.type.Types;
 
 /**
- * true/false boolean
+ * Unit type -- synonym for 0-tuple
  */
-public final class Unit extends IntrinsicType
+public final class Unit
 {
-    public final static java.lang.String NAME = Unit.class.getSimpleName();
-
-    public final static Unit INSTANCE = new Unit();
-
-    private Unit() 
-    {
-        super(NAME, Types.tup());
-    }
+    public final static Type INSTANCE = Types.tup();
 }
