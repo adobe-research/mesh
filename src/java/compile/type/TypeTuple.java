@@ -100,7 +100,7 @@ public final class TypeTuple extends NonScopeType
     public SubstMap unify(final Loc loc, final Type other, final TypeEnv env)
     {
         if (other instanceof TypeVar)
-            return SubstMap.bindVar(loc, (TypeVar)other, this);
+            return SubstMap.bindVar(loc, (TypeVar)other, this, env);
 
         final Type otherDeref = other.deref().eval();
 

@@ -15,6 +15,7 @@ import compile.term.*;
 import compile.term.visit.TermDumper;
 import compile.term.visit.TermVisitor;
 import compile.type.*;
+import compile.type.constraint.Constraint;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
 
@@ -196,21 +197,40 @@ public final class TypeDumper extends StackedTypeVisitor<String>
     @Override
     public String visit(final TypeVar var)
     {
+        final Kind kind = var.getKind();
+        final Constraint constraint = var.getConstraint();
+
+        if (kind != Kinds.STAR)
+        {
+            if (constraint != Constraint.ANY)
+                return var.getName() + ":" + kind.dump() + "|" + constraint.dump();
+
+            return var.getName() + ":" + kind.dump();
+        }
+
+        if (constraint != Constraint.ANY)
+            return var.getName() + ":" + constraint.dump();
+
         return var.getName();
     }
 
     public String visit(final TypeParam param)
     {
-        final Kind k = param.getKind();
+        final Kind kind = param.getKind();
+        final Constraint constraint = param.getConstraint();
 
-        final String suffix = k == Kinds.STAR ? "" :
-            //k == Kinds.STAR_LIST ? "..." :
-            k == Kinds.STAR_LIST ? ":[*]" :
-                null;
+        if (kind != Kinds.STAR)
+        {
+            if (constraint != null && constraint != Constraint.ANY)
+                return param.getName() + ":" + kind.dump() + "|" + constraint.dump();
 
-        assert suffix != null : "unsupported type param kind";
+            return param.getName() + ":" + kind.dump();
+        }
 
-        return param.getName() + suffix;
+        if (constraint != null && constraint != Constraint.ANY)
+            return param.getName() + ":" + constraint.dump();
+
+        return param.getName();
     }
 
     @Override

@@ -13,6 +13,7 @@ package compile.type;
 import com.google.common.collect.Sets;
 import compile.Loc;
 import compile.Session;
+import compile.type.constraint.Constraint;
 import compile.type.kind.Kind;
 import compile.type.visit.EquivState;
 import compile.type.visit.SubstMap;
@@ -29,15 +30,18 @@ public final class TypeVar extends NonScopeType
 {
     private final String name;
     private final Kind kind;
+    private Constraint constraint;
     private TypeParam sourceParam;
     private Set<TypeParam> unifiedParams;
 
-    private TypeVar(final Loc loc, final String name, final Kind kind,
+    private TypeVar(final Loc loc, final String name,
+        final Kind kind, final Constraint constraint,
         final TypeParam sourceParam)
     {
         super(loc);
         this.name = name;
         this.kind = kind;
+        this.constraint = constraint;
         this.sourceParam = sourceParam;
         this.unifiedParams = Sets.newIdentityHashSet();
 
@@ -46,21 +50,41 @@ public final class TypeVar extends NonScopeType
 
         if (kind == null)
             assert false : "null kind in TypeVar ctor: " + name;
+
+        if (constraint == null)
+            assert false : "null constraint in TypeVar ctor" + name;
     }
 
-    public TypeVar(final Loc loc, final String name, final Kind kind)
+    public TypeVar(final Loc loc, final String name,
+        final Kind kind, final Constraint constraint)
     {
-        this(loc, name, kind, null);
+        this(loc, name, kind, constraint, null);
     }
 
+    /**
+     * Note that param constraint is installed here
+     * without modification--must be replaced by
+     * instantiation after construction.
+     */
     public TypeVar(final String name, final TypeParam sourceParam)
     {
-        this(sourceParam.getLoc(), name, sourceParam.getKind(), sourceParam);
+        this(sourceParam.getLoc(), name, sourceParam.getKind(),
+            sourceParam.getConstraint(), sourceParam);
     }
 
     public String getName()
     {
         return name;
+    }
+
+    public Constraint getConstraint()
+    {
+        return constraint;
+    }
+
+    public void setConstraint(final Constraint constraint)
+    {
+        this.constraint = constraint;
     }
 
     public boolean hasSourceParam()
@@ -161,16 +185,17 @@ public final class TypeVar extends NonScopeType
      * Note: per the "types don't come from nowhere" rule, there should
      * be no legitimate cases where a param map is built for a lone type variable.
      */
-    public SubstMap buildParamMap(final Set<TypeVar> vars, final int nameGenOffset)
+    public SubstMap buildParamMap(final Set<TypeVar> vars,
+        final int nameGenOffset, final TypeEnv env)
     {
         if (vars.contains(this))
         {
             Session.error(loc, "building param map for lone type var {0}", dump());
 
             final TypeParam param = hasSourceParam() ?
-                getSourceParam() : new TypeParam(loc, name, kind);
+                getSourceParam() : new TypeParam(loc, name, kind, constraint);
 
-            return SubstMap.bindVar(loc, this, param);
+            return SubstMap.bindVar(loc, this, param, env);
         }
 
         // normal case
@@ -182,7 +207,7 @@ public final class TypeVar extends NonScopeType
         other = other.deref();
 
         return kind.equals(other.getKind()) ?
-            SubstMap.bindVar(loc, this, other.deref()) :
+            SubstMap.bindVar(loc, this, other.deref(), env) :
             null;
     }
 

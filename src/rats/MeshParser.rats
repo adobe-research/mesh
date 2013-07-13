@@ -625,9 +625,11 @@ transient Kind KindBaseExpr
 
     / <List> LeftBracket Star RightBracket
         { yyValue = Kinds.STAR_LIST; }
-
+/*
     / <Tup> LeftParen Star t:(Comma StarKind)* RightParen
         { yyValue = tupleKind(loc(yyStart), Kinds.STAR, t.list()); }
+*/
+//    / <RecConstraint>
 
     / LeftParen KindExpr RightParen ;
 

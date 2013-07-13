@@ -228,9 +228,13 @@ public final class TypeDef extends TypeBinding
     {
         final Type otherDeref = other.deref();
 
-        return equals(otherDeref) ? SubstMap.EMPTY :
-            !nominal ? value.unify(loc, otherDeref, env) :
-            other instanceof TypeVar ? SubstMap.bindVar(loc, (TypeVar)otherDeref, this) :
+        return
+            equals(otherDeref) ?
+                SubstMap.EMPTY :
+            !nominal ?
+                value.unify(loc, otherDeref, env) :
+            other instanceof TypeVar ?
+                SubstMap.bindVar(loc, (TypeVar)otherDeref, this, env) :
             null;
     }
 

@@ -12,6 +12,7 @@ package compile.type.visit;
 
 import com.google.common.collect.Sets;
 import compile.type.*;
+import compile.type.constraint.Constraint;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -27,6 +28,7 @@ import java.util.Set;
  * be referred to by inner types. These parameter references
  * need to be preserved during quantification, which yields
  * new types.
+ * <p/>
  * We currently do this very crudely, by moving, rather than
  * copying, type param objects that are propagated here.
  * This effectively destroys the original type, which is
@@ -58,10 +60,11 @@ public final class TypeVarSubstitutor extends TypeTransformerBase
     private final boolean canCopyParams;
 
     /**
-     * params we've encountered refs to during traversal.
+     * params we've encountered refs to during traversal,
+     * that need to be transferred to result (see header comment).
      * Note: must be identity set.
      */
-    private final Set<TypeParam> usedParams;
+    private final Set<TypeParam> xferParams;
 
     /**
      * if we can copy params, we remember refs here.
@@ -88,7 +91,7 @@ public final class TypeVarSubstitutor extends TypeTransformerBase
         this.type = type;
         this.substMap = substMap;
         this.canCopyParams = canCopyParams;
-        this.usedParams = Sets.newIdentityHashSet();
+        this.xferParams = Sets.newIdentityHashSet();
         this.paramRefs = new IdentityHashMap<TypeParam, List<TypeRef>>();
     }
 
@@ -102,7 +105,11 @@ public final class TypeVarSubstitutor extends TypeTransformerBase
 
         final Type applied = transform(type);
 
-        return TypeReducer.reduce(applied);
+        final Type reduced = TypeReducer.reduce(applied);
+
+        // Session.info("TVS.apply() {0} => {1}", type.dump(), reduced.dump());
+
+        return reduced;
     }
 
     // TypeTransformerBase
@@ -110,7 +117,7 @@ public final class TypeVarSubstitutor extends TypeTransformerBase
     /**
      * Here we transfer any params from the original that
      * are used by the transformed result.
-     * {@link #usedParams} may contain nonlocal params, so
+     * {@link #xferParams} may contain nonlocal params, so
      * we need to intersect with the original's params when
      * transferring.
      * Note that this makes the original useless.
@@ -121,7 +128,7 @@ public final class TypeVarSubstitutor extends TypeTransformerBase
     {
         for (final TypeParam param : original.getParams().values())
         {
-            if (usedParams.contains(param))
+            if (xferParams.contains(param))
             {
                 if (canCopyParams)
                 {
@@ -158,19 +165,47 @@ public final class TypeVarSubstitutor extends TypeTransformerBase
      */
     public Type visit(final TypeVar var)
     {
-        if (!substMap.containsKey(var))
+        // cases:
+        // var stays var
+        //      subst constraint
+        // var becomees param
+        //      set param constraint to subst constraint first time through
+        // becomes ground type
+        //      constraint must have been satisfied, can ignore
+
+        final Type type = substMap.get(var);
+
+        if (type == null)
+        {
+            final Constraint constraint = var.getConstraint();
+            final Constraint substConstraint = constraint.subst(substMap);
+
+            if (constraint != substConstraint)
+                var.setConstraint(substConstraint);
+
             return var;
+        }
+        else if (type instanceof TypeParam)
+        {
+            final TypeParam substParam = (TypeParam)type;
 
-        final Type subst = substMap.get(var);
+            if (substParam.getConstraint() == null)
+            {
+                // install the quantified param constraint
+                substParam.setConstraint(var.getConstraint().subst(substMap));
+            }
 
-        return subst instanceof TypeParam ?
-            new TypeRef(var.getLoc(), (TypeParam)subst) :
-            subst;
+            return new TypeRef(var.getLoc(), substParam);
+        }
+        else
+        {
+            return type;
+        }
     }
 
     /**
      * Add any existing refs to in-scope params to
-     * {@link #usedParams} for later fixup.
+     * {@link #xferParams} for later fixup.
      */
     @Override
     public Type visit(final TypeRef ref)
@@ -181,7 +216,7 @@ public final class TypeVarSubstitutor extends TypeTransformerBase
 
             if (param.getTypeScope() == type)
             {
-                usedParams.add(param);
+                xferParams.add(param);
 
                 if (canCopyParams)
                 {

@@ -10,7 +10,10 @@
  */
 package compile.analyze;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import compile.*;
 import compile.gen.IntrinsicsResolver;
 import compile.module.Module;
@@ -18,6 +21,8 @@ import compile.module.Scope;
 import compile.parse.ApplyFlavor;
 import compile.term.*;
 import compile.type.*;
+import compile.type.constraint.Constraint;
+import compile.type.constraint.RecordConstraint;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
 import compile.type.visit.*;
@@ -466,8 +471,8 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
             if (groupStateStack.size() == 1)
             {
                 Session.error(item.getLoc(),
-                    "internal error on item {0}: unquantified type vars at top level",
-                    item.dump());
+                    "internal error on item {0}: unquantified type vars at top level: {1}",
+                    item.dump(), quantItemType.dump());
             }
             else
             {
@@ -563,7 +568,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
      * to quantify this type. Avoid quantifying ambient vars, or
      * requantifying already-quantified vars.
      */
-    private static SubstMap buildTypeParams(
+    private SubstMap buildTypeParams(
         final Type type,
         final Set<TypeVar> ambientVars,
         final SubstMap ambientParams)
@@ -576,7 +581,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
 
         // create type params for all vars that don't appear in outer scopes,
         // and have not yet been quantified
-        return type.buildParamMap(newVars, ambientVars.size());
+        return type.buildParamMap(newVars, ambientVars.size(), this);
     }
 
     /**
@@ -702,25 +707,25 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
 
     public TypeVar freshVar(final Loc loc)
     {
-        return new TypeVar(loc, "t" + (nextTypeVar++), Kinds.STAR);
+        return new TypeVar(loc, "t" + (nextTypeVar++), Kinds.STAR, Constraint.ANY);
     }
 
     public TypeVar freshVar(final Loc loc, final Kind kind)
     {
-        return new TypeVar(loc, "t" + (nextTypeVar++), kind);
+        return new TypeVar(loc, "t" + (nextTypeVar++), kind, Constraint.ANY);
     }
 
-    public TypeVar freshVar(final TypeParam typeParam)
+    public TypeVar freshVar(final Loc loc, final Kind kind, final Constraint constraint)
     {
-        return new TypeVar("t" + (nextTypeVar++), typeParam);
+        return new TypeVar(loc, "t" + (nextTypeVar++), kind, constraint);
     }
 
-    public boolean unify(final Type t1, final Type t2)
+    public TypeVar freshVar(final TypeParam param)
     {
-        return unify(t1.getLoc(), t1, t2);
+        return new TypeVar("t" + (nextTypeVar++), param);
     }
 
-    public boolean unify(final Located located, final Type t1, final Type t2)
+    private boolean unify(final Located located, final Type t1, final Type t2)
     {
         return unify(located.getLoc(), t1, t2);
     }
@@ -803,7 +808,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
         // NOTE: don't filter out ambients
         //final Set<TypeVar> qvars = Sets.difference(subsType.getVars(), getAmbientVars());
 
-        final SubstMap paramMap = subsType.buildParamMap(subsType.getVars(), 0);
+        final SubstMap paramMap = subsType.buildParamMap(subsType.getVars(), 0, this);
 
         return subsType.quantify(paramMap, SubstMap.EMPTY);
     }
@@ -1062,8 +1067,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                     errorFormat(seedKeyType).dump());
         }
 
-        final ChoiceType
-            keyEnum = new ChoiceType(loc, seedKeyType.subst(subs), keySet);
+        final ChoiceType keyEnum = new ChoiceType(loc, seedKeyType.subst(subs), keySet);
 
         // values
 
@@ -1322,7 +1326,40 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                 }
                 else
                 {
-                    if (!unify(loc, Types.INT, argType))
+                    // base type not yet known.
+                    // default case is tuple, but if we have a constant arg
+                    // with known type, we can avoid dumb errors on obvious
+                    // record accesses. Again, this is all temporary.
+
+                    final Type argTypeDeref = argType.subst(subs).deref().eval();
+
+                    if (argDeref.isConstant() &&
+                        argTypeDeref instanceof TypeCons && argTypeDeref != Types.INT)
+                    {
+                        // we have a definite arg type, not Int: infer record base
+                        resultType = freshVar(loc, Kinds.STAR);
+
+                        final Map<Term, Type> targetMembers = Maps.newHashMap();
+                        targetMembers.put(argDeref, resultType);
+
+                        final ChoiceType keyEnum =
+                            new ChoiceType(argDeref.getLoc(), argTypeDeref, argDeref);
+
+                        final TypeMap targetMap =
+                            new TypeMap(loc, keyEnum, targetMembers);
+
+                        final Type targetBaseType =
+                            freshVar(loc, Kinds.STAR, new RecordConstraint(targetMap));
+
+                        if (!unify(loc, targetBaseType, baseType))
+                        {
+                            Session.error(loc,
+                                "cannot unify actual base type {0} with target type {1}",
+                                errorFormat(baseType).dump(),
+                                errorFormat(targetBaseType).dump());
+                        }
+                    }
+                    else if (!unify(loc, Types.INT, argType))
                     {
                         Session.error(argLoc,
                             "address argument is of type {0}, must be of type Int",

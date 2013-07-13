@@ -77,7 +77,7 @@ public abstract class EnumType extends ScopeType
         }
         else if (other instanceof TypeVar)
         {
-            return SubstMap.bindVar(loc, (TypeVar)other, this);
+            return SubstMap.bindVar(loc, (TypeVar)other, this, env);
         }
         else
         {

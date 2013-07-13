@@ -229,7 +229,7 @@ public final class TypeApp extends ScopeType
             return SubstMap.EMPTY;
 
         if (other instanceof TypeVar)
-            return SubstMap.bindVar(loc, (TypeVar)other, this);
+            return SubstMap.bindVar(loc, (TypeVar)other, this, env);
 
         // if our application expression can be evaluated, unify against that.
         if (isAbsApply())

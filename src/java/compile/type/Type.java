@@ -108,7 +108,7 @@ public interface Type extends Located, Dumpable
     /**
      *
      */
-    SubstMap buildParamMap(final Set<TypeVar> vars, int nameGenOffset);
+    SubstMap buildParamMap(final Set<TypeVar> vars, int nameGenOffset, TypeEnv env);
 
     /**
      * Apply substitutions from map

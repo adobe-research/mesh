@@ -196,8 +196,8 @@ public abstract class TypeTransformerBase extends TypeVisitorBase<Type>
     @Override
     public Type visit(final TypeMap map)
     {
-        final Type keyType = map.getKeyType();
-        final Type newKeyType = visitType(keyType);
+        final ChoiceType keyType = map.getKeyType();
+        final ChoiceType newKeyType = (ChoiceType)visitType(keyType);
 
         final Map<Term, Type> members = map.getMembers();
         final Map<Term, Type> newMembers = transformTypeMap(members);

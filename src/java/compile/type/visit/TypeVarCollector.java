@@ -22,28 +22,19 @@ import java.util.LinkedHashSet;
  */
 public final class TypeVarCollector extends TypeVisitorBase<Object>
 {
-    private static final ThreadLocal<TypeVarCollector> LOCAL =
-        new ThreadLocal<TypeVarCollector>()
-        {
-            protected TypeVarCollector initialValue()
-            {
-                return new TypeVarCollector();
-            }
-        };
-
     /**
      * Check for the presence of vars in type
      */
     public static boolean check(final Type type)
     {
-        final TypeVarCollector instance = LOCAL.get();
+        final TypeVarCollector collector = new TypeVarCollector();
 
-        instance.vars = null;
-        instance.found = false;
+        collector.vars = null;
+        collector.found = false;
 
-        instance.visitType(type);
+        collector.visitType(type);
 
-        return instance.found;
+        return collector.found;
     }
 
     /**
@@ -51,14 +42,14 @@ public final class TypeVarCollector extends TypeVisitorBase<Object>
      */
     public static LinkedHashSet<TypeVar> collect(final Type type)
     {
-        final TypeVarCollector instance = LOCAL.get();
+        final TypeVarCollector collector = new TypeVarCollector();
 
-        instance.vars = new LinkedHashSet<TypeVar>();
-        instance.found = false;
+        collector.vars = new LinkedHashSet<TypeVar>();
+        collector.found = false;
 
-        instance.visitType(type);
+        collector.visitType(type);
 
-        return instance.vars;
+        return collector.vars;
     }
 
     //
@@ -84,9 +75,14 @@ public final class TypeVarCollector extends TypeVisitorBase<Object>
     public Object visit(final TypeVar var)
     {
         if (vars != null)
+        {
             vars.add(var);
+            vars.addAll(var.getConstraint().getVars());
+        }
         else
+        {
             found = true;
+        }
 
         return null;
     }

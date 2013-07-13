@@ -13,6 +13,7 @@ package compile.type;
 import compile.Loc;
 import compile.gen.java.Constants;
 import compile.term.*;
+import compile.type.constraint.RecordConstraint;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -385,6 +386,13 @@ public final class Types
     {
         type = type.deref();
         return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == REC;
+    }
+
+    public static boolean isPolyRec(Type type)
+    {
+        type = type.deref();
+        return type instanceof TypeParam &&
+            ((TypeParam)type).getConstraint() instanceof RecordConstraint;
     }
 
     public static Type recFields(Type type)

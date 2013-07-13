@@ -15,6 +15,7 @@ import compile.Session;
 import compile.module.Scope;
 import compile.term.visit.BindingVisitor;
 import compile.term.TypeBinding;
+import compile.type.constraint.Constraint;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
 import compile.type.visit.EquivState;
@@ -29,28 +30,41 @@ import compile.type.visit.TypeVisitor;
 public final class TypeParam extends TypeBinding
 {
     private final Kind kind;
+    private Constraint constraint;
     private ScopeType typeScope;
 
-    public TypeParam(final Loc loc, final String name, final Kind kind)
+    public TypeParam(final Loc loc, final String name,
+        final Kind kind, final Constraint constraint)
     {
         super(loc, name);
         this.kind = kind;
+        this.constraint = constraint;
         this.typeScope = null;
     }
 
-    public TypeParam(final String name, final Kind kind)
+    public TypeParam(final String name, final Kind kind, final Constraint constraint)
     {
-        this(Loc.INTRINSIC, name, kind);
+        this(Loc.INTRINSIC, name, kind, constraint);
     }
 
     public TypeParam(final String name)
     {
-        this(Loc.INTRINSIC, name, Kinds.STAR);
+        this(Loc.INTRINSIC, name, Kinds.STAR, Constraint.ANY);
     }
 
     public TypeParam(final TypeParam param)
     {
-        this(param.getLoc(), param.getName(), param.getKind());
+        this(param.getLoc(), param.getName(), param.getKind(), param.getConstraint());
+    }
+
+    public Constraint getConstraint()
+    {
+        return constraint;
+    }
+
+    public void setConstraint(final Constraint constraint)
+    {
+        this.constraint = constraint;
     }
 
     public boolean hasTypeScope()
@@ -61,7 +75,7 @@ public final class TypeParam extends TypeBinding
     public ScopeType getTypeScope()
     {
         if (typeScope == null)
-            assert false : "null type scope on type param";
+            assert false : "null type scope on type param " + dump();
 
         return typeScope;
     }

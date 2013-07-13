@@ -110,7 +110,7 @@ public final class TypeReducer extends TypeTransformerBase
 
                 if (keyType instanceof ChoiceType && valTypes instanceof TypeList)
                 {
-                    final EnumType keyEnum = (EnumType)keyType;
+                    final ChoiceType keyEnum = (ChoiceType)keyType;
 
                     final List<Type> valTypeList = ((TypeList)valTypes).getItems();
 
@@ -133,7 +133,7 @@ public final class TypeReducer extends TypeTransformerBase
                         members.put(keyTerm, valType);
                     }
 
-                    return new TypeMap(loc, keyType, members);
+                    return new TypeMap(loc, keyEnum, members);
                 }
             }
         }

@@ -987,6 +987,10 @@ public final class StatementFormatter extends BindingVisitorBase<String>
                 if (Types.isMap(baseType))
                     return formatMapApplyTerm(apply);
 
+                Session.error(apply.getLoc(),
+                    "internal error: invalid base term {0} : {1} in collection index expression {2}",
+                    baseTerm.dump(), baseType.dump(), apply.dump());
+
                 break;
             }
 
@@ -998,16 +1002,23 @@ public final class StatementFormatter extends BindingVisitorBase<String>
                 if (Types.isRec(baseType))
                     return formatRecordApplyTerm(apply);
 
+                if (Types.isPolyRec(baseType))
+                    return formatPolyRecordApplyTerm(apply);
+
+                Session.error(apply.getLoc(),
+                    "internal error: invalid base term {0} : {1} in structure address expression {2}",
+                    baseTerm.dump(), baseType.dump(), apply.dump());
+
                 break;
             }
 
             default:
+                Session.error(apply.getLoc(),
+                    "internal error: unknown application flavor in expression {0}",
+                    apply.dump());
+
                 break;
         }
-
-        Session.error(apply.getLoc(),
-            "internal error: invalid base term {0} : {1} in application {2}",
-            baseTerm.dump(), baseType.dump(), apply.dump());
 
         return null;
     }
@@ -1077,7 +1088,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         final Term base = apply.getBase();
         final Term arg = apply.getArg();
 
-        //final Type baseType = base.getType();
         final Type applyType = apply.getType();
 
         if (Types.isSum(applyType))
@@ -1094,6 +1104,14 @@ public final class StatementFormatter extends BindingVisitorBase<String>
             ".get(" + formatTermAs(arg, Object.class) + ")";
 
         return fixup(apply.getLoc(), expr, Object.class);
+    }
+
+    /**
+     * TODO move to ohori compilation scheme
+     */
+    private String formatPolyRecordApplyTerm(final ApplyTerm apply)
+    {
+        return formatRecordApplyTerm(apply);
     }
 
     /**

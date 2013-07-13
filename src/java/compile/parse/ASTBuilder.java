@@ -15,6 +15,7 @@ import compile.Session;
 import compile.StringUtils;
 import compile.term.*;
 import compile.type.*;
+import compile.type.constraint.Constraint;
 import compile.type.kind.ArrowKind;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
@@ -831,12 +832,10 @@ public class ASTBuilder
     /**
      *
      */
-    public static TypeParam typeParam(final Loc loc, final String name, Kind kind)
+    public static TypeParam typeParam(final Loc loc, final String name, final Kind kind)
     {
-        if (kind == null)
-            kind = Kinds.STAR;
-
-        return new TypeParam(loc, name, kind);
+        return new TypeParam(loc, name,
+            kind == null ? Kinds.STAR : kind, Constraint.ANY);
     }
 
     //

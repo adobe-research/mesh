@@ -67,7 +67,7 @@ public final class XNode
         fieldMap.put(attrsKey, attrsType);
         fieldMap.put(elemsKey, elemsType);
 
-        final TypeApp xnodeType = Types.rec(new TypeMap(keyEnum, fieldMap));
+        final TypeApp xnodeType = Types.rec(new TypeMap(Loc.INTRINSIC, fieldMap));
 
         xnodeType.collectInlineParams();
 

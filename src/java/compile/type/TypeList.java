@@ -82,7 +82,7 @@ public final class TypeList extends NonScopeType
     public SubstMap unify(final Loc loc, final Type other, final TypeEnv env)
     {
         if (other instanceof TypeVar)
-            return SubstMap.bindVar(loc, (TypeVar)other, this);
+            return SubstMap.bindVar(loc, (TypeVar)other, this, env);
 
         final Type otherEval = other.deref().eval();
 
