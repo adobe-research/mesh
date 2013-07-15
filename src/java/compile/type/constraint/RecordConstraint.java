@@ -23,8 +23,8 @@ public final class RecordConstraint implements Constraint
 
     // Constraint
 
-    public Pair<? extends Constraint, SubstMap>
-        merge(final Constraint constraint, final TypeEnv env)
+    public Pair<? extends Constraint, SubstMap> merge(
+        final Constraint constraint, final TypeEnv env)
     {
         if (constraint == Constraint.ANY)
             return Pair.create(this, SubstMap.EMPTY);
@@ -37,7 +37,9 @@ public final class RecordConstraint implements Constraint
         final TypeMap fields = (TypeMap)Types.recFields(rec);
         final TypeMap otherFields = (TypeMap)Types.recFields(recordConstraint.rec);
 
-        final Pair<TypeMap, SubstMap> merged = fields.merge(otherFields, env);
+        // NOTE: reverse order tends to accumulate constraints in code order,
+        // given the polarity of unify() args in type checker. ugh
+        final Pair<TypeMap, SubstMap> merged = otherFields.merge(fields, env);
 
         if (merged == null)
             return null;

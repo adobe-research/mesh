@@ -21,6 +21,7 @@ import compile.type.visit.SubstMap;
 import compile.type.visit.TypeVisitor;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -116,7 +117,7 @@ public final class TypeMap extends NonScopeType
         if (subst == null)
             return null;
 
-        final Map<Term, Type> resultMembers = Maps.newLinkedHashMap();
+        final LinkedHashMap<Term, Type> resultMembers = Maps.newLinkedHashMap();
         resultMembers.putAll(members);
 
         for (final Map.Entry<Term, Type> entry : map.getMembers().entrySet())

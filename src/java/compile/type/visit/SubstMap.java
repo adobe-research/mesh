@@ -70,6 +70,8 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
 
             final Pair<? extends Constraint, SubstMap> merged =
                 var.getConstraint().merge(rhsVar.getConstraint(), env);
+            final Constraint mergedConstraint = merged.left;
+            final SubstMap mergeSubst = merged.right;
 
             if (merged == null)
             {
@@ -80,8 +82,8 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
                 return null;
             }
 
-            if (merged.left != rhsVar.getConstraint())
-                rhsVar.setConstraint(merged.left);
+            if (mergedConstraint != rhsVar.getConstraint())
+                rhsVar.setConstraint(mergedConstraint.subst(mergeSubst));
 
             // if lhs var has param info, transfer it.
             // this doesn't affect inference, but helps preserves declared param names.
@@ -90,7 +92,7 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
 
             rhsVar.addUnifiedParams(var.getUnifiedParams());
 
-            return merged.right.compose(loc, new SubstMap(var, rhsVar));
+            return mergeSubst.compose(loc, new SubstMap(var, rhsVar));
         }
         else
         {
@@ -192,25 +194,29 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
      * Check map for closure: no types in check set can mention any LHS vars.
      *
      */
-    public boolean checkClosure(final Loc loc, final Set<Type> check)
+    public boolean checkClosure(final Loc loc, final Set<Type> newRhses)
     {
         final Set<Type> lhsVars = keySet();
 
         final Set<Type> cycles = Sets.newLinkedHashSet();
 
-        for (final Type type : check)
+        for (final Type rhs : newRhses)
         {
-            for (final TypeVar typeVar : type.getVars())
-                if (lhsVars.contains(typeVar))
-                    cycles.add(type);
+            for (final TypeVar rhsVar : rhs.getVars())
+            {
+                if (lhsVars.contains(rhsVar))
+                {
+                    cycles.add(rhs);
+
+                    Session.error(loc,
+                        "internal error: substitution map is not closed. RHS type {0} mentions LHS var {1}, map = {2}",
+                        rhs.dump(), rhsVar.dump(), dump());
+                }
+            }
         }
 
         if (!cycles.isEmpty())
         {
-            Session.error(loc,
-                "internal error: substitution map is not closed. Cycles in type(s) {0}",
-                TypeDumper.dumpList(cycles));
-
             return false;
         }
 
