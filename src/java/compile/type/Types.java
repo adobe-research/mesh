@@ -415,12 +415,7 @@ public final class Types
         if (!(fieldTypes instanceof TypeMap))
             return null;
 
-        final Type keyType = ((TypeMap)fieldTypes).getKeyType();
-
-        if (!(keyType instanceof EnumType))
-            return null;
-
-        final EnumType keyEnum = (EnumType)keyType;
+        final ChoiceType keyEnum = ((TypeMap)fieldTypes).getKeyType();
 
         final List<SimpleLiteralTerm> list = new ArrayList<SimpleLiteralTerm>();
 

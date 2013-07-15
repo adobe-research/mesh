@@ -52,9 +52,6 @@ public final class XNode
         keySet.add(attrsKey);
         keySet.add(elemsKey);
 
-        final ChoiceType
-            keyEnum = new ChoiceType(Loc.INTRINSIC, Types.SYMBOL, keySet);
-
         final Type attrsType = Types.map(Types.SYMBOL, Types.STRING);
 
         final TypeRef xnodeTypeRef = new TypeRef(Loc.INTRINSIC,
@@ -63,11 +60,15 @@ public final class XNode
         final Type elemsType = Types.list(xnodeTypeRef);
 
         final LinkedHashMap<Term, Type> fieldMap = new LinkedHashMap<Term, Type>();
-        fieldMap.put(nameKey, Types.STRING);
-        fieldMap.put(attrsKey, attrsType);
-        fieldMap.put(elemsKey, elemsType);
+        fieldMap.put(new SymbolLiteral(Loc.INTRINSIC, XNODE_NAME), Types.STRING);
+        fieldMap.put(new SymbolLiteral(Loc.INTRINSIC, XNODE_ATTRS), attrsType);
+        fieldMap.put(new SymbolLiteral(Loc.INTRINSIC, XNODE_ELEMS), elemsType);
 
-        final TypeApp xnodeType = Types.rec(new TypeMap(Loc.INTRINSIC, fieldMap));
+        final ChoiceType keyEnum =
+            new ChoiceType(Loc.INTRINSIC, Types.SYMBOL, keySet);
+
+        final TypeApp xnodeType =
+            Types.rec(new TypeMap(Loc.INTRINSIC, keyEnum, fieldMap));
 
         xnodeType.collectInlineParams();
 

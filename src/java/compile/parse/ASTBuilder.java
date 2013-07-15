@@ -826,7 +826,7 @@ public class ASTBuilder
     {
         final LinkedHashSet<Term> values = new LinkedHashSet<Term>(items);
 
-        return new ChoiceType(loc, values);
+        return new ChoiceType(loc, new WildcardType(loc), values);
     }
 
     /**

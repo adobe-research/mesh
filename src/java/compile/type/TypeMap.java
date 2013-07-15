@@ -13,7 +13,6 @@ package compile.type;
 import com.google.common.collect.Maps;
 import compile.Loc;
 import compile.Pair;
-import compile.Session;
 import compile.term.Term;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
@@ -46,7 +45,7 @@ public final class TypeMap extends NonScopeType
 
     public TypeMap(final Loc loc, final Map<Term, Type> members)
     {
-        this(loc, new ChoiceType(loc, members.keySet()), members);
+        this(loc, new ChoiceType(loc, new WildcardType(loc), members.keySet()), members);
     }
 
     public Map<Term, Type> getMembers()
@@ -142,7 +141,7 @@ public final class TypeMap extends NonScopeType
             }
         }
 
-        return Pair.create(new TypeMap(loc, resultMembers), subst);
+        return Pair.create(new TypeMap(loc, keyType, resultMembers), subst);
     }
 
     // Type

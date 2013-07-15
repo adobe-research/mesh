@@ -195,7 +195,17 @@ public final class TypeVar extends NonScopeType
             final TypeParam param = hasSourceParam() ?
                 getSourceParam() : new TypeParam(loc, name, kind, constraint);
 
-            return SubstMap.bindVar(loc, this, param, env);
+            final SubstMap subst = SubstMap.bindVar(loc, this, param, env);
+
+            if (subst == null)
+            {
+                Session.error(loc, "internal error: failed to bind var {0} to param {1}",
+                    dump(), param.dump());
+
+                return SubstMap.EMPTY;
+            }
+
+            return subst;
         }
 
         // normal case

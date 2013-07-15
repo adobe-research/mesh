@@ -44,14 +44,6 @@ public final class ChoiceType extends EnumType
     }
 
     /**
-     * base type will be inferred
-     */
-    public ChoiceType(final Loc loc, final Set<Term> values)
-    {
-        this(loc, new WildcardType(loc), values);
-    }
-
-    /**
      * escape hatch--used by visitors who clone us. TODO should tighten up?
      */
     public LinkedHashSet<Term> getValueSet()
