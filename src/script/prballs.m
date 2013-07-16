@@ -52,6 +52,18 @@ CELLCOLS = W / CELLEXT + sign(W % CELLEXT);             // number of cell column
 CELLROWS = H / CELLEXT + sign(H % CELLEXT);             // number of cell rows
 CELLIXS = cross(count(CELLCOLS), count(CELLROWS));      // precalculated list of cell index (x, y) pairs
 
+// neighborhood matrix: for each cell at a given (x, y),
+// NABE[y][x] is a list oc (x, y) coordinates of adjacent cells.
+// e.g. NABE[1][1] = [(0, 0), (0, 1), (0, 2), ..., (2, 2)]
+//
+NABE = count(CELLROWS) | { r =>
+    count(CELLCOLS) | { c =>
+        adjx = fromto(max(0, c - 1), min(CELLCOLS - 1, c + 1));
+        adjy = fromto(max(0, r - 1), min(CELLROWS - 1, r + 1));
+        cross(adjx, adjy)
+    }
+};
+
 WALLSQUEEZE = 0.1;                                      // wall squeeze force, per unit position
 BALLSQUEEZE = 0.01 *. circarea(MINR);                   // ball squeeze force, based on min radius
 WALLDEATH = 25;                                         // 1 in WALLDEATH chance that wall kills (slow) ball
@@ -333,12 +345,10 @@ cellcollisions(cx, cy)
     cellplayers = *(cells[cy][cx]);
 
     // collect players to test against - this cell and adjacent cells
-    adjx = fromto(max(0, cx - 1), min(CELLCOLS - 1, cx + 1));
-    adjy = fromto(max(0, cy - 1), min(CELLROWS - 1, cy + 1));
-    testplayers = flatten(cross(adjx, adjy) | { *(cells[$1][$0]) });
+    testplayers = flatten(NABE[cy][cx] | { *(cells[$1][$0]) });
 
     // test each player in our cell against players
-    // from our cell and adjacent cells
+    // in our neighborhood
     for(cellplayers, { collisions($0, testplayers) });
 };
 

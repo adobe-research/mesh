@@ -2197,9 +2197,7 @@ mapgetd(map, key, default)
  */
 cross(xs, ys)
 {
-    xn = size(xs);
-    ixs = count(xn * size(ys));
-    zip(mapll(ixs | { $0 % xn }, xs), mapll(ixs | { $0 / xn }, ys))
+    zip(flatten(rep(size(ys), xs)), flatten(ys | {rep(size(xs), $0)}))
 };
 
 /**

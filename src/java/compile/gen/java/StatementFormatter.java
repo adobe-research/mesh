@@ -864,7 +864,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         // get keyset field name
         final String keyListField = keyListConstants.get(keyList);
         if (keyListField == null)
-            assert false;
+            assert false : "missing key list field for " + DumpUtils.dumpList(keyList);
 
         // generate value exprs
         final List<String> valueExprs = new ArrayList<String>();
@@ -1081,9 +1081,52 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
     /**
      * application on a record is keyed member access.
-     * TODO when poly recs/vars are in, can do more efficient lookup
      */
     private String formatRecordApplyTerm(final ApplyTerm apply)
+    {
+        final Term base = apply.getBase();
+        final Term arg = apply.getArg();
+
+        final Type applyType = apply.getType();
+
+        if (Types.isSum(applyType))
+            Session.error(apply.getLoc(),
+                "internal error: dynamic record access not currently supported");
+
+        {
+            final Term argDeref = arg instanceof RefTerm ? ((RefTerm)arg).deref() : arg;
+            assert argDeref.isConstant();
+        }
+
+        final String expr;
+
+        final Type baseType = base.getType().deref();
+        final List<SimpleLiteralTerm> keyList = Types.recKeyList(baseType);
+        final int pos = keyList.indexOf(arg);
+
+        if (pos >= keyList.size())
+        {
+            Session.error(apply.getLoc(),
+                "internal error: arg {0} not found in key list {1}",
+                arg.dump(), DumpUtils.dumpList(keyList));
+
+            // name lookup as error fallback
+            expr = formatTermAs(base, Record.class) +
+                ".get(" + formatTermAs(arg, Object.class) + ")";
+        }
+        else
+        {
+            // positional lookup
+            expr = formatTermAs(base, Record.class) + ".getValue(" + pos + ")";
+        }
+
+        return fixup(apply.getLoc(), expr, Object.class);
+    }
+
+    /**
+     * TODO move to ohori hidden params for poly rec access
+     */
+    private String formatPolyRecordApplyTerm(final ApplyTerm apply)
     {
         final Term base = apply.getBase();
         final Term arg = apply.getArg();
@@ -1104,14 +1147,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
             ".get(" + formatTermAs(arg, Object.class) + ")";
 
         return fixup(apply.getLoc(), expr, Object.class);
-    }
-
-    /**
-     * TODO move to ohori compilation scheme
-     */
-    private String formatPolyRecordApplyTerm(final ApplyTerm apply)
-    {
-        return formatRecordApplyTerm(apply);
     }
 
     /**
