@@ -105,8 +105,6 @@ public abstract class ScopeType extends AbstractType
      */
     public final Type quantify(final SubstMap newParams, final SubstMap ambientParams)
     {
-        // Session.info("ST.quantify() will add {0}", DumpUtils.dumpList(newParams.values()));
-
         final Type applied = subst(ambientParams.compose(loc, newParams));
 
         // add new params to our result type
@@ -179,24 +177,7 @@ public abstract class ScopeType extends AbstractType
             substMap.put(v, new TypeParam(v.getLoc(), name, v.getKind(), null));
         }
 
-        // Session.info("ST.BPM(v) {0} => {1}", DumpUtils.dumpList(vars), substMap.dump());
-
         return substMap;
-    }
-
-    /**
-     *
-     */
-    private static String nameGen(int i)
-    {
-        String name = "";
-        while (i >= 0)
-        {
-            final int ci = i % 26;
-            i = i / 26 - 1;
-            name = (char)(((int)'A') + ci) + name;
-        }
-        return name;
     }
 
     /**

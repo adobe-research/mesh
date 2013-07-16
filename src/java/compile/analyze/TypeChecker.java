@@ -24,6 +24,7 @@ import compile.type.*;
 import compile.type.constraint.Constraint;
 import compile.type.constraint.RecordConstraint;
 import compile.type.constraint.TupleConstraint;
+import compile.type.constraint.VariantConstraint;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
 import compile.type.visit.*;
@@ -1091,6 +1092,55 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
     }
 
     @Override
+    public Type visit(final VariantTerm var)
+    {
+        final Loc loc = var.getLoc();
+
+        final Term key = var.getKey();
+        final Type keyType = visitTerm(key);
+        final Term keyDeref = (key instanceof RefTerm) ?
+            ((RefTerm)key).deref() : key;
+
+        final Term value = var.getValue();
+        final Type valueType = visitTerm(value);
+
+        final Type type;
+
+        if (!keyDeref.isConstant())
+        {
+            Session.error(loc,
+                "variant key {0} is not constant",
+                key.dump());
+
+            type = Types.UNIT;
+        }
+        else
+        {
+            final Type keyTypeDeref = keyType.subst(subs).deref().eval();
+            final Type valueTypeDeref = valueType.subst(subs).deref().eval();
+
+            final Map<Term, Type> targetMembers = Maps.newHashMap();
+            targetMembers.put(keyDeref, valueTypeDeref);
+
+            final ChoiceType keyEnum =
+                new ChoiceType(keyDeref.getLoc(), keyTypeDeref, keyDeref);
+
+            final TypeMap targetMap =
+                new TypeMap(loc, keyEnum, targetMembers);
+
+            type = freshVar(loc, Kinds.STAR, new VariantConstraint(targetMap));
+        }
+
+        // done
+
+        var.setType(type);
+
+        addPendingItem(var);
+
+        return type;
+    }
+
+    @Override
     public Type visit(final LambdaTerm lambda)
     {
         if (lambda.hasDeclaredType())
@@ -1330,8 +1380,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
 
                     final Type argTypeDeref = argType.subst(subs).deref().eval();
 
-                    if (argDeref.isConstant() &&
-                        argTypeDeref instanceof TypeCons && argTypeDeref != Types.INT)
+                    if (argTypeDeref instanceof TypeCons && argTypeDeref != Types.INT)
                     {
                         // we have a definite arg type, not Int: infer record base
                         resultType = freshVar(loc, Kinds.STAR);
@@ -1381,7 +1430,6 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
 
                         final Type targetBaseType =
                             freshVar(loc, Kinds.STAR, new TupleConstraint(targetList));
-                            // Types.tup(loc, targetMembers);
 
                         if (!unify(loc, targetBaseType, baseType))
                         {

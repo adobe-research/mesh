@@ -120,6 +120,13 @@ public class TermVisitorBase<T> implements TermVisitor<T>
         return null;
     }
 
+    public T visit(final VariantTerm variant)
+    {
+        visitTerm(variant.getKey());
+        visitTerm(variant.getValue());
+        return null;
+    }
+
     public T visit(final LambdaTerm lambda)
     {
         return null;

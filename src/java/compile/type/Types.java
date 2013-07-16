@@ -434,31 +434,31 @@ public final class Types
     // arg kind is checked for compatibility later
     //
 
-    public static TypeApp sum(final Loc loc, final Map<Term, Type> items)
+    public static TypeApp var(final Loc loc, final Map<Term, Type> items)
     {
-        return sum(loc, new TypeMap(loc, items));
+        return var(loc, new TypeMap(loc, items));
     }
 
-    public static TypeApp sum(final Loc loc, final Type opts)
+    public static TypeApp var(final Type opts)
+    {
+        return var(Loc.INTRINSIC, opts);
+    }
+
+    public static TypeApp var(final Loc loc, final Type opts)
     {
         return app(loc, SUM, opts);
     }
 
-    public static TypeApp sum(final Type opts)
-    {
-        return sum(Loc.INTRINSIC, opts);
-    }
-
-    public static boolean isSum(Type type)
+    public static boolean isVar(Type type)
     {
         type = type.deref();
         return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == SUM;
     }
 
-    public static Type sumOpts(Type type)
+    public static Type varOpts(Type type)
     {
         type = type.deref();
-        if (!Types.isSum(type))
+        if (!Types.isVar(type))
             throw new IllegalArgumentException();
 
         return ((TypeApp)type).getArg();

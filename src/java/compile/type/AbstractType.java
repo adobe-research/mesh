@@ -29,6 +29,23 @@ public abstract class AbstractType implements Type
         this.loc = loc;
     }
 
+    /**
+     * utility used for type param name generation.
+     * up here because currently TypeVar is a NonScopeType,
+     * which is nonsense and needs to change
+     */
+    protected static String nameGen(int i)
+    {
+        String name = "";
+        while (i >= 0)
+        {
+            final int ci = i % 26;
+            i = i / 26 - 1;
+            name = (char)(((int)'A') + ci) + name;
+        }
+        return name;
+    }
+
     // Type
 
     public final void setLoc(final Loc loc)

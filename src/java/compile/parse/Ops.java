@@ -81,6 +81,7 @@ public class Ops
     final static String UPDATES_SYM = "<<-";
 
     final static String COND_SYM = "?";
+    final static String VAR_SYM = "!";
 
     final static String DOUBLE_TIMES_SYM = "**";
 
@@ -100,6 +101,8 @@ public class Ops
     //
     static
     {
+        BINOP_INFO.put(VAR_SYM, new BinopInfo(1, Assoc.Right, VAR_SYM));
+
         BINOP_INFO.put(ASSIGN_SYM, new BinopInfo(5, Assoc.Right, _put.INSTANCE.getName()));
         BINOP_INFO.put(ASSIGNS_SYM, new BinopInfo(5, Assoc.Right, _puts.INSTANCE.getName()));
 

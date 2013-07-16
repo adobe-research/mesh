@@ -17,8 +17,10 @@ import compile.type.constraint.Constraint;
 import compile.type.kind.Kind;
 import compile.type.visit.EquivState;
 import compile.type.visit.SubstMap;
+import compile.type.visit.TypeParamCollector;
 import compile.type.visit.TypeVisitor;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -52,7 +54,7 @@ public final class TypeVar extends NonScopeType
             assert false : "null kind in TypeVar ctor: " + name;
 
         if (constraint == null)
-            assert false : "null constraint in TypeVar ctor" + name;
+            assert false : "null constraint in TypeVar ctor: " + name;
     }
 
     public TypeVar(final Loc loc, final String name,
@@ -120,7 +122,7 @@ public final class TypeVar extends NonScopeType
         {
             if (Session.isDebug())
                 Session.debug(loc,
-                    "type var {0}:in-scope source param {1} available, using",
+                    "type var {0}: in-scope source param {1} available, using",
                     name, sourceParam.dump());
 
             return sourceParam;
@@ -136,7 +138,7 @@ public final class TypeVar extends NonScopeType
                 {
                     if (Session.isDebug())
                         Session.debug(loc,
-                            "type var {0}:in-scope unified param {1} available, using",
+                            "type var {0}: in-scope unified param {1} available, using",
                             name, unified.dump());
 
                     return unified;
@@ -162,10 +164,19 @@ public final class TypeVar extends NonScopeType
      */
     public Type quantify(final SubstMap newParams, final SubstMap ambientParams)
     {
+        final Type applied = subst(ambientParams.compose(loc, newParams));
+
+        // add new params to our result type
+        for (final Type type : newParams.values())
+            applied.addParam((TypeParam)type);
+
+        return applied;
+
+        /*
         if (newParams.containsKey(this))
         {
             // see header comment
-            Session.error(loc, "quantifying lone type var {0}", dump());
+            // Session.error(loc, "quantifying lone type var {0}", dump());
 
             final TypeParam param = (TypeParam)newParams.get(this);
             final TypeRef typeRef = new TypeRef(loc, param);
@@ -177,6 +188,7 @@ public final class TypeVar extends NonScopeType
         return ambientParams.containsKey(this) ?
             new TypeRef(loc, (TypeParam)ambientParams.get(this)) :
             this;
+        */
     }
 
     /**
@@ -188,6 +200,58 @@ public final class TypeVar extends NonScopeType
     public SubstMap buildParamMap(final Set<TypeVar> vars,
         final int nameGenOffset, final TypeEnv env)
     {
+        final Set<TypeVar> qvars = Sets.intersection(vars, getVars());
+
+        if (qvars.isEmpty())
+            return SubstMap.EMPTY;
+
+        // when generating param names, avoid names of used params.
+        final Set<String> usedNames = new HashSet<String>();
+
+        for (final TypeParam param : TypeParamCollector.collect(this))
+            usedNames.add(param.getName());
+
+        // begin generating names from this offset into the generated name space.
+        int genIndex = nameGenOffset;
+
+        final SubstMap substMap = new SubstMap();
+
+        for (final TypeVar v : qvars)
+        {
+            final String name;
+
+            // broken
+//            final TypeParam param = v.getBackingParam(usedNames, this);
+//            if (param != null)
+//            {
+//                name = param.getName();
+//            }
+//            else
+            {
+                String tmp;
+                do
+                {
+                    tmp = nameGen(genIndex++);
+                }
+                while (usedNames.contains(tmp));
+
+                name = tmp;
+            }
+
+            usedNames.add(name);
+
+            // NOTE: v's constraint is ignored here, because it needs to be
+            // not just transferred to the corresponding param, but also run
+            // through this same substitution map at quantification time.
+            // Users of this map are responsible for doing this.
+            //
+            substMap.put(v, new TypeParam(v.getLoc(), name, v.getKind(), null));
+        }
+
+        return substMap;
+
+
+        /*
         if (vars.contains(this))
         {
             Session.error(loc, "building param map for lone type var {0}", dump());
@@ -210,6 +274,7 @@ public final class TypeVar extends NonScopeType
 
         // normal case
         return SubstMap.EMPTY;
+        */
     }
     
     public SubstMap unify(final Loc loc, Type other, final TypeEnv env)

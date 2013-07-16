@@ -105,11 +105,7 @@ public final class TypeVarSubstitutor extends TypeTransformerBase
 
         final Type applied = transform(type);
 
-        final Type reduced = TypeReducer.reduce(applied);
-
-        // Session.info("TVS.apply() {0} => {1}", type.dump(), reduced.dump());
-
-        return reduced;
+        return TypeReducer.reduce(applied);
     }
 
     // TypeTransformerBase

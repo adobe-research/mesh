@@ -17,6 +17,7 @@ import compile.Session;
 import compile.StringUtils;
 import compile.type.Type;
 import compile.type.TypeEnv;
+import compile.type.TypeParam;
 import compile.type.TypeVar;
 import compile.type.constraint.Constraint;
 

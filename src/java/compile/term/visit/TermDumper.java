@@ -152,6 +152,12 @@ public final class TermDumper extends TermVisitorBase<String>
     }
 
     @Override
+    public String visit(final VariantTerm var)
+    {
+        return var.getKey().dump() + " ! " + var.getValue().dump();
+    }
+
+    @Override
     public String visit(final LambdaTerm lambda)
     {
         final StringBuilder buf = new StringBuilder();

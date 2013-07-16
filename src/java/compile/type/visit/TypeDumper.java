@@ -123,10 +123,20 @@ public final class TypeDumper extends StackedTypeVisitor<String>
      */
     private List<String> visitEntrySet(final Set<Map.Entry<Term, Type>> entrySet)
     {
+        return visitEntrySet(entrySet, ": ");
+    }
+
+    /**
+     * Helper - visit a map of values terms to type terms, return an array of
+     * "(value): (type)" dump strings.
+     */
+    private List<String> visitEntrySet(
+        final Set<Map.Entry<Term, Type>> entrySet, final String sep)
+    {
         final List<String> visitedList = new ArrayList<String>();
 
         for (final Map.Entry<Term, Type> entry : entrySet)
-            visitedList.add(entry.getKey().dump() + ": " + visitType(entry.getValue()));
+            visitedList.add(entry.getKey().dump() + sep + visitType(entry.getValue()));
 
         return visitedList;
     }
@@ -331,8 +341,8 @@ public final class TypeDumper extends StackedTypeVisitor<String>
             {
                 final Map<Term, Type> fields = ((TypeMap)arg).getMembers();
 
-                return "?(" +
-                    StringUtils.join(visitEntrySet(fields.entrySet()), ", ") +
+                return "(" +
+                        StringUtils.join(visitEntrySet(fields.entrySet(), " ! "), ", ") +
                     ")";
             }
         }

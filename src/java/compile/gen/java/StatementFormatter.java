@@ -26,6 +26,7 @@ import runtime.rep.Record;
 import runtime.rep.Tuple;
 import runtime.rep.Lambda;
 import runtime.intrinsic.IntrinsicLambda;
+import runtime.rep.Variant;
 import runtime.rep.list.ListValue;
 import runtime.rep.list.PersistentList;
 import runtime.rep.map.MapValue;
@@ -912,6 +913,21 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     }
 
     /**
+     * Generate Java source expression denoting a Variant as specified by a literal term
+     */
+    @Override
+    public String visit(final VariantTerm var)
+    {
+        final String keyExpr = formatTermAs(var.getKey(), Object.class);
+        final String valExpr = formatTermAs(var.getValue(), Object.class);
+
+        final String expr = "(new " + Variant.class.getName() +
+            "(" + keyExpr + ", " + valExpr + "))";
+
+        return fixup(var.getLoc(), expr, var.getType());
+    }
+
+    /**
      * Generate a Java expression constructing a lambda term.
      */
     @Override
@@ -1062,7 +1078,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         final Term base = apply.getBase();
         final Type applyType = apply.getType();
 
-        if (Types.isSum(applyType))
+        if (Types.isVar(applyType))
             Session.error(apply.getLoc(),
                 "internal error: dynamic tuple access not currently supported");
 
@@ -1089,7 +1105,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
         final Type applyType = apply.getType();
 
-        if (Types.isSum(applyType))
+        if (Types.isVar(applyType))
             Session.error(apply.getLoc(),
                 "internal error: dynamic record access not currently supported");
 
@@ -1133,7 +1149,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
         final Type applyType = apply.getType();
 
-        if (Types.isSum(applyType))
+        if (Types.isVar(applyType))
             Session.error(apply.getLoc(),
                 "internal error: dynamic record access not currently supported");
 
