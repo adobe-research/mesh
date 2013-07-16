@@ -23,6 +23,7 @@ import compile.term.*;
 import compile.type.*;
 import compile.type.constraint.Constraint;
 import compile.type.constraint.RecordConstraint;
+import compile.type.constraint.TupleConstraint;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
 import compile.type.visit.*;
@@ -1252,13 +1253,9 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                 {
                     // base type is known to be a record
                     final Type fields = Types.recFields(baseType).deref();
-
                     assert fields instanceof TypeMap;
                     final TypeMap fieldMap = (TypeMap)fields;
-
-                    final Type keyType = fieldMap.getKeyType();
-                    final Type keyBaseType = keyType instanceof ChoiceType ?
-                        ((EnumType)keyType).getBaseType() : keyType;
+                    final Type keyBaseType = fieldMap.getKeyType().getBaseType();
 
                     if (unify(loc, keyBaseType, argType))
                     {
@@ -1370,18 +1367,21 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                     else
                     {
                         // otherwise infer tuple base
-                        resultType = freshVar(loc, Kinds.STAR);
-
                         final int pos = ((IntLiteral)argDeref).getValue();
 
                         final List<Type> targetMembers = Lists.newArrayList();
-
                         for (int i = 0; i < pos; i++)
                             targetMembers.add(freshVar(loc, Kinds.STAR));
 
+                        resultType = freshVar(loc, Kinds.STAR);
                         targetMembers.add(resultType);
 
-                        final Type targetBaseType = Types.tup(loc, targetMembers);
+                        final TypeList targetList =
+                            new TypeList(loc, targetMembers);
+
+                        final Type targetBaseType =
+                            freshVar(loc, Kinds.STAR, new TupleConstraint(targetList));
+                            // Types.tup(loc, targetMembers);
 
                         if (!unify(loc, targetBaseType, baseType))
                         {

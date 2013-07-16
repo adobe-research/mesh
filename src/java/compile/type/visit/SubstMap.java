@@ -70,8 +70,6 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
 
             final Pair<? extends Constraint, SubstMap> merged =
                 var.getConstraint().merge(rhsVar.getConstraint(), env);
-            final Constraint mergedConstraint = merged.left;
-            final SubstMap mergeSubst = merged.right;
 
             if (merged == null)
             {
@@ -81,6 +79,9 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
 
                 return null;
             }
+
+            final Constraint mergedConstraint = merged.left;
+            final SubstMap mergeSubst = merged.right;
 
             if (mergedConstraint != rhsVar.getConstraint())
                 rhsVar.setConstraint(mergedConstraint.subst(mergeSubst));

@@ -2197,7 +2197,8 @@ mapgetd(map, key, default)
  */
 cross(xs, ys)
 {
-    zip(flatten(rep(size(ys), xs)), flatten(ys | {rep(size(xs), $0)}))
+    xn = size(xs);
+    flatten(ys | { zip(xs, rep(xn, $0)) })
 };
 
 /**

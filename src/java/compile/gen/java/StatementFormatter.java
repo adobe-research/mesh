@@ -996,7 +996,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
             case StructAddr:
             {
-                if (Types.isTup(baseType))
+                if (Types.isTup(baseType) || Types.isPolyTup(baseType))
                     return formatTupleApplyTerm(apply);
 
                 if (Types.isRec(baseType))

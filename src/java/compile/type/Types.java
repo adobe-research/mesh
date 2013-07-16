@@ -14,6 +14,7 @@ import compile.Loc;
 import compile.gen.java.Constants;
 import compile.term.*;
 import compile.type.constraint.RecordConstraint;
+import compile.type.constraint.TupleConstraint;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -333,11 +334,6 @@ public final class Types
         return app(loc, TUP, new TypeList(loc, items));
     }
 
-    public static TypeApp tup(final Type... items)
-    {
-        return tup(Loc.INTRINSIC, Arrays.asList(items));
-    }
-
     public static TypeApp tup(final Loc loc, final Type list)
     {
         return app(loc, TUP, list);
@@ -350,6 +346,13 @@ public final class Types
 
         type = type.deref();
         return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == TUP;
+    }
+
+    public static boolean isPolyTup(Type type)
+    {
+        type = type.deref();
+        return type instanceof TypeParam &&
+            ((TypeParam)type).getConstraint() instanceof TupleConstraint;
     }
 
     public static Type tupMembers(Type type)

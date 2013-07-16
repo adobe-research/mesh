@@ -10,7 +10,9 @@
  */
 package compile.type;
 
+import com.google.common.collect.Lists;
 import compile.Loc;
+import compile.Pair;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
 import compile.type.visit.EquivState;
@@ -38,6 +40,72 @@ public final class TypeList extends NonScopeType
     public List<Type> getItems()
     {
         return items;
+    }
+
+    /**
+     * return substitution if we contain at least as many items as another
+     * type list, and all overlapping items are unifiable with each other.
+     * otherwise null
+     */
+    public SubstMap subsume(final Loc loc, final TypeList list, final TypeEnv env)
+    {
+        if (items.size() < list.getItems().size())
+            return null;
+
+        SubstMap subst = SubstMap.EMPTY;
+
+        int i = 0;
+        for (final Type listItem : list.getItems())
+        {
+            final Type item = items.get(i++);
+
+            final SubstMap itemSubst =
+                item.subst(subst).unify(loc, listItem.subst(subst), env);
+
+            if (itemSubst == null)
+                return null;
+
+            subst = subst.compose(loc, itemSubst);
+        }
+
+        return subst;
+    }
+
+    /**
+     * return pair of merged type list and substitution map, if
+     * we can be merged successfully with another type list.,
+     * otherwise null
+     */
+    public Pair<TypeList, SubstMap> merge(final TypeList list, final TypeEnv env)
+    {
+        // NOTE: these should always be enums over ground types
+        SubstMap subst = SubstMap.EMPTY;
+
+        final List<Type> resultItems = Lists.newArrayList(items);
+        final int n = items.size();
+
+        int i = 0;
+        for (final Type listItem : list.getItems())
+        {
+            if (i < n)
+            {
+                final Type resultItem = resultItems.get(i++);
+
+                final SubstMap memberSubst =
+                    resultItem.subst(subst).unify(loc, listItem.subst(subst), env);
+
+                if (memberSubst == null)
+                    return null;
+
+                subst = subst.compose(loc, memberSubst);
+            }
+            else
+            {
+                resultItems.add(listItem);
+            }
+        }
+
+        return Pair.create(new TypeList(loc, resultItems), subst);
     }
 
     // Type
