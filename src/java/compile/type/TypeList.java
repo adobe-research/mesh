@@ -162,30 +162,31 @@ public final class TypeList extends NonScopeType
             // ------------------
             // [A,B,C] <=> [X,Y,Z]
 
-            // NOTE: experimental [A, B, C, ...] <= [X, Y, Z]
-
             final TypeList otherList = (TypeList)otherEval;
 
             final List<Type> otherItems = otherList.getItems();
 
             return items.size() == otherItems.size() ?
-                unifyRange(0, otherItems, env) :
+                unifyRange(otherItems, env) :
                 null;
         }
         else if (Types.isApp(otherEval) && otherEval.getKind() == Kinds.STAR_LIST)
         {
-            // here we need to unify against type applications yielding type lists
+            // here we try to unify against type applications yielding type lists
 
             final TypeApp app = (TypeApp)otherEval;
             final Type base = app.getBase();
 
             if (base == Types.TMAP)
             {
-                // other type is each expr
+                // other type is type-level map expr
+                // if our elements can all be expressed as applications of
+                // a particular type constructor, then we can be expressed
+                // as a map operation over that TC.
 
-                // A <=> T(a), B <=> T(b), C <=> T(c), V <=> [a,b,c]
-                // -------------------------------------------------
-                // [A,B,C] <=> T @ V
+                // A <=> TC(a), B <=> TC(b), C <=> TC(c), ...
+                // ---------------------------------------
+                // [A,B,C,...] <=> [a,b,c,...] | TC
 
                 final Type tlist = Types.tmapList(app);
                 final Type tcon = Types.tmapCons(app);
@@ -196,13 +197,16 @@ public final class TypeList extends NonScopeType
 
                 for (final Type item : items)
                 {
+                    // fresh var to unify with TC arg
                     final TypeVar argVar = env.freshVar(item.getLoc(), Kinds.STAR);
                     argVars.add(argVar);
 
-                    final Type indiv = Types.app(tcon, argVar).deref().eval();
+                    // build target item to unify with TODO reexamine deref/eval
+                    final Type targetItem = Types.app(tcon, argVar).deref().eval();
 
+                    // attempt to unify
                     final SubstMap itemSubst =
-                        item.subst(subst).unify(loc, indiv.subst(subst), env);
+                        item.subst(subst).unify(loc, targetItem.subst(subst), env);
 
                     if (itemSubst == null)
                         return null;
@@ -210,12 +214,62 @@ public final class TypeList extends NonScopeType
                     subst = subst.compose(loc, itemSubst);
                 }
 
-                final TypeList memberArgList = new TypeList(loc, argVars);
+                // arg to map operation is list of args to TC
+                final TypeList argList = new TypeList(loc, argVars);
 
+                // note: should work if items worked
                 final SubstMap listSubst =
-                    memberArgList.subst(subst).unify(loc, tlist.subst(subst), env);
+                    argList.subst(subst).unify(loc, tlist.subst(subst), env);
 
-                return subst.compose(loc, listSubst);
+                return listSubst == null ? null : subst.compose(loc, listSubst);
+            }
+            else if (base == Types.CONE)
+            {
+                // other type is cone expr
+                // if our elements can all be expressed as function types
+                // with a particular codomain, then we can be expressed as
+                // a cone over the list of domains and that codomain.
+
+                // A <=> a->X, B <=> b->X, C <=> c->X, ...
+                // --------------------------------------------
+                // [A->X,B->X,C->X,...] <=> Cone([a,b,c,...],X)
+
+                final Type doms = Types.coneDomains(app);
+                final Type cod = Types.coneCodomain(app);
+
+                final List<Type> domVars = new ArrayList<Type>();
+                final TypeVar codVar = env.freshVar(cod.getLoc(), Kinds.STAR);
+
+                SubstMap subst = SubstMap.EMPTY;
+
+                for (final Type item : items)
+                {
+                    // fresh var to unify with domain
+                    final TypeVar domVar = env.freshVar(item.getLoc(), Kinds.STAR);
+                    domVars.add(domVar);
+
+                    // build target dv -> cv item to unify with TODO reexamine deref/eval
+                    final Type targetItem =
+                        Types.fun(item.getLoc(), domVar, codVar).deref().eval();
+
+                    // attempt to unify
+                    final SubstMap itemSubst =
+                        item.subst(subst).unify(loc, targetItem.subst(subst), env);
+
+                    if (itemSubst == null)
+                        return null;
+
+                    subst = subst.compose(loc, itemSubst);
+                }
+
+                // first arg to cone TC is list of domains
+                final TypeList domList = new TypeList(loc, domVars);
+
+                // note: should work if items worked
+                final SubstMap domsSubst =
+                    domList.subst(subst).unify(loc, doms.subst(subst), env);
+
+                return domsSubst == null ? null : subst.compose(loc, domsSubst);
             }
         }
 
@@ -225,21 +279,18 @@ public final class TypeList extends NonScopeType
     /**
      * unify a range of our list against an entire other list.
      */
-    private SubstMap unifyRange(final int start, final List<Type> list, final TypeEnv env)
+    private SubstMap unifyRange(final List<Type> list, final TypeEnv env)
     {
-        if (start < 0)
-            return null;
-
         final int listSize = list.size();
 
-        if (start + listSize > items.size())
+        if (listSize > items.size())
             return null;
 
         SubstMap subst = SubstMap.EMPTY;
 
         for (int i = 0; i < listSize; i++)
         {
-            final Type item = items.get(start + i);
+            final Type item = items.get(i);
             final Type otherItem = list.get(i);
 
             final SubstMap itemSubst =

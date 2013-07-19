@@ -198,10 +198,11 @@ public final class TypeDumper extends StackedTypeVisitor<String>
     {
         // TODO enum syntax
         // return "Enum([" + TermDumper.dumpList(enumType.getValues()) + "])";
-        final Type baseType = enumType.getBaseType();
+        // final Type baseType = enumType.getBaseType();
 
         return
-            baseType.dump() + ":{" + TermDumper.dumpList(enumType.getValues()) + "}";
+        //    baseType.dump() + ":{" + TermDumper.dumpList(enumType.getValues()) + "}";
+            "{" + TermDumper.dumpList(enumType.getValues()) + "}";
     }
 
     @Override
@@ -335,7 +336,7 @@ public final class TypeDumper extends StackedTypeVisitor<String>
                     "(" + StringUtils.join(visitEntrySet(fields.entrySet()), ", ") + ")";
             }
         }
-        else if (base == Types.SUM)
+        else if (base == Types.VAR)
         {
             if (arg instanceof TypeMap)
             {

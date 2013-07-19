@@ -22,6 +22,7 @@ import compile.term.*;
 import compile.term.visit.BindingVisitorBase;
 import compile.type.*;
 import compile.type.visit.TypeDumper;
+import runtime.intrinsic._cond;
 import runtime.rep.Record;
 import runtime.rep.Tuple;
 import runtime.rep.Lambda;
@@ -928,6 +929,21 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     }
 
     /**
+     * Generate Java source expression denoting a Variant as specified by a literal term
+     */
+    @Override
+    public String visit(final CondTerm cond)
+    {
+        final String selExpr = formatTermAs(cond.getSel(), Variant.class);
+        final String casesExpr = formatTermAs(cond.getCases(), Record.class);
+
+        final String expr = _cond.class.getName() + "." + Constants.INVOKE +
+            "(" + selExpr + ", " + casesExpr + ")";
+
+        return fixup(cond.getLoc(), expr, cond.getType());
+    }
+
+    /**
      * Generate a Java expression constructing a lambda term.
      */
     @Override
@@ -1076,11 +1092,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     {
         final Term arg = apply.getArg();
         final Term base = apply.getBase();
-        final Type applyType = apply.getType();
-
-        if (Types.isVar(applyType))
-            Session.error(apply.getLoc(),
-                "internal error: dynamic tuple access not currently supported");
 
         assert arg.getType() == Types.INT;
 
@@ -1102,12 +1113,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     {
         final Term base = apply.getBase();
         final Term arg = apply.getArg();
-
-        final Type applyType = apply.getType();
-
-        if (Types.isVar(applyType))
-            Session.error(apply.getLoc(),
-                "internal error: dynamic record access not currently supported");
 
         {
             final Term argDeref = arg instanceof RefTerm ? ((RefTerm)arg).deref() : arg;

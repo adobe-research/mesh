@@ -11,7 +11,10 @@
 package compile.type;
 
 import compile.Loc;
+import compile.Pair;
+import compile.Session;
 import compile.term.Term;
+import compile.type.visit.SubstMap;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -69,5 +72,34 @@ public final class ChoiceType extends EnumType
     public LinkedHashSet<Term> getValues()
     {
         return values;
+    }
+
+    @Override
+    public Pair<? extends EnumType, SubstMap> merge(final EnumType otherEnum)
+    {
+        if (!(otherEnum instanceof ChoiceType))
+            return null;
+
+        final ChoiceType otherChoice = (ChoiceType)otherEnum;
+
+        final Set<Term> mergedValues = new LinkedHashSet<Term>(values);
+        mergedValues.addAll(otherChoice.values);
+
+        final ChoiceType mergedChoice = new ChoiceType(loc, baseType, mergedValues);
+
+        return Pair.create(mergedChoice, SubstMap.EMPTY);
+    }
+
+    @Override
+    public SubstMap subsume(final Loc loc, final Type type, final TypeEnv env)
+    {
+        if (!(type instanceof ChoiceType))
+            return null;
+
+        final ChoiceType otherChoice = (ChoiceType)type;
+
+        return otherChoice.getBaseType().equals(baseType) &&
+            values.containsAll(otherChoice.values) ?
+            SubstMap.EMPTY : null;
     }
 }

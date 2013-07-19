@@ -2,6 +2,7 @@ package compile.type.constraint;
 
 import compile.Loc;
 import compile.Pair;
+import compile.Session;
 import compile.type.*;
 import compile.type.visit.SubstMap;
 import compile.type.visit.TypeInstantiator;
@@ -16,6 +17,7 @@ public final class VariantConstraint implements Constraint
 {
     private final Type var;
 
+    // TODO what about non-typemap cases?
     public VariantConstraint(final TypeMap fields)
     {
         this.var = Types.var(fields);
@@ -49,13 +51,73 @@ public final class VariantConstraint implements Constraint
 
     public SubstMap satisfy(final Loc loc, final Type type, final TypeEnv env)
     {
+        if (Session.isDebug())
+            Session.debug(loc, "({0}).satisfy({1})", dump(), type.dump());
+
         if (!Types.isVar(type))
             return null;
 
         final TypeMap opts = (TypeMap)Types.varOpts(var);
-        final TypeMap otherOpts = (TypeMap)Types.varOpts(type);
 
-        return otherOpts.subsume(loc, opts, env);
+        final Type otherOpts = Types.varOpts(type);
+
+        if (otherOpts instanceof TypeMap)
+        {
+            return ((TypeMap)otherOpts).subsume(loc, opts, env);
+        }
+        else if (otherOpts instanceof TypeApp)
+        {
+            /*
+            final TypeApp otherOptsApp = (TypeApp)otherOpts;
+            final Type base = otherOptsApp.getBase();
+
+            if (!(base instanceof TypeCons))
+            {
+                if (Session.isDebug())
+                    Session.debug(loc, "type app base {0} is not a type cons, fail",
+                        base.dump());
+
+                return null;
+            }
+
+            final TypeCons baseCons = (TypeCons)base;
+
+            if (baseCons == Types.ASSOC)
+            {
+                final Type assocKey = Types.assocKey(otherOptsApp);
+                final SubstMap keySubst =
+                    assocKey.subsume(opts.getKeyType());
+
+                if (keySubst == null)
+                    return null;
+
+                final Type assocVals = Types.assocVals(otherOptsApp).subst(keySubst);
+                final SubstMap valsSubst =
+                    assocVals.subsume(opts.getValueTypes().subst(keySubst));
+
+                if (valsSubst == null)
+                    return null;
+
+                return keySubst.compose(loc, valsSubst);
+            }
+
+            if (Session.isDebug())
+                Session.debug(loc, "type cons {0} is not handled, fail",
+                    baseCons.dump());
+            */
+            return null;
+        }
+        else
+        {
+            // Note that TypeVar is handled by caller--should probably be handled
+            // in Constraint.satisfy() super-impl instead TODO
+
+            Session.error(loc,
+                "internal error in ({0}).satisfy({1}): : unhandled argument {2} to Var TC ",
+                dump(), type.dump(), otherOpts.dump());
+
+            return null;
+        }
     }
 
     public Constraint subst(final SubstMap substMap)

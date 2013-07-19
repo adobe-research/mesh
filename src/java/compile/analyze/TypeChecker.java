@@ -218,11 +218,15 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
     }
 
     /**
-     * overriden for debug messages
+     * overriden for filtering and debug messages
      */
     @Override
     protected void processStatement(final Statement statement)
     {
+        if (statement instanceof ImportStatement ||
+            statement instanceof ExportStatement)
+            return;
+
         if (Session.isDebug())
             Session.debug("{0}*** statement", indent());
 
@@ -783,7 +787,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
      */
     public boolean checkVisited(final Type left, final Type right)
     {
-        final Pair<Type, Type> pair = new Pair<Type, Type>(left, right);
+        final Pair<Type, Type> pair = Pair.create(left, right);
         if (visited.contains(pair))
         {
             return true;
@@ -1140,6 +1144,21 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
         return type;
     }
 
+    /**
+     * here's why cond(sel, cases) isn't a function--
+     * this type isn't yet expressible in the type language.
+     * Specifically, we don't yet have type-level zip,
+     * nor a type-level list singleton maker (here "List").
+     *
+     *  <Key, Vals:[*], R>
+     *      select(sel:Var(Assoc(K, Vs)), cases:Rec(Assoc(K, Zip(Vs, List(R)) | Fun));
+     */
+    @Override
+    public Type visit(final CondTerm cond)
+    {
+        return Types.UNIT;
+    }
+
     @Override
     public Type visit(final LambdaTerm lambda)
     {
@@ -1258,6 +1277,9 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                             errorFormat(targetBaseType).dump());
                     }
                 }
+
+                // TODO same strategy as with structs--if known non-int key type, do map
+
                 else
                 {
                     // not known, assume list

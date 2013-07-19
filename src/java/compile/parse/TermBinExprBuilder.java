@@ -43,9 +43,17 @@ public class TermBinExprBuilder extends BinExprBuilder<Term>
         final Term base = buildOpTerm(loc, op);
 
         // TODO must be a better way
-        if (base instanceof RefTerm && ((RefTerm)base).getName().equals(Ops.VAR_SYM))
+        if (base instanceof RefTerm)
         {
-            return new VariantTerm(loc, lhs, rhs);
+            final String name = ((RefTerm)base).getName();
+            if (name != null)
+            {
+                if (name.equals(Ops.VAR_SYM))
+                    return new VariantTerm(loc, lhs, rhs);
+
+                if (name.equals(Ops.COND_SYM))
+                    return new CondTerm(loc, lhs, rhs);
+            }
         }
 
         final Term arg = new TupleTerm(loc, lhs, rhs);

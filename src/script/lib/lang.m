@@ -44,12 +44,13 @@ intrinsic type Tup;         // Tup(<type list>), sugar (T1, T2, ...)
 
 // kind: (*, [*]) -> *
 intrinsic type Rec;         // Rec(<key type>, <type list>), sugar (k1:T1, k2:T2, ...)
-intrinsic type Sum;         // Sum(<key type>, <type list>), sugar TBD
+intrinsic type Var;         // Var(<key type>, <type list>), sugar (k1!T1, k2!T2, ...)
 
 // type transformers
 intrinsic type TMap;        // type-level map: TMap(<type list>, <type constructor>)
 intrinsic type Index;       // experimental
 intrinsic type Assoc;       // experimental
+intrinsic type Cone;        // experimental
 
 type Pred(T) = T -> Bool;
 
@@ -59,14 +60,6 @@ type Pred(T) = T -> Bool;
 //
 // conditional execution
 //
-
-/**
- * Return the value of an evironment variable.
- * @param name the name of the environment variable to query
- * @return the value of the environment varaible, or an empty string
- * if the named value does not exist
- */
-intrinsic getenv(name:String) -> String;
 
 /**
  * Guarded execution. If the given condition is true, return the
@@ -120,9 +113,21 @@ intrinsic <T> if(c : Bool, y : () -> T, z : () -> T) -> T;
 intrinsic <T> iif(c : Bool, t : T, f : T) -> T;
 
 /**
+ * Conditional execution of a block of code iff predicate is true.
+ * @param c predicate boolean condition
+ * @param b block to execute
+ */
+intrinsic <T> when(c : Bool, b : () -> T) -> ();
+
+/**
+ * generalized conditional. sugared to infix ?
+ */
+intrinsic <K, V:[*], R>
+    cond(sel : Var(Assoc(K, V)), cases : Rec(Assoc(K, Cone(V, R)))) -> R;
+
+/**
  * runs the function in the map indicated by the selector,
  * and return the result.
- * TODO retype using keyset selector and rectype for cases
  *
  * @param selector key indicating a selector.
  * @param cases map of selectors to lambdas.
@@ -132,13 +137,6 @@ intrinsic <T> iif(c : Bool, t : T, f : T) -> T;
  * @endcode
  */
 <K, V> switch(sel : K, cases : [ K : () -> V ]) { cases[sel]() };
-
-/**
- * Conditional execution of a block of code iff predicate is true.
- * @param c predicate boolean condition
- * @param b block to execute
- */
-intrinsic <T> when(c : Bool, b : () -> T) -> ();
 
 // ------------------------------------------------------------------
 
@@ -2805,6 +2803,14 @@ intrinsic assert(c : Bool, m : String) -> ();
  * @return float value greater than or equal to 0.0 and less than 1.0.
  */
 intrinsic frand() -> Double;
+
+/**
+ * Return the value of an evironment variable.
+ * @param name the name of the environment variable to query
+ * @return the value of the environment varaible, or an empty string
+ * if the named value does not exist
+ */
+intrinsic getenv(name:String) -> String;
 
 /**
  * @return current time in millis.

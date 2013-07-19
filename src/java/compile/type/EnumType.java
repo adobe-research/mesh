@@ -11,6 +11,7 @@
 package compile.type;
 
 import compile.Loc;
+import compile.Pair;
 import compile.term.Term;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
@@ -27,7 +28,7 @@ import compile.type.visit.TypeVisitor;
  */
 public abstract class EnumType extends ScopeType
 {
-    private Type baseType;
+    protected Type baseType;
 
     public EnumType(final Loc loc, final Type baseType)
     {
@@ -50,6 +51,10 @@ public abstract class EnumType extends ScopeType
     public abstract int getSize();
 
     public abstract Iterable<Term> getValues();
+
+    public abstract Pair<? extends EnumType, SubstMap> merge(EnumType otherEnum);
+
+    public abstract SubstMap subsume(Loc loc, Type type, TypeEnv env);
 
     // Type
 

@@ -11,8 +11,10 @@
 package compile.type;
 
 import compile.Loc;
+import compile.Pair;
 import compile.term.IntLiteral;
 import compile.term.Term;
+import compile.type.visit.SubstMap;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -76,4 +78,32 @@ public final class ExtentType extends EnumType
             }
         };
     }
+
+    @Override
+    public Pair<? extends EnumType, SubstMap> merge(final EnumType otherEnum)
+    {
+        if (!(otherEnum instanceof ExtentType))
+            return null;
+
+        final ExtentType otherExtent = (ExtentType)otherEnum;
+
+        final ExtentType mergedExtent =
+            new ExtentType(loc, baseType, Math.max(extent, otherExtent.extent));
+
+        return Pair.create(mergedExtent, SubstMap.EMPTY);
+    }
+
+    @Override
+    public SubstMap subsume(final Loc loc, final Type type, final TypeEnv env)
+    {
+        if (!(type instanceof ExtentType))
+            return null;
+
+        final ExtentType otherExtent = (ExtentType)type;
+
+        return otherExtent.getBaseType().equals(baseType) &&
+            extent >= otherExtent.extent ?
+            SubstMap.EMPTY : null;
+    }
+
 }

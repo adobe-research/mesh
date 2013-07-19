@@ -21,6 +21,7 @@ import compile.type.visit.SubstMap;
 import compile.type.visit.TypeVisitor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -64,6 +65,11 @@ public final class TypeMap extends NonScopeType
     {
         assert keyType == null;
         this.keyType = keyType;
+    }
+
+    public Collection<Type> getValueTypes()
+    {
+        return members.values();
     }
 
     /**

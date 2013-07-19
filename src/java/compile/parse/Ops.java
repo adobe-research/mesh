@@ -101,7 +101,9 @@ public class Ops
     //
     static
     {
-        BINOP_INFO.put(VAR_SYM, new BinopInfo(1, Assoc.Right, VAR_SYM));
+        BINOP_INFO.put(COND_SYM, new BinopInfo(1, Assoc.Left, COND_SYM));
+
+        BINOP_INFO.put(VAR_SYM, new BinopInfo(2, Assoc.Right, VAR_SYM));
 
         BINOP_INFO.put(ASSIGN_SYM, new BinopInfo(5, Assoc.Right, _put.INSTANCE.getName()));
         BINOP_INFO.put(ASSIGNS_SYM, new BinopInfo(5, Assoc.Right, _puts.INSTANCE.getName()));
@@ -202,7 +204,7 @@ public class Ops
 
     static
     {
-        TYPE_UNOP_INFO.put(COND_SYM, Types.SUM.name);
+        TYPE_UNOP_INFO.put(COND_SYM, Types.VAR.name);
         TYPE_UNOP_INFO.put(TIMES_SYM, Types.BOX.name);
     }
 }

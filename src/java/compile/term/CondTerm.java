@@ -14,30 +14,30 @@ import compile.Loc;
 import compile.term.visit.TermVisitor;
 
 /**
- * Term representing a variant literal expression.
+ * Term representing a conditional selection expression.
  *
  * @author Basil Hosmer
  */
-public final class VariantTerm extends AbstractTypedTerm
+public final class CondTerm extends AbstractTypedTerm
 {
-    private final Term key;
-    private final Term value;
+    private final Term sel;
+    private final Term cases;
 
-    public VariantTerm(final Loc loc, final Term key, final Term value)
+    public CondTerm(final Loc loc, final Term sel, final Term cases)
     {
         super(loc);
-        this.key = key;
-        this.value = value;
+        this.sel = sel;
+        this.cases = cases;
     }
 
-    public Term getKey()
+    public Term getSel()
     {
-        return key;
+        return sel;
     }
 
-    public Term getValue()
+    public Term getCases()
     {
-        return value;
+        return cases;
     }
 
     // Term
@@ -49,7 +49,7 @@ public final class VariantTerm extends AbstractTypedTerm
 
     public final boolean isConstant()
     {
-        return key.isConstant() && value.isConstant();
+        return sel.isConstant() && cases.isConstant();
     }
 
     // Object
@@ -60,10 +60,10 @@ public final class VariantTerm extends AbstractTypedTerm
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final VariantTerm that = (VariantTerm)o;
+        final CondTerm that = (CondTerm)o;
 
-        if (!key.equals(that.key)) return false;
-        if (!value.equals(that.value)) return false;
+        if (!sel.equals(that.sel)) return false;
+        if (!cases.equals(that.cases)) return false;
 
         return true;
     }
@@ -71,8 +71,8 @@ public final class VariantTerm extends AbstractTypedTerm
     @Override
     public int hashCode()
     {
-        int result = key.hashCode();
-        result = 31 * result + value.hashCode();
+        int result = sel.hashCode();
+        result = 31 * result + cases.hashCode();
         return result;
     }
 }

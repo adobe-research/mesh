@@ -536,6 +536,14 @@ public class ASTBuilder
     }
 
     /**
+     * enum literal
+     */
+    public static VariantTerm enumLit(final Term lit)
+    {
+        return new VariantTerm(lit.getLoc(), lit, TupleTerm.UNIT);
+    }
+
+    /**
      * boolean literal
      */
     public static BoolLiteral boolLiteral(final Loc loc, final String text)
@@ -748,6 +756,14 @@ public class ASTBuilder
     }
 
     /**
+     * build finished arg expr out of arglist
+     */
+    public static Type typeArgExpr(final Loc loc, final List<Type> args)
+    {
+        return args.size() == 1 ? args.get(0) : new TypeTuple(loc, args);
+    }
+
+    /**
      *
      */
     public static Type typeIdRef(final Loc loc, final String name)
@@ -922,7 +938,7 @@ public class ASTBuilder
      */
     public static <K, V> Pair<K, V> assoc(final K k, final V v)
     {
-        return new Pair<K, V>(k, v);
+        return Pair.create(k, v);
     }
 
     /**

@@ -22,11 +22,11 @@ import compile.term.ExportStatement;
  *
  * @author Keith McGuigan
  */
-public final class ExportResolver extends ImportExportResolverBase
+public final class ExportProcessor extends ImportExportResolverBase
 {
     private boolean exportFound;
 
-    public ExportResolver(final Module module)
+    public ExportProcessor(final Module module)
     {
         super(module);
     }

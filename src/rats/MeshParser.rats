@@ -264,10 +264,38 @@ Term BaseExpr
         { yyValue = inlineParam(loc(yyStart), pre, ix); }
 
     //
+    // value literal
+    //
+    / <Literal> lit:LitExpr
+
+    //
+    // id reference
+    //
+    / <IdRef>       id:Id
+        { yyValue = idRef(loc(yyStart), id); }
+
+    //
+    // An operator symbol enclosed in parens denotes the implementing function.
+    // Note that binary operators hide unary operators with the same symbol
+    //
+    / <OpSym>       LeftParen op:RefOpSym RightParen
+        { yyValue = opRef(loc(yyStart), op); }
+
+    //
+    // parenthesized expressions
+    //
+    / LeftParen Expr RightParen ;
+
+//
+// literals
+//
+Term LitExpr
+
+    //
     // A list literal is a comma-separated expression list surrounded
     // by square brackets.
     //
-    / <ListLit>     LeftBracket el:ExprList? RightBracket
+    = <ListLit>     LeftBracket el:ExprList? RightBracket
          { yyValue = listLiteral(loc(yyStart), el); }
 
     //
@@ -298,14 +326,7 @@ Term BaseExpr
         { yyValue = recLiteral(loc(yyStart), m); }
 
     //
-    // An operator symbol enclosed in parens denotes the implementing function.
-    // Note that binary operators hide unary operators with the same symbol
-    //
-    / <OpSym>       LeftParen op:RefOpSym RightParen
-        { yyValue = opRef(loc(yyStart), op); }
-
-    //
-    // A Symbol literal is a backquote followed by a lexical id.
+    // A Symbol literal is a pound sign followed by a lexical id.
     //
     / <SymLit>      void:"#" id:Id
         { yyValue = symLiteral(loc(yyStart), id); }
@@ -327,18 +348,7 @@ Term BaseExpr
     //
     // Lambda expressions
     //
-    / <Lambda>      Lambda
-
-    //
-    // id references
-    //
-    / <IdRef>       id:Id
-        { yyValue = idRef(loc(yyStart), id); }
-
-    //
-    // parenthesized expressions
-    //
-    / LeftParen Expr RightParen ;
+    / <Lambda>      Lambda ;
 
 //
 // rule translates a sequence of dollar signs into its depth
@@ -411,7 +421,7 @@ transient String BinaryOp
 // Backed by info in compile.parse.Ops
 //
 transient String UnaryOp
-    = "**" / "*" / "!" / "-." / "-";
+    = "**" / "*" / "!" / "-." / "-" ;
 
 //
 // Parameter list
@@ -503,7 +513,7 @@ String QName
 //
 
 //
-// Quantified type expr: <params> :: <body>
+// Quantified type expr: '<' params '>' body
 //
 Type QuantifiedTypeExpr
     = LessThan ps:TypeParamList GreaterThan b:TypeExpr
@@ -530,17 +540,24 @@ Type TypePrefixExpr
     = <Unop> op:TypeUnaryOp t:TypePrefixExpr
         { yyValue = unaryTypeExpr(loc(yyStart), op, t); }
 
-    / <App> h:TypeBaseExpr t:TypeBaseExpr+
-        { yyValue = typeApplyChain(loc(yyStart), h, t.list()); }
+    / <App> base:TypeIdRef argchain:TypeArgExpr+
+        { yyValue = typeApplyChain(loc(yyStart), base, argchain.list()); }
 
     / TypeBaseExpr ;
+
+//
+// type arg expr. we need this rule to grab parenthesized lists
+// before they get used as tuple type exprs. TODO something better?
+//
+transient Type TypeArgExpr
+    = LeftParen args:TypeExprList RightParen
+        { yyValue = typeArgExpr(loc(yyStart), args); } ;
 
 //
 // base type expr
 //
 Type TypeBaseExpr
-    = <IdRef>       id:QName
-        { yyValue = typeIdRef(loc(yyStart), id); }
+    = <IdRef>       TypeIdRef
 
     / <Wildcard>    Question
         { yyValue = wildcardType(loc(yyStart)); }
@@ -574,6 +591,9 @@ Type TypeBaseExpr
 */
     / LeftParen QuantifiedTypeExpr RightParen ;
 
+transient Type TypeIdRef
+    = id:QName
+        { yyValue = typeIdRef(loc(yyStart), id); } ;
 
 transient List<TypeParam> TypeParamList
     = h:TypeParam t:(Comma TypeParam)*

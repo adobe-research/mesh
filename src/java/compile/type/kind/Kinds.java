@@ -75,4 +75,12 @@ public class Kinds
     // e.g. Int ^ 3 is int triple. (type level int constant N denotes {0..n-1}
     // e.g. String ^ {#first, #last} => (#first: String, #last: String)
     public static ArrowKind TYPE_EXP_KIND = new ArrowKind(STAR_PAIR, STAR);
+
+    // specialized type list constructor: given a list of domains and
+    // a single codomain, return a list of functions, one for each
+    // domain and all to the shared codomain
+    //
+    public static ArrowKind CONE_KIND =
+        new ArrowKind(new TupleKind(STAR_LIST, STAR), STAR_LIST);
+
 }

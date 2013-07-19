@@ -15,10 +15,10 @@ import compile.type.TypeCons;
 import compile.type.kind.Kinds;
 
 /**
- *
+ * Variant type constructor
  */
-public final class Sum
+public final class Var
 {
     public final static Type INSTANCE =
-        new TypeCons(Sum.class.getSimpleName(), Kinds.MAP_CONS);
+        new TypeCons(Var.class.getSimpleName(), Kinds.MAP_CONS);
 }

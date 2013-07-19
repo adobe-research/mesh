@@ -137,8 +137,29 @@ public final class TypeReducer extends TypeTransformerBase
                 }
             }
         }
+        else if (base == Types.CONE)
+        {
+            if (arg instanceof TypeTuple)
+            {
+                final List<Type> args = ((TypeTuple)arg).getMembers();
+                final Type domTypes = args.get(0);
+                final Type codType = args.get(1);
 
-        return base == app.getBase() && arg == app.getArg() ?
+                if (domTypes instanceof TypeList)
+                {
+                    final List<Type> domTypeList = ((TypeList)domTypes).getItems();
+
+                    final ArrayList<Type> items = new ArrayList<Type>();
+
+                    for (final Type domType : domTypeList)
+                        items.add(Types.fun(domType.getLoc(), domType, codType));
+
+                    return new TypeList(loc, items);
+                }
+            }
+        }
+
+       return base == app.getBase() && arg == app.getArg() ?
             app : Types.app(loc, base, arg);
     }
 }

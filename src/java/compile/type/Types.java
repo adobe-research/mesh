@@ -58,16 +58,18 @@ public final class Types
     public static final TypeCons TUP = findIntrinsicCons("Tup");
     public static final TypeCons REC = findIntrinsicCons("Rec");
 
-    public static final TypeCons SUM = findIntrinsicCons("Sum");
+    public static final TypeCons VAR = findIntrinsicCons("Var");
 
     //
-    // built-in type functions
+    // built-in type "functions" (transforms)
     //
     public static final TypeCons TMAP = findIntrinsicCons("TMap");
 
     public static final TypeCons INDEX = findIntrinsicCons("Index");
 
     public static final TypeCons ASSOC = findIntrinsicCons("Assoc");
+
+    public static final TypeCons CONE = findIntrinsicCons("Cone");
 
     /**
      * Unit is the 0-tuple, an application of the Tup type constructor
@@ -446,13 +448,13 @@ public final class Types
 
     public static TypeApp var(final Loc loc, final Type opts)
     {
-        return app(loc, SUM, opts);
+        return app(loc, VAR, opts);
     }
 
     public static boolean isVar(Type type)
     {
         type = type.deref();
-        return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == SUM;
+        return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == VAR;
     }
 
     public static Type varOpts(Type type)
@@ -560,6 +562,37 @@ public final class Types
     }
 
     //
+    // cone exprs are app(CONE, (<key type>, <value types>))
+    //
+
+    public static TypeApp cone(final Loc loc, final Type domains, final Type codomain)
+    {
+        return binapp(loc, CONE, domains, codomain);
+    }
+
+    public static TypeApp cone(final Type domains, final Type codomain)
+    {
+        return cone(Loc.INTRINSIC, domains, codomain);
+    }
+
+    public static boolean isCone(final Type type)
+    {
+        return isAppOf(type, CONE);
+    }
+
+    public static Type coneDomains(final Type type)
+    {
+        assert Types.isCone(type);
+        return appArg(type, 0);
+    }
+
+    public static Type coneCodomain(final Type type)
+    {
+        assert Types.isCone(type);
+        return appArg(type, 1);
+    }
+
+    //
     // binary applications are app(<TCON>, (<arg 0>, <arg 1))
     // builders take scattered arg pair
     //
@@ -579,7 +612,7 @@ public final class Types
      */
     public static Type applyArgCoercions(final TypeCons cons, final Type arg)
     {
-        if (cons == SUM)
+        if (cons == VAR)
             return applySumArgCoercions(arg);
 
         return arg;
