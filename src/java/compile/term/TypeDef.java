@@ -33,8 +33,11 @@ public final class TypeDef extends TypeBinding
      */
     public static TypeDef opaque(final String name)
     {
-        final TypeDef def = new TypeDef(Loc.INTRINSIC, name, Types.newType(Types.OPAQUE));
+        final TypeDef def = new TypeDef(Loc.INTRINSIC, name,
+            Types.newType(Loc.INTRINSIC, Types.OPAQUE));
+
         ((TypeApp)def.getValue()).setKind(Kinds.STAR);
+
         return def;
     }
 

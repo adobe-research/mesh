@@ -61,11 +61,9 @@ public final class Types
     public static final TypeCons VAR = findIntrinsicCons("Var");
 
     //
-    // built-in type "functions" (transforms)
+    // built-in type transformers
     //
     public static final TypeCons TMAP = findIntrinsicCons("TMap");
-
-    public static final TypeCons INDEX = findIntrinsicCons("Index");
 
     public static final TypeCons ASSOC = findIntrinsicCons("Assoc");
 
@@ -75,24 +73,6 @@ public final class Types
      * Unit is the 0-tuple, an application of the Tup type constructor
      */
     public static final Type UNIT = findIntrinsic("Unit");
-
-    /**
-     * build TypeDef over given TypeCons
-     * used to add builtin type constructors to intrinsics module
-     */
-    public static TypeDef def(final TypeCons cons)
-    {
-        return new TypeDef(Loc.INTRINSIC, cons.getName(), cons);
-    }
-
-    /**
-     * build TypeDef with given name, rvalue
-     * used to add builtin types to intrinsics module
-     */
-    public static TypeDef def(final String name, final Type type)
-    {
-        return new TypeDef(Loc.INTRINSIC, name, type);
-    }
 
     //
     // helpers - convenience wrappers to build and query
@@ -106,11 +86,6 @@ public final class Types
     public static TypeApp app(final Loc loc, final Type base, final Type arg)
     {
         return new TypeApp(loc, base, arg);
-    }
-
-    public static TypeApp app(final Type base, final Type arg)
-    {
-        return new TypeApp(Loc.INTRINSIC, base, arg);
     }
 
     public static boolean isApp(final Type type)
@@ -171,11 +146,6 @@ public final class Types
         return app(loc, BOX, arg);
     }
 
-    public static TypeApp box(final Type arg)
-    {
-        return box(Loc.INTRINSIC, arg);
-    }
-
     public static boolean isBox(final Type type)
     {
         return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == BOX;
@@ -197,11 +167,6 @@ public final class Types
     public static TypeApp newType(final Loc loc, final Type arg)
     {
         return app(loc, NEW, arg);
-    }
-
-    public static TypeApp newType(final Type arg)
-    {
-        return newType(Loc.INTRINSIC, arg);
     }
 
     public static boolean isNew(final Type type)
@@ -227,11 +192,6 @@ public final class Types
         return app(loc, LIST, elem);
     }
 
-    public static TypeApp list(final Type elem)
-    {
-        return list(Loc.INTRINSIC, elem);
-    }
-
     public static boolean isList(Type type)
     {
         type = type.deref();
@@ -255,11 +215,6 @@ public final class Types
     public static TypeApp map(final Loc loc, final Type key, final Type val)
     {
         return binapp(loc, MAP, key, val);
-    }
-
-    public static TypeApp map(final Type key, final Type val)
-    {
-        return map(Loc.INTRINSIC, key, val);
     }
 
     public static boolean isMap(Type type)
@@ -294,11 +249,6 @@ public final class Types
     public static TypeApp fun(final Loc loc, final Type param, final Type result)
     {
         return binapp(loc, FUN, param, result);
-    }
-
-    public static TypeApp fun(final Type key, final Type val)
-    {
-        return fun(Loc.INTRINSIC, key, val);
     }
 
     public static boolean isFun(Type type)
@@ -336,9 +286,9 @@ public final class Types
         return app(loc, TUP, new TypeList(loc, items));
     }
 
-    public static TypeApp tup(final Loc loc, final Type list)
+    public static TypeApp tup(final Loc loc, final Type items)
     {
-        return app(loc, TUP, list);
+        return app(loc, TUP, items);
     }
 
     public static boolean isTup(Type type)
@@ -375,11 +325,6 @@ public final class Types
     public static TypeApp rec(final Loc loc, final Map<Term, Type> items)
     {
         return rec(loc, new TypeMap(loc, items));
-    }
-
-    public static TypeApp rec(final Type fields)
-    {
-        return rec(Loc.INTRINSIC, fields);
     }
 
     public static TypeApp rec(final Loc loc, final Type fields)
@@ -420,7 +365,7 @@ public final class Types
         if (!(fieldTypes instanceof TypeMap))
             return null;
 
-        final ChoiceType keyEnum = ((TypeMap)fieldTypes).getKeyType();
+        final EnumType keyEnum = ((TypeMap)fieldTypes).getKeyType();
 
         final List<SimpleLiteralTerm> list = new ArrayList<SimpleLiteralTerm>();
 
@@ -439,11 +384,6 @@ public final class Types
     public static TypeApp var(final Loc loc, final Map<Term, Type> items)
     {
         return var(loc, new TypeMap(loc, items));
-    }
-
-    public static TypeApp var(final Type opts)
-    {
-        return var(Loc.INTRINSIC, opts);
     }
 
     public static TypeApp var(final Loc loc, final Type opts)
@@ -476,11 +416,6 @@ public final class Types
         return binapp(loc, TMAP, lhs, rhs);
     }
 
-    public static TypeApp tmap(final Type lhs, final Type rhs)
-    {
-        return tmap(Loc.INTRINSIC, lhs, rhs);
-    }
-
     public static boolean isTMap(Type type)
     {
         type = type.deref();
@@ -503,31 +438,6 @@ public final class Types
             throw new IllegalArgumentException();
 
         return appArg(type, 1);
-    }
-
-    //
-    // index exprs are app(INDEX, <type list>)
-    //
-
-    public static TypeApp index(final Loc loc, final Type list)
-    {
-        return app(loc, INDEX, list);
-    }
-
-    public static TypeApp index(final Type list)
-    {
-        return index(Loc.INTRINSIC, list);
-    }
-
-    public static boolean isIndex(final Type type)
-    {
-        return isAppOf(type, INDEX);
-    }
-
-    public static Type indexList(final Type type)
-    {
-        assert Types.isIndex(type);
-        return appArg(type);
     }
 
     //
@@ -570,11 +480,6 @@ public final class Types
         return binapp(loc, CONE, domains, codomain);
     }
 
-    public static TypeApp cone(final Type domains, final Type codomain)
-    {
-        return cone(Loc.INTRINSIC, domains, codomain);
-    }
-
     public static boolean isCone(final Type type)
     {
         return isAppOf(type, CONE);
@@ -604,42 +509,8 @@ public final class Types
     }
 
     //
-    // coercions
+    // intrinsic def utils
     //
-
-    /**
-     *
-     */
-    public static Type applyArgCoercions(final TypeCons cons, final Type arg)
-    {
-        if (cons == VAR)
-            return applySumArgCoercions(arg);
-
-        return arg;
-    }
-
-    /**
-     *
-     */
-    private static Type applySumArgCoercions(final Type arg)
-    {
-        if (isRec(arg))
-        {
-            return recFields(arg);
-        }
-        else if (isTup(arg))
-        {
-            final Type members = tupMembers(arg);
-            return assoc(index(members), members);
-        }
-        else if (arg instanceof TypeList)
-        {
-            return assoc(index(arg), arg);
-        }
-
-        return arg;
-    }
-
 
     public static Type findIntrinsic(final String name)
     {

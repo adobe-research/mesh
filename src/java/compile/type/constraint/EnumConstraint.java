@@ -41,7 +41,7 @@ public final class EnumConstraint implements Constraint
         // NOTE: reverse order tends to accumulate constraints in code order,
         // given the polarity of unify() args in type checker. ugh
         final Pair<? extends EnumType, SubstMap> merged =
-            enumConstraint.enumType.merge(enumType);
+            enumConstraint.enumType.merge(enumType, env);
 
         if (merged == null)
             return null;

@@ -53,8 +53,6 @@ public class Kinds
 
     public static ArrowKind MAP_CONS = new ArrowKind(STAR_MAP, STAR);
 
-    // NOTE: not kind-polymorphic, this signature will handle List @ StarTypes
-    // but not e.g. Map @ Zip(KeyTYpes, ValueTypes).
     public static ArrowKind TYPE_MAP_KIND =
         new ArrowKind(new TupleKind(STAR_LIST, UNARY_CONS), STAR_LIST);
 

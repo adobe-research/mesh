@@ -33,10 +33,10 @@ import java.util.Map;
  */
 public final class TypeMap extends NonScopeType
 {
-    private ChoiceType keyType;
+    private EnumType keyType;
     private final Map<Term, Type> members;
 
-    public TypeMap(final Loc loc, final ChoiceType keyType, final Map<Term, Type> members)
+    public TypeMap(final Loc loc, final EnumType keyType, final Map<Term, Type> members)
     {
         super(loc);
         this.keyType = keyType;
@@ -47,7 +47,7 @@ public final class TypeMap extends NonScopeType
 
     public TypeMap(final Loc loc, final Map<Term, Type> members)
     {
-        this(loc, new ChoiceType(loc, new WildcardType(loc), members.keySet()), members);
+        this(loc, new EnumType(loc, new WildcardType(loc), members.keySet()), members);
     }
 
     public Map<Term, Type> getMembers()
@@ -55,13 +55,13 @@ public final class TypeMap extends NonScopeType
         return members;
     }
 
-    public ChoiceType getKeyType()
+    public EnumType getKeyType()
     {
         assert keyType != null;
         return keyType;
     }
 
-    public void setKeyType(final ChoiceType keyType)
+    public void setKeyType(final EnumType keyType)
     {
         assert keyType == null;
         this.keyType = keyType;

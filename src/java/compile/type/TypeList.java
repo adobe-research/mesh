@@ -78,7 +78,6 @@ public final class TypeList extends NonScopeType
      */
     public Pair<TypeList, SubstMap> merge(final TypeList list, final TypeEnv env)
     {
-        // NOTE: these should always be enums over ground types
         SubstMap subst = SubstMap.EMPTY;
 
         final List<Type> resultItems = Lists.newArrayList(items);
@@ -202,7 +201,8 @@ public final class TypeList extends NonScopeType
                     argVars.add(argVar);
 
                     // build target item to unify with TODO reexamine deref/eval
-                    final Type targetItem = Types.app(tcon, argVar).deref().eval();
+                    final Type targetItem =
+                        Types.app(item.getLoc(), tcon, argVar).deref().eval();
 
                     // attempt to unify
                     final SubstMap itemSubst =

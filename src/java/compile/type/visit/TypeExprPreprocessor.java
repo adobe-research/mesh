@@ -69,24 +69,15 @@ public final class TypeExprPreprocessor extends TypeVisitorBase<Object>
             origBaseType.instance(typeChecker, true) :
             typeChecker.freshVar(enumType.getLoc(), Kinds.STAR);
 
-        if (enumType.isExplicit())
+        for (final Term value : enumType.getValues())
         {
-            for (final Term value : enumType.getValues())
-            {
-                final Type valueType = typeChecker.visitTermInType(value);
+            final Type valueType = typeChecker.visitTermInType(value);
 
-                if (!typeChecker.unify(value.getLoc(), baseType, valueType))
-                    Session.error(value.getLoc(),
-                        "value type {0} is incompatible with established enum base type {1}",
-                        typeChecker.errorFormat(valueType).dump(),
-                        typeChecker.errorFormat(baseType).dump());
-            }
-        }
-        else if (baseType == null)
-        {
-            Session.error(enumType.getLoc(),
-                "non-explicit enum {0} with no base type specified",
-                enumType.dump());
+            if (!typeChecker.unify(value.getLoc(), baseType, valueType))
+                Session.error(value.getLoc(),
+                    "value type {0} is incompatible with established enum base type {1}",
+                    typeChecker.errorFormat(valueType).dump(),
+                    typeChecker.errorFormat(baseType).dump());
         }
 
         if (origBaseType != baseType)

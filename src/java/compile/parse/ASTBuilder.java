@@ -816,33 +816,10 @@ public class ASTBuilder
     /**
      *
      */
-    public static Type extentType(final Loc loc, final String ntext)
-    {
-        final Term numLit = numLiteral(loc, ntext, 10);
-
-        final int n;
-
-        if (numLit instanceof LongLiteral)
-        {
-            Session.error(loc, "extent {0} not supported", numLit.dump());
-            n = (int)((LongLiteral)numLit).getValue();
-        }
-        else
-        {
-            n = ((IntLiteral)numLit).getValue();
-        }
-
-        return new ExtentType(loc, Types.INT, n);
-    }
-
-    /**
-     *
-     */
     public static Type enumType(final Loc loc, final List<Term> items)
     {
         final LinkedHashSet<Term> values = new LinkedHashSet<Term>(items);
-
-        return new ChoiceType(loc, new WildcardType(loc), values);
+        return new EnumType(loc, new WildcardType(loc), values);
     }
 
     /**

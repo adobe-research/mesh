@@ -48,7 +48,6 @@ intrinsic type Var;         // Var(<key type>, <type list>), sugar (k1!T1, k2!T2
 
 // type transformers
 intrinsic type TMap;        // type-level map: TMap(<type list>, <type constructor>)
-intrinsic type Index;       // experimental
 intrinsic type Assoc;       // experimental
 intrinsic type Cone;        // experimental
 

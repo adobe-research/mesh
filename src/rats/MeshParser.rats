@@ -580,9 +580,6 @@ Type TypeBaseExpr
     / <RecType>     LeftParen m:TermTypePairList RightParen
         { yyValue = recType(loc(yyStart), m); }
 
-    / <ExtentType>  n:NatConstant
-        { yyValue = extentType(loc(yyStart), n); }
-
 /*
     conflict: {...} for enums vs. juxtaposition apply syntax for types.
 

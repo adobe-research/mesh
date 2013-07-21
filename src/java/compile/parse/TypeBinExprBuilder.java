@@ -45,7 +45,7 @@ public class TypeBinExprBuilder extends BinExprBuilder<Type>
 
         final Type arg = new TypeTuple(loc, lhs, rhs);
 
-        return Types.app(base, arg);
+        return Types.app(loc, base, arg);
     }
 
     @Override

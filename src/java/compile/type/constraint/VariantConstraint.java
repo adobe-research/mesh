@@ -20,7 +20,7 @@ public final class VariantConstraint implements Constraint
     // TODO what about non-typemap cases?
     public VariantConstraint(final TypeMap fields)
     {
-        this.var = Types.var(fields);
+        this.var = Types.var(fields.getLoc(), fields);
     }
 
     // Constraint

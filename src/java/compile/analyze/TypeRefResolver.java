@@ -46,9 +46,8 @@ public final class TypeRefResolver extends StackedTypeVisitor<Object>
     @Override
     public Object visit(final EnumType enumType)
     {
-        if (enumType.isExplicit())
-            for (final Term value : enumType.getValues())
-                refResolver.resolve(value);
+        for (final Term value : enumType.getValues())
+            refResolver.resolve(value);
 
         return enumType;
     }

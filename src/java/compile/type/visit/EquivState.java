@@ -53,15 +53,12 @@ public final class EquivState
     public boolean checkVisited(final Type left, final Type right)
     {
         final Pair<Type, Type> pair = Pair.create(left, right);
+
         if (visited.contains(pair))
-        {
             return true;
-        }
-        else 
-        {
-            visited.add(pair);
-            return false;
-        }
+
+        visited.add(pair);
+        return false;
     }
 
     /**

@@ -109,6 +109,8 @@ public final class TypeApp extends ScopeType
         if (inEval)
             return this;
 
+        inEval = true;
+
         final Type baseEval = base.deref().eval();
         final Type argEval = arg.deref().eval();
 
@@ -159,8 +161,8 @@ public final class TypeApp extends ScopeType
         final Type bodySubst = new TypeApplier(body, argMap).apply();
 
         // evaluate body with args substituted for params
-        inEval = true;
         reduced = bodySubst.eval();
+
         inEval = false;
 
         if (Session.isDebug())

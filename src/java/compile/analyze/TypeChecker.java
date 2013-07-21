@@ -1073,7 +1073,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                     errorFormat(seedKeyType).dump());
         }
 
-        final ChoiceType keyEnum = new ChoiceType(loc, seedKeyType.subst(subs), keySet);
+        final EnumType keyEnum = new EnumType(loc, seedKeyType.subst(subs), keySet);
 
         // values
 
@@ -1126,8 +1126,8 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
             final Map<Term, Type> targetMembers = Maps.newHashMap();
             targetMembers.put(keyDeref, valueTypeDeref);
 
-            final ChoiceType keyEnum =
-                new ChoiceType(keyDeref.getLoc(), keyTypeDeref, keyDeref);
+            final EnumType keyEnum =
+                new EnumType(keyDeref.getLoc(), keyTypeDeref, keyDeref);
 
             final TypeMap targetMap =
                 new TypeMap(loc, keyEnum, targetMembers);
@@ -1410,8 +1410,8 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                         final Map<Term, Type> targetMembers = Maps.newHashMap();
                         targetMembers.put(argDeref, resultType);
 
-                        final ChoiceType keyEnum =
-                            new ChoiceType(argDeref.getLoc(), argTypeDeref, argDeref);
+                        final EnumType keyEnum =
+                            new EnumType(argDeref.getLoc(), argTypeDeref, argDeref);
 
                         final TypeMap targetMap =
                             new TypeMap(loc, keyEnum, targetMembers);

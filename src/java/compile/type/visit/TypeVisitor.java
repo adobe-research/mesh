@@ -44,6 +44,6 @@ public interface TypeVisitor<T>
     T visit(TypeTuple tuple);
     
     T visit(TypeList list);
-    
+
     T visit(TypeMap map);
 }

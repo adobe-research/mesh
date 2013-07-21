@@ -18,7 +18,7 @@ public final class RecordConstraint implements Constraint
 
     public RecordConstraint(final TypeMap fields)
     {
-        this.rec = Types.rec(fields);
+        this.rec = Types.rec(fields.getLoc(), fields);
     }
 
     // Constraint
