@@ -1048,9 +1048,9 @@ assert_equals({ 6 }, { find(flatten([[0,1] ,[2,4], [3,5]]), 6) }); // MatrixList
 
 
 
-// first : (T => [T] -> T) = <intrinsic>
-assert_equals({ "cat" }, { first(["cat", "dog", "bird", "dog", "snake"]) });
-assert_equals({ "cat" }, { apply(first, ["cat", "dog", "bird", "dog", "snake"]) });
+// head : (T => [T] -> T) = <intrinsic>
+assert_equals({ "cat" }, { head(["cat", "dog", "bird", "dog", "snake"]) });
+assert_equals({ "cat" }, { apply(head, ["cat", "dog", "bird", "dog", "snake"]) });
 
 
 // first_where = { pred, vals => n = list:size(vals); cycle(0, { i => and(lt(i, n), { not(pred(vals[i])) }) }, inc) }
@@ -1144,9 +1144,9 @@ assert_equals({ ["a", "c"] }, { apply(remove, (["a", "b", "c"], "b")) });
 assert_equals({ ["cat", "cat", "cat"] }, { rep(3, "cat") });
 assert_equals({ ["cat", "cat", "cat"] }, { apply(rep, (3, "cat")) });
 
-// rest : (T => [T] -> [T]) = <intrinsic>
-assert_equals({ ["dog", "fish"] }, { rest(["cat", "dog", "fish"]) });
-assert_equals({ ["dog", "fish"] }, { apply(rest, ["cat", "dog", "fish"]) });
+// tail : (T => [T] -> [T]) = <intrinsic>
+assert_equals({ ["dog", "fish"] }, { tail(["cat", "dog", "fish"]) });
+assert_equals({ ["dog", "fish"] }, { apply(tail, ["cat", "dog", "fish"]) });
 
 
 // reverse = { list => n = size(list); mapll(range(minus(n, 1), neg(n)), list) }

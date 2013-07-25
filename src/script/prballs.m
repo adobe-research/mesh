@@ -513,7 +513,7 @@ dragstate() { last(*draghist) };
 dragvel()
 {
     hist = *draghist;
-    (s0, s1) = (first(hist), last(hist));
+    (s0, s1) = (head(hist), last(hist));
     dist = diff(s1.pos, s0.pos);
     elap = lminus(s1.time, s0.time);
     scale(dist, fdivz(1000000.0, l2f(elap)));

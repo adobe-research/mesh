@@ -60,8 +60,8 @@ consume(c, q, f)
     while({*c}, {
         awaits((c, q), (not, ne));
         when(*c, {
-            (b, l) = tau(q, ne, rest);
-            when(b, { f(first(l)) })
+            (b, l) = tau(q, ne, tail);
+            when(b, { f(head(l)) })
         })
     })
 };

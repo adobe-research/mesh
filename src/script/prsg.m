@@ -79,7 +79,7 @@ letterbox() {
 
 // sum a matrix of floats by column
 sumcols(mat:[[Double]]) {
-    (nrows, ncols) = (size(mat), size(first(mat)));
+    (nrows, ncols) = (size(mat), size(head(mat)));
     count(ncols) | { c => fsum(count(nrows) | { mat[$0][c] }) }
 };
 
@@ -88,7 +88,7 @@ drawlayers(keys:[String], layermap:[String : [Double]], basefunc:[[Double]]->[Do
 
     layers = maplm(keys, layermap);             // data layers
     base = basefunc(layers);                    // compute baseline
-    n = size(first(layers));                    // number of data points
+    n = size(head(layers));                    // number of data points
     ixs = count(n);                             // indexes
 
     iw = fmin(1.0, i2f(W) /. i2f(n));                       // item width
@@ -145,21 +145,21 @@ drawlayers(keys:[String], layermap:[String : [Double]], basefunc:[[Double]]->[Do
 
 // flat baseline is just zero all the way across
 flatbase(layers:[[Double]]) {
-    rep(size(first(layers)), 0.0)
+    rep(size(head(layers)), 0.0)
 };
 
 // centered baseline is, for a given x, the centerline minus half the stack height at that x
 centeredbase(layers:[[Double]]) {
     heights = sumcols(layers);
     maxh = reduce(fmax, 0.0, heights);
-    index(first(layers)) | { (maxh -. heights[$0]) /. 2.0 }
+    index(head(layers)) | { (maxh -. heights[$0]) /. 2.0 }
 };
 
 // min-wiggle baseline
 // http://github.com/leebyron/streamgraph_generator/blob/master/MinimizedWiggleLayout.java
 minwigglebase(layers:[[Double]]) {
     nlayers = size(layers);
-    nitems = size(first(layers));
+    nitems = size(head(layers));
     calc(x) {
         contrib(y) { (i2f(nlayers - y) -. 0.5) *. layers[y][x] };
         fsum(count(nlayers) | contrib) /. i2f(nlayers)
@@ -190,7 +190,7 @@ paused = box(false);
 nsamples = box(3);
 
 datasize(map) {
-    size(first(values(map)))
+    size(head(values(map)))
 };
 
 // add a new set of samples to global data map.

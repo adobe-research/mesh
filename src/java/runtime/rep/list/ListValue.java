@@ -28,6 +28,13 @@ public interface ListValue extends Iterable<Object>
     int size();
 
     /**
+     * Returns item at index 0.
+     * Note: throws IndexOutOfBoundsException on empty list,
+     * currently
+     */
+    Object head();
+
+    /**
      * Returns item at index. Valid values of index
      * are 0..size() - 1.
      * Note: throws IndexOutOfBoundsException on bad
@@ -65,6 +72,15 @@ public interface ListValue extends Iterable<Object>
      * index, currently
      */
     ListValue subList(final int from, final int to);
+
+    /**
+     * Return new list with items from given position to end.
+     * Valid values of from and to are 0 .. size(), with
+     * from <= to.
+     * Note: throws IndexOutOfBoundsException on bad
+     * index, currently
+     */
+    ListValue subList(final int from);
 
     /**
      * Return iterator over the selected range. Makes

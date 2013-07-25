@@ -1547,7 +1547,7 @@ intrinsic <T> drop(x:Int, y:[T]) -> [T];
 /**
  * evaluate f at each position of a list, using the value at that position
  * as the left argument, and the next value as the right argument. Begin with
- * f(init, first(list)).
+ * f(init, head(list)).
  * @param init initial value for left argument to f
  * @param f function to be evaluated
  * @param args list of values
@@ -1612,12 +1612,6 @@ intrinsic <T> filter(x:[T], y:(T -> Bool)) -> [T];
 intrinsic <T> find(x:[T], y:T) -> Int;
 
 /**
- * @param x List
- * @return First element of non-empty list.
- */
-intrinsic <T> first(x:[T]) -> T;
-
-/**
  * given a predicate and a list of values, return the position of the
  * first item that satisfies the predicate. If none does, return the
  * size of the list
@@ -1657,6 +1651,12 @@ intrinsic fromto(x:Int, y:Int) -> [Int];
  * @return A map from keys to collections of values.
  */
 intrinsic <K, V> group(keys : [K], vals : [V]) -> [K : [V]];
+
+/**
+ * @param x List
+ * @return head element of non-empty list.
+ */
+intrinsic <T> head(x:[T]) -> T;
 
 /**
  * Create a list of indexes: index(list) == count(size(list)).
@@ -1775,13 +1775,6 @@ intrinsic <T> remove(x:[T], y:T) -> [T];
 intrinsic <T> rep(x:Int, y:T) -> [T];
 
 /**
- * TODO: empty list throws
- * @param x list of items
- * @return A new list of items x, minus the first value.
- */
-intrinsic <T> rest(x:[T]) -> [T];
-
-/**
  * list reverse
  * @param list list of items
  * @return a new list with the items in reverse order
@@ -1848,6 +1841,13 @@ starts(sizes : [Int]) -> [Int]
 {
     drop(-1, scan((+), 0, sizes))
 };
+
+/**
+ * Note: empty list throws, currently
+ * @param x list of items
+ * @return A new list of items x, minus the first value.
+ */
+intrinsic <T> tail(x:[T]) -> [T];
 
 /**
  * Takes first x items from list if x > 0, last -x if x < 0.
@@ -2527,7 +2527,7 @@ postdec(b)
 //
 // CAS and variations.
 // In all cases, boxes are owned up front, making the
-// rest of the transaction inevitable, mod (a) outer
+// tail of the transaction inevitable, mod (a) outer
 // transactions and (b) box acquisition in passed
 // functions.
 //

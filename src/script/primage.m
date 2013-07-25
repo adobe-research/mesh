@@ -81,7 +81,7 @@ bestsizeurl(info:XNode, w, h)
                 iif(cur.0 * cur.1 >= next.0 * next.1, i, j)
             };
 
-            bestix = evolve(first(fitixs), maxarea, rest(fitixs));
+            bestix = evolve(head(fitixs), maxarea, tail(fitixs));
             sizeinfos[bestix].attrs[#source]
         })
     })

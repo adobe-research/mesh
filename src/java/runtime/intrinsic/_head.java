@@ -13,15 +13,15 @@ package runtime.intrinsic;
 import runtime.rep.list.ListValue;
 
 /**
- * rest(list) = all but first element of non-empty list
+ * head(list) = head element of non-empty list.
  * empty list throws, currently.
  *
  * @author Basil Hosmer
  */
-public final class _rest extends IntrinsicLambda
+public final class _head extends IntrinsicLambda
 {
-    public static final _rest INSTANCE = new _rest(); 
-    public static final String NAME = "rest";
+    public static final _head INSTANCE = new _head();
+    public static final String NAME = "head";
 
     public String getName()
     {
@@ -33,8 +33,8 @@ public final class _rest extends IntrinsicLambda
         return invoke((ListValue)arg);
     }
 
-    public static ListValue invoke(final ListValue list)
+    public static Object invoke(final ListValue list)
     {
-        return list.subList(1, list.size());
+        return list.get(0);
     }
 }

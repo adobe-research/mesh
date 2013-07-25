@@ -34,6 +34,11 @@ final class EmptyList extends PersistentList
         return 0;
     }
 
+    public Object head()
+    {
+        throw new IndexOutOfBoundsException();
+    }
+
     public Object get(final int index)
     {
         throw new IndexOutOfBoundsException();
@@ -67,6 +72,11 @@ final class EmptyList extends PersistentList
     public ListValue subList(final int from, final int to)
     {
         return Sublist.create(this, from, to);
+    }
+
+    public ListValue subList(final int from)
+    {
+        return Sublist.create(this, from);
     }
 
     public Iterator<Object> iterator(final int from, final int to)

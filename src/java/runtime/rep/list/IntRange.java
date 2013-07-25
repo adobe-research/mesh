@@ -53,6 +53,11 @@ public final class IntRange implements ListValue
         return size;
     }
 
+    public Object head()
+    {
+        return start;
+    }
+
     public Object get(final int index)
     {
         if (index < 0 || index >= size)
@@ -81,6 +86,12 @@ public final class IntRange implements ListValue
     {
         checkRange(from, to);
         return new IntRange(start + from, start + to);
+    }
+
+    public ListValue subList(final int from)
+    {
+        checkRange(from, size);
+        return new IntRange(start + from, start + size);
     }
 
     public ListValue apply(final Lambda f)

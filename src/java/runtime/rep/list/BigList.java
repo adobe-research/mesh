@@ -81,6 +81,16 @@ public final class BigList extends PersistentList
         return size;
     }
 
+    public Object head()
+    {
+        Object[] node = data;
+
+        for (int shift = (height - 1) * PATH_BITS; shift > 0; shift -= PATH_BITS)
+            node = (Object[])node[0];
+
+        return node[0];
+    }
+
     public Object get(final int index)
     {
         if (index < 0 || index >= size)
@@ -233,6 +243,11 @@ public final class BigList extends PersistentList
     public ListValue subList(final int from, final int to)
     {
         return Sublist.create(this, from, to);
+    }
+
+    public ListValue subList(final int from)
+    {
+        return Sublist.create(this, from);
     }
 
     /**

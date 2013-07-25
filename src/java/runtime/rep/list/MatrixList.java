@@ -45,6 +45,11 @@ public final class MatrixList implements ListValue
         return size;
     }
 
+    public Object head()
+    {
+        return ((ListValue)lists.head()).head();
+    }
+
     public Object get(final int index)
     {
         if (index < 0 || index >= size)
@@ -87,6 +92,11 @@ public final class MatrixList implements ListValue
     public ListValue subList(final int from, final int to)
     {
         return Sublist.create(this, from, to);
+    }
+
+    public ListValue subList(final int from)
+    {
+        return Sublist.create(this, from);
     }
 
     public ListValue apply(final Lambda f)
