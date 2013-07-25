@@ -12,8 +12,10 @@ package compile.type;
 
 import com.google.common.collect.Sets;
 import compile.Loc;
+import compile.Pair;
 import compile.Session;
 import compile.type.constraint.Constraint;
+import compile.type.constraint.SubsumptionConstraint;
 import compile.type.kind.Kind;
 import compile.type.visit.EquivState;
 import compile.type.visit.SubstMap;
@@ -282,8 +284,38 @@ public final class TypeVar extends NonScopeType
         other = other.deref();
 
         return kind.equals(other.getKind()) ?
-            SubstMap.bindVar(loc, this, other.deref(), env) :
+            SubstMap.bindVar(loc, this, other, env) :
             null;
+    }
+
+    public SubstMap subsume(final Loc loc, final Type type, final TypeEnv env)
+    {
+        if (type instanceof TypeVar)
+        {
+            final TypeVar var = (TypeVar)type;
+
+            final Pair<? extends Constraint, SubstMap> merged =
+                constraint.merge(var.constraint, env);
+
+            if (merged == null)
+                return null;
+
+            setConstraint(merged.left);
+
+            return merged.right;
+        }
+        else
+        {
+            final Pair<? extends Constraint, SubstMap> merged =
+                constraint.merge(new SubsumptionConstraint(type), env);
+
+            if (merged == null)
+                return null;
+
+            setConstraint(merged.left);
+
+            return merged.right;
+        }
     }
 
     public boolean equiv(final Type other, final EquivState state)

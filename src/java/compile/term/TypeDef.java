@@ -241,6 +241,20 @@ public final class TypeDef extends TypeBinding
             null;
     }
 
+    public SubstMap subsume(final Loc loc, final Type other, final TypeEnv env)
+    {
+        final Type otherDeref = other.deref();
+
+        return
+            equals(otherDeref) ?
+                SubstMap.EMPTY :
+                !nominal ?
+                    value.subsume(loc, otherDeref, env) :
+                    otherDeref instanceof TypeVar ?
+                        ((TypeVar)otherDeref).getConstraint().satisfy(loc, this, env) :
+                        null;
+    }
+
     public boolean equiv(final Type other, final EquivState state)
     {
         return nominal ? equals(other.deref()) :

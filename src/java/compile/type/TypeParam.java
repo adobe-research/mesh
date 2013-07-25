@@ -102,6 +102,12 @@ public final class TypeParam extends TypeBinding
         return null;
     }
 
+    public SubstMap subsume(final Loc loc, final Type other, final TypeEnv env)
+    {
+        Session.error(loc, "internal error: TypeParam.subsume()");
+        return null;
+    }
+
     public <T> T accept(final TypeVisitor<T> visitor)
     {
         return visitor.visit(this);

@@ -63,10 +63,14 @@ public final class VariantConstraint implements Constraint
 
         if (otherOpts instanceof TypeMap)
         {
-            return ((TypeMap)otherOpts).subsume(loc, opts, env);
+            return otherOpts.subsume(loc, opts, env);
         }
         else if (otherOpts instanceof TypeApp)
         {
+            Session.info("TypeApp otherOpts = {0}", otherOpts.dump());
+
+            return otherOpts.subsume(loc, opts, env);
+
             /*
             final TypeApp otherOptsApp = (TypeApp)otherOpts;
             final Type base = otherOptsApp.getBase();
@@ -105,7 +109,6 @@ public final class VariantConstraint implements Constraint
                 Session.debug(loc, "type cons {0} is not handled, fail",
                     baseCons.dump());
             */
-            return null;
         }
         else
         {

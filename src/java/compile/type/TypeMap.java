@@ -13,6 +13,7 @@ package compile.type;
 import com.google.common.collect.Maps;
 import compile.Loc;
 import compile.Pair;
+import compile.Session;
 import compile.term.Term;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
@@ -70,85 +71,6 @@ public final class TypeMap extends NonScopeType
     public Collection<Type> getValueTypes()
     {
         return members.values();
-    }
-
-    /**
-     * return substitution if we have a unifiable key type and
-     * contain unifiable entries for all entries in another type map,
-     * otherwise null
-     */
-    public SubstMap subsume(final Loc loc, final TypeMap map, final TypeEnv env)
-    {
-        if (members.size() < map.getMembers().size())
-            return null;
-
-        SubstMap subst =
-            keyType.getBaseType().unify(loc, map.getKeyType().getBaseType(), env);
-
-        if (subst == null)
-            return null;
-
-        for (final Map.Entry<Term, Type> entry : map.getMembers().entrySet())
-        {
-            final Term key = entry.getKey();
-            final Type mapMember = entry.getValue();
-            final Type member = members.get(key);
-
-            if (member == null)
-                return null;
-
-            final SubstMap memberSubst =
-                member.subst(subst).unify(loc, mapMember.subst(subst), env);
-
-            if (memberSubst == null)
-                return null;
-
-            subst = subst.compose(loc, memberSubst);
-        }
-
-        return subst;
-    }
-
-    /**
-     * return pair of merged type map and substitution map, if
-     * we can be merged successfully with another type map,
-     * otherwise null
-     */
-    public Pair<TypeMap, SubstMap> merge(final TypeMap map, final TypeEnv env)
-    {
-        // NOTE: these should always be enums over ground types
-        SubstMap subst =
-            keyType.getBaseType().unify(loc, map.getKeyType().getBaseType(), env);
-
-        if (subst == null)
-            return null;
-
-        final LinkedHashMap<Term, Type> resultMembers = Maps.newLinkedHashMap();
-        resultMembers.putAll(members);
-
-        for (final Map.Entry<Term, Type> entry : map.getMembers().entrySet())
-        {
-            final Term key = entry.getKey();
-            final Type mapMember = entry.getValue();
-            final Type resultMember = resultMembers.get(key);
-
-            if (resultMember != null)
-            {
-                final SubstMap memberSubst =
-                    resultMember.subst(subst).unify(loc, mapMember.subst(subst), env);
-
-                if (memberSubst == null)
-                    return null;
-
-                subst = subst.compose(loc, memberSubst);
-            }
-            else
-            {
-                resultMembers.put(key, mapMember);
-            }
-        }
-
-        return Pair.create(new TypeMap(loc, keyType, resultMembers), subst);
     }
 
     // Type
@@ -235,6 +157,93 @@ public final class TypeMap extends NonScopeType
         }
 
         return null;
+    }
+
+    /**
+     * return substitution if we have a unifiable key type and
+     * contain unifiable entries for all entries in another type map,
+     * otherwise null
+     */
+    public SubstMap subsume(final Loc loc, final Type type, final TypeEnv env)
+    {
+        if (!(type instanceof TypeMap))
+        {
+            Session.error("TypeMap.subsume(): non-TypeMap arg: {0}", type.dump());
+            return null;
+        }
+
+        final TypeMap map = (TypeMap)type;
+
+        if (members.size() < map.getMembers().size())
+            return null;
+
+        SubstMap subst =
+            keyType.getBaseType().unify(loc, map.getKeyType().getBaseType(), env);
+
+        if (subst == null)
+            return null;
+
+        for (final Map.Entry<Term, Type> entry : map.getMembers().entrySet())
+        {
+            final Term key = entry.getKey();
+            final Type mapMember = entry.getValue();
+            final Type member = members.get(key);
+
+            if (member == null)
+                return null;
+
+            final SubstMap memberSubst =
+                member.subst(subst).unify(loc, mapMember.subst(subst), env);
+
+            if (memberSubst == null)
+                return null;
+
+            subst = subst.compose(loc, memberSubst);
+        }
+
+        return subst;
+    }
+
+    /**
+     * return pair of merged type map and substitution map, if
+     * we can be merged successfully with another type map,
+     * otherwise null
+     */
+    public Pair<TypeMap, SubstMap> merge(final TypeMap map, final TypeEnv env)
+    {
+        // NOTE: these should always be enums over ground types
+        SubstMap subst =
+            keyType.getBaseType().unify(loc, map.getKeyType().getBaseType(), env);
+
+        if (subst == null)
+            return null;
+
+        final LinkedHashMap<Term, Type> resultMembers = Maps.newLinkedHashMap();
+        resultMembers.putAll(members);
+
+        for (final Map.Entry<Term, Type> entry : map.getMembers().entrySet())
+        {
+            final Term key = entry.getKey();
+            final Type mapMember = entry.getValue();
+            final Type resultMember = resultMembers.get(key);
+
+            if (resultMember != null)
+            {
+                final SubstMap memberSubst =
+                    resultMember.subst(subst).unify(loc, mapMember.subst(subst), env);
+
+                if (memberSubst == null)
+                    return null;
+
+                subst = subst.compose(loc, memberSubst);
+            }
+            else
+            {
+                resultMembers.put(key, mapMember);
+            }
+        }
+
+        return Pair.create(new TypeMap(loc, keyType, resultMembers), subst);
     }
 
     public <T> T accept(final TypeVisitor<T> visitor)

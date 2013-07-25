@@ -65,6 +65,9 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
 
         if (type instanceof TypeVar)
         {
+            // TODO this case should happen as a natural result of calling
+            // TODO var.constraint.satisfy with a TypeVar argument
+
             // for var -> var, we need to check and possibly manipulate constraints
             final TypeVar rhsVar = (TypeVar)type;
 

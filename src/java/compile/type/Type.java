@@ -13,7 +13,6 @@ package compile.type;
 import compile.Dumpable;
 import compile.Loc;
 import compile.Located;
-import compile.Pair;
 import compile.type.kind.Kind;
 import compile.type.visit.EquivState;
 import compile.type.visit.SubstMap;
@@ -126,7 +125,7 @@ public interface Type extends Located, Dumpable
     /**
      * TODO
      */
-    //SubstMap subsume(Loc loc, Type type, TypeEnv env);
+    SubstMap subsume(Loc loc, Type type, TypeEnv env);
 
     /**
      * TODO

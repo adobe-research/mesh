@@ -23,8 +23,8 @@ public final class RecordConstraint implements Constraint
 
     // Constraint
 
-    public Pair<? extends Constraint, SubstMap> merge(
-        final Constraint constraint, final TypeEnv env)
+    public Pair<? extends Constraint, SubstMap>
+        merge(final Constraint constraint, final TypeEnv env)
     {
         if (constraint == Constraint.ANY)
             return Pair.create(this, SubstMap.EMPTY);

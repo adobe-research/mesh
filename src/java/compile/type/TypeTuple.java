@@ -11,6 +11,7 @@
 package compile.type;
 
 import compile.Loc;
+import compile.Session;
 import compile.type.kind.Kind;
 import compile.type.visit.EquivState;
 import compile.type.visit.SubstMap;
@@ -134,6 +135,45 @@ public final class TypeTuple extends NonScopeType
 
 
         return null;
+    }
+
+    /**
+     * return substitution if we contain at least as many items as another
+     * type list, and all overlapping items are unifiable with each other.
+     * otherwise null
+     */
+    public SubstMap subsume(final Loc loc, final Type type, final TypeEnv env)
+    {
+        if (!(type instanceof TypeTuple))
+        {
+            Session.error("TypeTuple.subsume(): non-TypeTuple arg: {0} (this = {1})",
+                type.dump(), dump());
+
+            return null;
+        }
+
+        final TypeTuple tuple = (TypeTuple)type;
+
+        if (members.size() < tuple.getMembers().size())
+            return null;
+
+        SubstMap subst = SubstMap.EMPTY;
+
+        int i = 0;
+        for (final Type tupleMember : tuple.getMembers())
+        {
+            final Type item = members.get(i++);
+
+            final SubstMap itemSubst =
+                item.subst(subst).unify(loc, tupleMember.subst(subst), env);
+
+            if (itemSubst == null)
+                return null;
+
+            subst = subst.compose(loc, itemSubst);
+        }
+
+        return subst;
     }
 
     public <T> T accept(final TypeVisitor<T> visitor)

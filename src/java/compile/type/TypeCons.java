@@ -85,6 +85,16 @@ public final class TypeCons extends NonScopeType
             null;
     }
 
+    public SubstMap subsume(final Loc loc, final Type type, final TypeEnv env)
+    {
+        return
+            type instanceof TypeVar ?
+                ((TypeVar)type).getConstraint().satisfy(loc, this, env) :
+                type.deref().equals(this) ?
+                    SubstMap.EMPTY :
+                    null;
+    }
+
     public boolean equiv(final Type other, final EquivState state)
     {
         return equals(other.deref());

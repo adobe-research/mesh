@@ -75,11 +75,6 @@ public final class Types
     public static final Type UNIT = findIntrinsic("Unit");
 
     //
-    // helpers - convenience wrappers to build and query
-    // common type terms
-    //
-
-    //
     // type application terms
     //
 
