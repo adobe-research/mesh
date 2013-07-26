@@ -2,7 +2,7 @@
 import lib.bench;
 import unittest;
 
-// bench = { b => t0 = millitime(); result = b(); (#result: result, #time: integer:l2i(lang:lminus(millitime(), t0))) }
+// bench = { b => t0 = millitime(); result = b(); (result: result, time: integer:l2i(lang:lminus(millitime(), t0))) }
 assert_equals({ true }, {
                         res = bench({ sleep(15); inc(2) });
                         eq(3, res.result);

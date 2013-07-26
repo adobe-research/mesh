@@ -12,11 +12,12 @@
 // TODO this reduce is very common use-case for decomposing params
 //
 mvcs(a) {
-    // compute b parallel to a, with b[i] = (start, sum) of max
-    // subsequence ending at i.
-    // reducer implements the decision at i to extend i-1's max
-    // subsequence, or start a new one.
-    // also tracks and returns (position of) winning subsequence.
+    // compute b parallel to a, with b[i] = (start, sum) of max subsequence
+    // ending at i.
+    // reducer implements the decision at i to extend i-1's max subsequence,
+    // or start a new one.
+    // also tracks and returns position of winning subsequence.
+    //
     (b, win, _) = reduce({ state, v =>
         (b, win, n) = state;
         // if max at i - 1 is > 0, extend, otherwise start new

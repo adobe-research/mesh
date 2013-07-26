@@ -11,7 +11,7 @@ import unittest;
 //
 <T> harness(mut:*T->?, init:T, term:T, nboxes:Int, ntasks:Int, niters:Int)
 {
-    print(#nboxes: nboxes, #ntasks: ntasks, #niters: niters);
+    print(nboxes: nboxes, ntasks: ntasks, niters: niters);
 
     // create per-task shuffles of common box list
     blist = repeat(nboxes, { box(init) });

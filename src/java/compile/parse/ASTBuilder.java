@@ -650,8 +650,10 @@ public class ASTBuilder
      */
     public static MapTerm mapLiteral(final Loc loc, final List<Pair<Term, Term>> pairs)
     {
-        return new MapTerm(loc, mapFromPairs(pairs != null ? pairs :
-            Collections.<Pair<Term, Term>>emptyList()));
+        return new MapTerm(loc,
+            mapFromPairs(
+                pairs != null ? pairs : Collections.<Pair<Term, Term>>emptyList(),
+                false));
     }
 
     /**
@@ -665,11 +667,14 @@ public class ASTBuilder
 
     /**
      * record literal
+     * Note: syntactic ids appearing in key positions are parsed as symbol literals
      */
     public static RecordTerm recLiteral(final Loc loc, final List<Pair<Term, Term>> pairs)
     {
-        return new RecordTerm(loc, mapFromPairs(pairs != null ? pairs :
-            Collections.<Pair<Term, Term>>emptyList()));
+        return new RecordTerm(loc,
+            mapFromPairs(
+                pairs != null ? pairs : Collections.<Pair<Term, Term>>emptyList(),
+                true));
     }
 
     /**
@@ -810,7 +815,7 @@ public class ASTBuilder
     public static Type recType(final Loc loc, final List<Pair<Term, Type>> pairs)
     {
         return Types.rec(loc, pairs != null ?
-            mapFromPairs(pairs) : Collections.<Term, Type>emptyMap());
+            mapFromPairs(pairs, true) : Collections.<Term, Type>emptyMap());
     }
 
     /**
@@ -866,20 +871,34 @@ public class ASTBuilder
      * but since a PEG parser may get here speculatively,
      * we must defer some semantic checks until later.
      */
-    private static <T> LinkedHashMap<Term, T> mapFromPairs(final List<Pair<Term, T>> pairs)
+    private static <T> LinkedHashMap<Term, T>
+        mapFromPairs(final List<Pair<Term, T>> pairs,
+        final boolean keySymSugar)
     {
         final LinkedHashMap<Term, T> accum = new LinkedHashMap<Term, T>();
 
         for (final Pair<Term, T> pair : pairs)
         {
-            if (accum.containsKey(pair.left))
+            final Term key;
+            if (keySymSugar)
             {
-                Session.error(pair.left.getLoc(), "duplicate key: {0}",
-                    pair.left.dump());
+                final Term rawKey = pair.left;
+                key = rawKey instanceof RefTerm ?
+                    symLiteral(rawKey.getLoc(), ((RefTerm)rawKey).getName()) :
+                    rawKey;
             }
             else
             {
-                accum.put(pair.left, pair.right);
+                key = pair.left;
+            }
+
+            if (accum.containsKey(key))
+            {
+                Session.error(key.getLoc(), "duplicate key: {0}", key.dump());
+            }
+            else
+            {
+                accum.put(key, pair.right);
             }
         }
 

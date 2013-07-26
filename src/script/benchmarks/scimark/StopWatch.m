@@ -27,14 +27,14 @@ export StopWatch;
 
 StopWatch() {
 
-    members = box(#running: false, #last_time: 0.0, #total: 0.0);
+    members = box(running: false, last_time: 0.0, total: 0.0);
 
     seconds() -> Double {
         l2f(millitime()) /. 1000.0
     };
 
     set(running, last, total) { 
-        members := (#running: running, #last_time: last, #total: total);
+        members := (running: running, last_time: last, total: total);
     };
 
     _reset() { set(false, 0.0, 0.0); };
@@ -67,10 +67,10 @@ StopWatch() {
     _reset();
 
     (
-        #reset: _reset,
-        #start: _start,
-        #resume: _resume,
-        #stop: _stop,
-        #read: _read
+        reset: _reset,
+        start: _start,
+        resume: _resume,
+        stop: _stop,
+        read: _read
     )
 };

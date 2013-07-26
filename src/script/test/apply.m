@@ -81,7 +81,7 @@ ONE = 1;
 assert_equals({"hey"}, {tup.(ONE)});
 
 // addressing a record by a symbol literal, sugared
-rec = (#age: 30, #name: "bob");
+rec = (age: 30, name: "bob");
 assert_equals({30}, {rec.age});
 
 // addressing a record by a symbol literal, unsugared

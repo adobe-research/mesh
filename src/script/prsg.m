@@ -9,13 +9,13 @@ import processing;
 
 // a Bump is triple of floats representing height, x-displacement and rate (slope)
 //
-type Bump = (#height: Double, #xoff: Double, #rate: Double);
+type Bump = (height: Double, xoff: Double, rate: Double);
 
 // generate a bump in the range [x, x + wid).
 bump(x, wid) { (
-    #height: ln(1.0 /. frand()),           // log keeps things fairly sober
-    #xoff: x + frand() *. wid,              // location of bump event in [x, x + wid)
-    #rate: fmax(25.0, frand() *. 200.0)     // smaller = narrower/steeper (note: not scaled by wid)
+    height: ln(1.0 /. frand()),           // log keeps things fairly sober
+    xoff: x + frand() *. wid,              // location of bump event in [x, x + wid)
+    rate: fmax(25.0, frand() *. 200.0)     // smaller = narrower/steeper (note: not scaled by wid)
 ) };
 
 // generate the average quantity of bumps for [x, wid)
@@ -26,7 +26,7 @@ bumpgen(x, wid) {
 
 // shift bumps a given x-distance
 shiftbumps(dx, bumps:[Bump]) {
-    bumps | {b:Bump => (#height: b.height, #xoff: b.xoff + dx, #rate: b.rate)}
+    bumps | {b:Bump => (height: b.height, xoff: b.xoff + dx, rate: b.rate)}
 };
 
 // compute the value at a given x-position, given a list of bumps
@@ -52,8 +52,8 @@ bumpedvalue(xpos, bumps:[Bump]) {
 (HBORDER, VBORDER) = (0, 100);
 
 VIEWPORT = (
-    #left: i2f(HBORDER), #top: i2f(VBORDER),
-    #width: i2f(W - 2 * HBORDER), #height: i2f(H - 2 * VBORDER));
+    left: i2f(HBORDER), top: i2f(VBORDER),
+    width: i2f(W - 2 * HBORDER), height: i2f(H - 2 * VBORDER));
 
 BORDERBG = 0x0D1F28;
 
@@ -95,7 +95,7 @@ drawlayers(keys:[String], layermap:[String : [Double]], basefunc:[[Double]]->[Do
     maxh = reduce(fmax, 0.0, sumcols([base] + layers));     // max total height
     ih = (VIEWPORT.height -. 1.0) /. maxh;                  // item height
 
-    (#left: vl, #top: vt, #width: vw, #height: vh) = VIEWPORT;
+    (left: vl, top: vt, width: vw, height: vh) = VIEWPORT;
     vb = vt + vh;
 
     // worker - draws the shape for a given layer

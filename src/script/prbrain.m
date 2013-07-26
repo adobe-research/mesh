@@ -393,10 +393,10 @@ drawview() {
 
 // torus movement
 
-dragstate = box((#pos: (0, 0), #time: 0L));
+dragstate = box((pos: (0, 0), time: 0L));
 
 grab() {
-    dragstate := (#pos: prmouse(), #time: millitime());
+    dragstate := (pos: prmouse(), time: millitime());
     rotv := (0.0, 0.0, 0.0)
 };
 
@@ -421,7 +421,7 @@ drag() {
     when(elapsed >. 0.0, {
         pos = prmouse();
         (rx, ry, rz) = mouserot(pos, state.pos);
-        dragstate := (#pos: pos, #time: now);
+        dragstate := (pos: pos, time: now);
         rotv := (-.rx /. elapsed, ry /. elapsed, rz /. elapsed);
     });
 };

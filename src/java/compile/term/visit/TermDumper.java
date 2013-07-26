@@ -126,7 +126,7 @@ public final class TermDumper extends TermVisitorBase<String>
             "[:]" :
             "[" +
                 StringUtils.join(
-                    visitEntrySet(map.getItems().entrySet(), ": "), ", ") +
+                    visitEntrySet(map.getItems().entrySet(), ": ", false), ", ") +
             "]";
     }
 
@@ -147,7 +147,7 @@ public final class TermDumper extends TermVisitorBase<String>
             "(:)" :
             "(" +
                 StringUtils.join(
-                    visitEntrySet(record.getItems().entrySet(), ": "), ", ") +
+                    visitEntrySet(record.getItems().entrySet(), ": ", true), ", ") +
                 ")";
     }
 
@@ -227,12 +227,28 @@ public final class TermDumper extends TermVisitorBase<String>
      * pairwise-concatenated string results
      */
     private List<String> visitEntrySet(final Set<Map.Entry<Term, Term>> entrySet,
-        final String sep)
+        final String sep,
+        final boolean keySymSugar)
     {
         final List<String> visitedList = new ArrayList<String>();
 
         for (final Map.Entry<Term, Term> pair : entrySet)
-            visitedList.add(visitTerm(pair.getKey()) + sep + visitTerm(pair.getValue()));
+        {
+            final String keyDump;
+            if (keySymSugar)
+            {
+                final Term key = pair.getKey();
+                keyDump = key instanceof SymbolLiteral ?
+                    ((SymbolLiteral)key).getValue() :
+                    visitTerm(key);
+            }
+            else
+            {
+                keyDump = visitTerm(pair.getKey());
+            }
+
+            visitedList.add(keyDump + sep + visitTerm(pair.getValue()));
+        }
 
         return visitedList;
     }

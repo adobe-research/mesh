@@ -6,7 +6,7 @@
 // a Fork is record holding an id and
 // an availability flag
 //
-type Fork = (#id: Int, #avail: Bool);
+type Fork = (id: Int, avail: Bool);
 
 // make_fork returns a new fork with unique id
 //
@@ -16,33 +16,33 @@ make_fork =
     idgen = box(0);
 
     // make_fork returns fork with new id
-    { (#id: postinc(idgen), #avail: true) }
+    { (id: postinc(idgen), avail: true) }
 }();
 
 // returns a new fork with same id, toggled availability
-toggle_fork(f:Fork) { (#id: f.id, #avail: !f.avail) };
+toggle_fork(f:Fork) { (id: f.id, avail: !f.avail) };
 
 // a Phil is a name, a list of boxed forks,
 // an is-eating flag and a quantity of food
 //
-type Phil = (#name: Symbol, #forks: [*Fork], #eating: Bool, #food: Int);
+type Phil = (name: Symbol, forks: [*Fork], eating: Bool, food: Int);
 
 // create a Phil with the given name, forks
 // and food quantity
 //
 make_phil(name:Symbol, forks:[*Fork], food:Int)
 {
-    (#name: name, #forks: forks, #eating: false, #food: food)
+    (name: name, forks: forks, eating: false, food: food)
 };
 
 // make a new version of phil that is eating
 // and has consumed 1 unit of food
 started(p:Phil)
 {
-    (#name: p.name,
-    #forks: p.forks,
-    #eating: true,
-    #food: p.food - 1)
+    (name: p.name,
+    forks: p.forks,
+    eating: true,
+    food: p.food - 1)
 };
 
 // attempt to put boxed phil into the eating state.
@@ -80,10 +80,10 @@ start_eating(phil:*Phil)
 // eating
 stopped(p:Phil)
 {
-    (#name: p.name,
-    #forks: p.forks,
-    #eating: false,
-    #food: p.food)
+    (name: p.name,
+    forks: p.forks,
+    eating: false,
+    food: p.food)
 };
 
 // if phil is in eating state, take it out

@@ -399,7 +399,7 @@ assert_true({ apply(not, false) });
 //eq : (T => (T, T) -> Bool) = <intrinsic>
 assert_true({ eq(2, 2) });
 assert_false({ eq(2, 1) });
-assert_true({ r = (#a:1); eq(r, r) }); // record
+assert_true({ r = (a:1); eq(r, r) }); // record
 assert_true({ apply(eq, (2, 2)) });
 // eq for lists
 assert_true({ l = fromto(1, 4); eq(l, l) });
@@ -432,7 +432,7 @@ assert_equals({ false }, { empty([1,2]) });
 assert_equals({ false }, { empty([1:1]) });
 assert_equals({ false }, { empty((1,1)) });
 assert_equals({ false }, { empty("string") });
-assert_equals({ false }, { empty((#a:1)) });
+assert_equals({ false }, { empty((a:1)) });
 assert_equals({ false }, { empty(1) });
 assert_equals({ true }, { apply(empty, []) });
 
@@ -933,7 +933,7 @@ assert_equals({ "[:]" }, { tostr([:]) });                   // empty map
 assert_equals({ "(1, \"b\", 3)" }, { tostr((1, "b", 3)) }); // tuple
 assert_equals({ "()" }, { tup=(); tostr(tup) }); // tuple
 assert_equals({ "(1,)" }, { tup=(1,); tostr(tup) }); // tuple
-assert_equals({ "(#a: 2)" }, { tostr((#a:2)) });            // record
+assert_equals({ "(a: 2)" }, { tostr((a:2)) });            // record
 assert_equals({ "(:)" }, { tostr((:)) });            // record
 // variant
 assert_equals({ "box(3)" }, { tostr(box(3)) });             // box

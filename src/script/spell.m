@@ -90,7 +90,7 @@ correct(word)
 //
 
 // record holds stats from a test run
-type Stats = (#tests:Int, #misses:Int, #unknowns:Int);
+type Stats = (tests:Int, misses:Int, unknowns:Int);
 
 //
 // runs list of (target, misspells) test cases
@@ -121,7 +121,7 @@ spelltest(cases:[String : String], parallel:Bool, verbose:Bool) -> Stats
             if(corrected == goal,
             {
                 // found the goal spelling - print verbose diags
-                when(verbose, {print(#word: input, #corrected: corrected)})
+                when(verbose, {print(word: input, corrected: corrected)})
             },
             {
                 // missed - update miss counter
@@ -136,10 +136,10 @@ spelltest(cases:[String : String], parallel:Bool, verbose:Bool) -> Stats
                 // print verbose diags
                 when(verbose,
                 {
-                    print(#word: input,
-                        #corrected: corrected,
-                        #goal: goal,
-                        #unknown: !known)
+                    print(word: input,
+                        corrected: corrected,
+                        goal: goal,
+                        unknown: !known)
                 })
             })
         };
@@ -156,7 +156,7 @@ spelltest(cases:[String : String], parallel:Bool, verbose:Bool) -> Stats
     });
 
     // return stats
-    (#tests: get(tests), #misses: get(misses), #unknowns: get(unknowns))
+    (tests: get(tests), misses: get(misses), unknowns: get(unknowns))
 };
 
 //
