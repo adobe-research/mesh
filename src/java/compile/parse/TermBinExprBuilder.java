@@ -49,7 +49,13 @@ public class TermBinExprBuilder extends BinExprBuilder<Term>
             if (name != null)
             {
                 if (name.equals(Ops.VAR_SYM))
-                    return new VariantTerm(loc, lhs, rhs);
+                {
+                    final Term lhsCooked = lhs instanceof RefTerm ?
+                        new SymbolLiteral(lhs.getLoc(), ((RefTerm)lhs).getName()) :
+                        lhs;
+
+                    return new VariantTerm(loc, lhsCooked, rhs);
+                }
 
                 if (name.equals(Ops.COND_SYM))
                     return new CondTerm(loc, lhs, rhs);

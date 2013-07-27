@@ -121,9 +121,10 @@ public final class TypeDumper extends StackedTypeVisitor<String>
      * Helper - visit a map of values terms to type terms, return an array of
      * "(value): (type)" dump strings.
      */
-    private List<String> visitEntrySet(final Set<Map.Entry<Term, Type>> entrySet)
+    private List<String> visitEntrySet(final Set<Map.Entry<Term, Type>> entrySet,
+        final boolean keySymSugar)
     {
-        return visitEntrySet(entrySet, ": ");
+        return visitEntrySet(entrySet, ": ", keySymSugar);
     }
 
     /**
@@ -131,12 +132,29 @@ public final class TypeDumper extends StackedTypeVisitor<String>
      * "(value): (type)" dump strings.
      */
     private List<String> visitEntrySet(
-        final Set<Map.Entry<Term, Type>> entrySet, final String sep)
+        final Set<Map.Entry<Term, Type>> entrySet,
+        final String sep,
+        final boolean keySymSugar)
     {
         final List<String> visitedList = new ArrayList<String>();
 
         for (final Map.Entry<Term, Type> entry : entrySet)
-            visitedList.add(entry.getKey().dump() + sep + visitType(entry.getValue()));
+        {
+            final String keyDump;
+            if (keySymSugar)
+            {
+                final Term key = entry.getKey();
+                keyDump = key instanceof SymbolLiteral ?
+                    ((SymbolLiteral)key).getValue() :
+                    key.dump();
+            }
+            else
+            {
+                keyDump = entry.getKey().dump();
+            }
+
+            visitedList.add(keyDump + sep + visitType(entry.getValue()));
+        }
 
         return visitedList;
     }
@@ -333,7 +351,7 @@ public final class TypeDumper extends StackedTypeVisitor<String>
 
                 return fields.isEmpty() ?
                     "(:)" :
-                    "(" + StringUtils.join(visitEntrySet(fields.entrySet()), ", ") + ")";
+                    "(" + StringUtils.join(visitEntrySet(fields.entrySet(), true), ", ") + ")";
             }
         }
         else if (base == Types.VAR)
@@ -343,7 +361,7 @@ public final class TypeDumper extends StackedTypeVisitor<String>
                 final Map<Term, Type> fields = ((TypeMap)arg).getMembers();
 
                 return "(" +
-                        StringUtils.join(visitEntrySet(fields.entrySet(), " ! "), ", ") +
+                        StringUtils.join(visitEntrySet(fields.entrySet(), " ! ", true), ", ") +
                     ")";
             }
         }
@@ -382,6 +400,6 @@ public final class TypeDumper extends StackedTypeVisitor<String>
     public String visit(final TypeMap map)
     {
         final Map<Term, Type> members = map.getMembers();
-        return "[" + StringUtils.join(visitEntrySet(members.entrySet()), ", ") + "]";
+        return "[" + StringUtils.join(visitEntrySet(members.entrySet(), false), ", ") + "]";
     }
 }
