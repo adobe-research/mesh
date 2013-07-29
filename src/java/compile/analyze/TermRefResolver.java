@@ -164,10 +164,6 @@ class TermRefResolver extends TermTransformerBase {
         }
         else
         {
-            // final Module module = refResolver.getModule();
-            // final ValueBinding vb = currentScope.findValueBinding(name);
-
-            // binding = (vb != null) ? vb : module.findValueBinding(name);
             binding = currentScope.findValueBinding(name);
 
             // error cases:

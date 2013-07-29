@@ -585,6 +585,52 @@ run(b) { b() };
  */
 id(v) { v };
 
+/**
+ * Simple function memoizer. Results are stored in a simple
+ * argument-indexed map, which grows unrestrictedly.
+ * @param f a function
+ * @return a function with the same signature as f, which saves
+ * and reuses results.
+ * TODO require f be a pure function once constraint is available
+ */
+memo(f)
+{
+    m = box([:]);
+
+    { a =>
+        if(iskey(*m, a), { (*m)[a] }, {
+            v = f(a);
+            m <- { mapset($0, a, v) };
+            v
+        })
+    }
+};
+
+/**
+ * TODO memoizer using variant-returning map lookup function
+ *
+
+// map get with variant result
+// intrinsify
+look(m, k) {
+    if(iskey(m,k), {true ! m[k]}, {false ! ()})
+};
+
+memoize(f) {
+    m = box([:]);
+    { a =>
+        look(*m, a) ? (true: id, false: {
+            v = f(a);
+            m <- { mapset($0, a, v) };
+            v
+        })
+    }
+};
+
+ *
+ */
+
+
 // ------------------------------------------------------------------
 
 //

@@ -49,7 +49,7 @@ edits1(word)
 // filter a list of words by their presence in dict
 known(words)
 {
-    filter(words, {w => iskey(dict, w)})
+    filter(words, { iskey(dict, $0) })
 };
 
 //

@@ -38,7 +38,35 @@ mvcs(a)
 // issues: if/elses are too cumbersome
 // box ops are too cumbersome
 // iskey is necessitated by lack of variants in lookup API
+// TODO log BUG on recursive closure CG (seen if memoize call is inlined)
 knap01(items, wlim)
+{
+    m(i, w) {
+        if(i < 0, { (items: [], w: 0, v: 0) }, {
+            item = items[i];
+            if(w < item.w, { m(i - 1, w) }, {
+                m1 = m(i - 1, w);
+                m2 = m(i - 1, w - item.w);
+                guard(m1.v >= m2.v + item.v, m1, {
+                    (items: append(m2.items, item), w: m2.w + item.w, v: m2.v + item.v)
+                })
+            })
+        })
+    };
+
+    // see comment header: should be able to do m = memoize({...})
+    // but this reveals a bug in our closure CG, related to fwd decls
+    mm = memo(m);
+
+    mm(size(items) - 1, wlim)
+};
+
+/*
+// knapsack 0/1 solver--recursive w/memoization
+// issues: if/elses are too cumbersome
+// box ops are too cumbersome
+// iskey is necessitated by lack of variants in lookup API
+knap01x(items, wlim)
 {
     memo = box([:]);
 
@@ -61,6 +89,7 @@ knap01(items, wlim)
 
     m(size(items) - 1, wlim)
 };
+*/
 
 items = [
     ("map",                     9,       150),
