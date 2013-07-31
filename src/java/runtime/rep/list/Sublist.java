@@ -91,7 +91,7 @@ final class Sublist implements ListValue
 
     public Object get(final int index)
     {
-        if (from + index >= to)
+        if (index < 0 || index >= to - from)
             throw new IndexOutOfBoundsException();
 
         return list.get(from + index);

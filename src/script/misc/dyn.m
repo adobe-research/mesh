@@ -9,7 +9,7 @@
 // e.g.
 // > mvcs(draw(5, 100) @- 50)
 // ([-3, -45, 6, 37, -46], [(0, -3), (1, -45), (2, 6), (2, 43), (2, -3)], [6, 37])
-// TODO this reduce is very common use-case for decomposing params
+// TODO decomposing params
 //
 mvcs(a)
 {
@@ -35,61 +35,69 @@ mvcs(a)
 };
 
 // knapsack 0/1 solver--recursive w/memoization
-// issues: if/elses are too cumbersome
-// box ops are too cumbersome
-// iskey is necessitated by lack of variants in lookup API
-// TODO log BUG on recursive closure CG (seen if memoize call is inlined)
-knap01(items, wlim)
+// NOTE: we can't use library memo(f) currently due to a bug
+// in CG on some recursive closures, described elsewhere. TODO
+//
+knap01a(items, wlim)
 {
+    comps = box(0);
+
+    mem = box([:]);
+
     m(i, w) {
-        if(i < 0, { (items: [], w: 0, v: 0) }, {
-            item = items[i];
-            if(w < item.w, { m(i - 1, w) }, {
-                m1 = m(i - 1, w);
-                m2 = m(i - 1, w - item.w);
-                guard(m1.v >= m2.v + item.v, m1, {
-                    (items: append(m2.items, item), w: m2.w + item.w, v: m2.v + item.v)
+        if(iskey(*mem, (i, w)), { (*mem)[(i, w)] }, {
+            comps <- inc;
+            if(i < 0, { (items: [], w: 0, v: 0) }, {
+                item = items[i];
+                if(w < item.w, { m(i - 1, w) }, {
+                    m1 = m(i - 1, w);
+                    m2 = m(i - 1, w - item.w);
+                    res = guard(m1.v >= m2.v + item.v, m1, {
+                        (items: append(m2.items, item), w: m2.w + item.w, v: m2.v + item.v)
+                    });
+                    mem <- { mapset($0, (i, w), res) };
+                    res
                 })
             })
         })
     };
 
-    // see comment header: should be able to do m = memoize({...})
-    // but this reveals a bug in our closure CG, related to fwd decls
-    mm = memo(m);
+    result = m(size(items) - 1, wlim);
 
-    mm(size(items) - 1, wlim)
+    print("knapsack recursive + memo, wlim:", wlim, "#comps: ", *comps);    // 400, 6485
+
+    result
 };
 
-/*
-// knapsack 0/1 solver--recursive w/memoization
-// issues: if/elses are too cumbersome
-// box ops are too cumbersome
-// iskey is necessitated by lack of variants in lookup API
-knap01x(items, wlim)
+// knapsack 0/1 solver--uses reduce to build a full table
+// of solutions eagerly, then read desired one from the end.
+// on the one hand, avoids repeated computations without need
+// of memoization. on the other hand, will compute unneeded
+// entries.
+//
+knap01b(items, wlim)
 {
-    memo = box([:]);
+    comps = box(0);
 
-    m(i, w) {
-        if(iskey(*memo, (i, w)), { (*memo)[(i, w)] }, {
-            res = if(i < 0, { (items: [], w: 0, v: 0) }, {
-                item = items[i];
-                if(w < item.w, { m(i - 1, w) }, {
-                    m1 = m(i - 1, w);
-                    m2 = m(i - 1, w - item.w);
-                    guard(m1.v >= m2.v + item.v, m1, {
-                        (items: append(m2.items, item), w: m2.w + item.w, v: m2.v + item.v)
-                    })
+    m = reduce({ m, i =>
+        r = count(wlim + 1) | { w =>
+            comps <- inc;
+            item = items[i];
+            if(w < item.w, { m[i][w] }, {
+                m1 = m[i][w];
+                m2 = m[i][w - item.w];
+                guard(m1.v >= m2.v + item.v, m1, {
+                    (items: append(m2.items, item), w: m2.w + item.w, v: m2.v + item.v)
                 })
-            });
-            memo <- { mapset($0, (i, w), res) };
-            res
-        })
-    };
+            })
+        };
+        append(m, r)
+    }, [rep(wlim + 1, (items: [], w: 0, v: 0))], index(items));
 
-    m(size(items) - 1, wlim)
+    print("knapsack reduce, wlim:", wlim, "#comps:", *comps);   // 400, 8822
+
+    m[size(items)][wlim]
 };
-*/
 
 items = [
     ("map",                     9,       150),

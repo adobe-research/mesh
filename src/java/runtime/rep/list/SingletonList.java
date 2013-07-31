@@ -42,7 +42,7 @@ final class SingletonList extends PersistentList
 
     public Object get(final int index)
     {
-        if (index > 0)
+        if (index != 0)
             throw new IndexOutOfBoundsException();
 
         return value;
