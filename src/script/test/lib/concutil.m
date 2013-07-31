@@ -77,6 +77,6 @@ assert_equals({ (2, 3) }, {
 // produce = { c, q, n, f => nf = { l => lt(list:size(l), n) }; while({ get(c) }, { mutate:awaits((c, q), { b, l => or(not(b), { nf(l) }) }); loop:when(get(c), { v = f(); while({ and(get(c), { not(mutate:tau(q, nf, { $0_90_36 => list:append($0_90_36, v) }).0) }) }, { () }); () }); () }); () }
 // TODO
 
-// consume = { c, q, f => ne = { l => gt(list:size(l), 0) }; while({ get(c) }, { mutate:awaits((c, q), { b, l => or(not(b), { ne(l) }) }); loop:when(get(c), { _118_13 = mutate:tau(q, ne, list:rest); b = _118_13.0; l = _118_13.1; loop:when(b, { f(list:first(l)) }); () }); () }); () }
+// consume = { c, q, f => ne = { l => gt(list:size(l), 0) }; while({ get(c) }, { mutate:awaits((c, q), { b, l => or(not(b), { ne(l) }) }); loop:when(get(c), { _118_13 = mutate:tau(q, ne, list:tail); b = _118_13.0; l = _118_13.1; loop:when(b, { f(list:head(l)) }); () }); () }); () }
 // TODO
 

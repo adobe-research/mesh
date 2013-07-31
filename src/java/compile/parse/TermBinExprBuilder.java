@@ -12,10 +12,7 @@ package compile.parse;
 
 import compile.Loc;
 import compile.Session;
-import compile.term.ApplyTerm;
-import compile.term.RefTerm;
-import compile.term.Term;
-import compile.term.TupleTerm;
+import compile.term.*;
 import compile.Pair;
 import runtime.intrinsic._eachleft;
 import runtime.intrinsic._eachright;
@@ -44,6 +41,27 @@ public class TermBinExprBuilder extends BinExprBuilder<Term>
     {
         final Loc loc = lhs.getLoc();
         final Term base = buildOpTerm(loc, op);
+
+        // TODO must be a better way
+        if (base instanceof RefTerm)
+        {
+            final String name = ((RefTerm)base).getName();
+            if (name != null)
+            {
+                if (name.equals(Ops.VAR_SYM))
+                {
+                    final Term lhsCooked = lhs instanceof RefTerm ?
+                        new SymbolLiteral(lhs.getLoc(), ((RefTerm)lhs).getName()) :
+                        lhs;
+
+                    return new VariantTerm(loc, lhsCooked, rhs);
+                }
+
+                if (name.equals(Ops.COND_SYM))
+                    return new CondTerm(loc, lhs, rhs);
+            }
+        }
+
         final Term arg = new TupleTerm(loc, lhs, rhs);
         return new ApplyTerm(loc, base, arg);
     }

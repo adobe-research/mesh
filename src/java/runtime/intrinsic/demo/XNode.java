@@ -16,9 +16,7 @@ import compile.term.SymbolLiteral;
 import compile.term.Term;
 import compile.type.*;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  *
@@ -43,31 +41,21 @@ public final class XNode
 
     private static Type initType()
     {
-        final SymbolLiteral nameKey = new SymbolLiteral(Loc.INTRINSIC, XNODE_NAME);
-        final SymbolLiteral attrsKey = new SymbolLiteral(Loc.INTRINSIC, XNODE_ATTRS);
-        final SymbolLiteral elemsKey = new SymbolLiteral(Loc.INTRINSIC, XNODE_ELEMS);
-
-        final Set<Term> keySet = new LinkedHashSet<Term>();
-        keySet.add(nameKey);
-        keySet.add(attrsKey);
-        keySet.add(elemsKey);
-
-        final ChoiceType
-            keyEnum = new ChoiceType(Loc.INTRINSIC, Types.SYMBOL, keySet);
-
-        final Type attrsType = Types.map(Types.SYMBOL, Types.STRING);
+        final Type attrsType =
+            Types.map(Loc.INTRINSIC, Types.SYMBOL, Types.STRING);
 
         final TypeRef xnodeTypeRef = new TypeRef(Loc.INTRINSIC,
             XNode.class.getSimpleName());
 
-        final Type elemsType = Types.list(xnodeTypeRef);
+        final Type elemsType = Types.list(Loc.INTRINSIC, xnodeTypeRef);
 
         final LinkedHashMap<Term, Type> fieldMap = new LinkedHashMap<Term, Type>();
-        fieldMap.put(nameKey, Types.STRING);
-        fieldMap.put(attrsKey, attrsType);
-        fieldMap.put(elemsKey, elemsType);
+        fieldMap.put(new SymbolLiteral(Loc.INTRINSIC, XNODE_NAME), Types.STRING);
+        fieldMap.put(new SymbolLiteral(Loc.INTRINSIC, XNODE_ATTRS), attrsType);
+        fieldMap.put(new SymbolLiteral(Loc.INTRINSIC, XNODE_ELEMS), elemsType);
 
-        final TypeApp xnodeType = Types.rec(new TypeMap(keyEnum, fieldMap));
+        final TypeApp xnodeType =
+            Types.rec(Loc.INTRINSIC, new TypeMap(Loc.INTRINSIC, fieldMap));
 
         xnodeType.collectInlineParams();
 

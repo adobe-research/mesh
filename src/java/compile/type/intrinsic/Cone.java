@@ -17,8 +17,8 @@ import compile.type.kind.Kinds;
 /**
  *
  */
-public final class Sum
+public final class Cone
 {
     public final static Type INSTANCE =
-        new TypeCons(Sum.class.getSimpleName(), Kinds.MAP_CONS);
+        new TypeCons(Cone.class.getSimpleName(), Kinds.CONE_KIND);
 }

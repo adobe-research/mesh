@@ -23,10 +23,10 @@ primesieve = {
     };
 
     // private instance method
-    filter_relative(pl:(#value: ()->Int, #next: ()->Int), to) {
+    filter_relative(pl:(value: ()->Int, next: ()->Int), to) {
         ( 
-            #value: { pl.value() },
-            #next: { 
+            value: { pl.value() },
+            next: {
                 iter({ pl.next() % to == 0 });
                 pl.value()
             }
@@ -38,14 +38,14 @@ primesieve = {
 
     ( 
         // public instance method
-        #get : { 
+        get : {
             v = (*pipeline).next();
             pipeline := filter_relative(*pipeline, v);
             v
         },
         
         // public instance method
-        #reset: { 
+        reset: {
             pipeline := generator(1, inc);
         }
     )

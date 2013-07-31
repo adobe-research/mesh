@@ -38,7 +38,7 @@ public abstract class TypeVisitorBase<T> implements TypeVisitor<T>
 
         return type.accept(this);
     }
-    
+
     /**
      * helper - visit a collection of type terms, return a list of results
      */
@@ -105,7 +105,7 @@ public abstract class TypeVisitorBase<T> implements TypeVisitor<T>
     {
         return null;
     }
-    
+
     public T visit(final TypeDef def)
     {
         visitType(def.getValue());
@@ -123,14 +123,14 @@ public abstract class TypeVisitorBase<T> implements TypeVisitor<T>
 
         return null;
     }
-    
+
     public T visit(final TypeApp app)
     {
         visitType(app.getBase());
         visitType(app.getArg());
         return null;
     }
-    
+
     public T visit(final TypeTuple tuple)
     {
         for (final Type member : tuple.getMembers())

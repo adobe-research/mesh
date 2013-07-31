@@ -166,7 +166,7 @@ public final class TypeMapper extends TypeVisitorBase<Class<?>>
             Types.isFun(app) ? Lambda.class :
             Types.isTup(app) ? Tuple.class :
             Types.isRec(app) ? Record.class :
-            Types.isSum(app) ? Variant.class :
+            Types.isVar(app) ? Variant.class :
             null;
 
         if (c != null)

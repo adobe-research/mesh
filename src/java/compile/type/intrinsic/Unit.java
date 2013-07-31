@@ -10,13 +10,17 @@
  */
 package compile.type.intrinsic;
 
+import compile.Loc;
 import compile.type.Type;
 import compile.type.Types;
+
+import java.util.Collections;
 
 /**
  * Unit type -- synonym for 0-tuple
  */
 public final class Unit
 {
-    public final static Type INSTANCE = Types.tup();
+    public final static Type INSTANCE =
+        Types.tup(Loc.INTRINSIC, Collections.<Type>emptyList());
 }

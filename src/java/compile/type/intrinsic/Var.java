@@ -15,10 +15,10 @@ import compile.type.TypeCons;
 import compile.type.kind.Kinds;
 
 /**
- *
+ * Variant type constructor
  */
-public final class Index
+public final class Var
 {
     public final static Type INSTANCE =
-        new TypeCons(Index.class.getSimpleName(), Kinds.TYPE_INDEX_KIND);
+        new TypeCons(Var.class.getSimpleName(), Kinds.MAP_CONS);
 }

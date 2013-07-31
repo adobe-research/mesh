@@ -32,7 +32,7 @@ public interface Type extends Located, Dumpable
     /**
      * used (rarely) to patch loc when building types from user exprs
      */
-    public void setLoc(final Loc loc);
+    public void setLoc(Loc loc);
 
     /**
      *
@@ -98,17 +98,17 @@ public interface Type extends Located, Dumpable
      * Convert all params to fresh vars. Store type params names with type vars
      * for use in later quantification, if directed
      */
-    Type instance(TypeEnv env, final boolean useParamNames);
+    Type instance(TypeEnv env, boolean useParamNames);
 
     /**
      *
      */
-    Type quantify(final SubstMap newParams, final SubstMap ambientParams);
+    Type quantify(SubstMap newParams, SubstMap ambientParams);
 
     /**
      *
      */
-    SubstMap buildParamMap(final Set<TypeVar> vars, int nameGenOffset);
+    SubstMap buildParamMap(Set<TypeVar> vars, int nameGenOffset, TypeEnv env);
 
     /**
      * Apply substitutions from map
@@ -120,7 +120,17 @@ public interface Type extends Located, Dumpable
      * Experimental - base types generate mgu if otherType
      * is a subtype.
      */
-    SubstMap unify(final Loc loc, Type other, TypeEnv env);
+    SubstMap unify(Loc loc, Type other, TypeEnv env);
+
+    /**
+     * TODO
+     */
+    SubstMap subsume(Loc loc, Type type, TypeEnv env);
+
+    /**
+     * TODO
+     */
+    //Pair<? extends Type, SubstMap> merge(Type type, TypeEnv env);
 
     /**
      * Equivalent for purposes of checking agreement between

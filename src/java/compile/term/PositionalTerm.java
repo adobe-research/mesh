@@ -35,6 +35,8 @@ public abstract class PositionalTerm extends AbstractTypedTerm
         return items;
     }
 
+    // Term
+
     public final boolean isConstant()
     {
         for (final Term item : items)
@@ -43,6 +45,8 @@ public abstract class PositionalTerm extends AbstractTypedTerm
 
         return true;
     }
+
+    // Object
 
     @Override
     public boolean equals(final Object o)

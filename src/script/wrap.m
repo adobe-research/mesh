@@ -82,12 +82,12 @@ paras = filter(strsplit(text, "\n\n") | unwrap, { !empty($0) });
 parawords = paras | { strsplit($0, " ") };
 
 // print initial stats
-(#path: path,
- #size: strlen(text),
- #words: sum(parawords | size),
- #paras: size(paras),
- #avgpara: sum(parawords | size) / size(paras),
- #longpara: reduce(max, 0, parawords| size));
+print(path: path,
+ size: strlen(text),
+ words: sum(parawords | size),
+ paras: size(paras),
+ avgpara: sum(parawords | size) / size(paras),
+ longpara: reduce(max, 0, parawords| size));
 
 // sample random paras to print - boxed so it can
 // be modified from the shell
@@ -99,7 +99,7 @@ testwrap(wid)
     b = bench({ paras | { wrap($0, wid) } });
 
     // print elapsed time and a few random paragraphs
-    print((#time: b.time));
+    print((time: b.time));
     mapll(*samples, b.result) | { printpara($0, wid) };
     printstr("");
 

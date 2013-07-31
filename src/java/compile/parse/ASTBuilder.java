@@ -15,6 +15,7 @@ import compile.Session;
 import compile.StringUtils;
 import compile.term.*;
 import compile.type.*;
+import compile.type.constraint.Constraint;
 import compile.type.kind.ArrowKind;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
@@ -535,6 +536,14 @@ public class ASTBuilder
     }
 
     /**
+     * enum literal
+     */
+    public static VariantTerm enumLit(final Term lit)
+    {
+        return new VariantTerm(lit.getLoc(), lit, TupleTerm.UNIT);
+    }
+
+    /**
      * boolean literal
      */
     public static BoolLiteral boolLiteral(final Loc loc, final String text)
@@ -641,8 +650,10 @@ public class ASTBuilder
      */
     public static MapTerm mapLiteral(final Loc loc, final List<Pair<Term, Term>> pairs)
     {
-        return new MapTerm(loc, mapFromPairs(pairs != null ? pairs :
-            Collections.<Pair<Term, Term>>emptyList()));
+        return new MapTerm(loc,
+            mapFromPairs(
+                pairs != null ? pairs : Collections.<Pair<Term, Term>>emptyList(),
+                false));
     }
 
     /**
@@ -656,11 +667,14 @@ public class ASTBuilder
 
     /**
      * record literal
+     * Note: syntactic ids appearing in key positions are parsed as symbol literals
      */
     public static RecordTerm recLiteral(final Loc loc, final List<Pair<Term, Term>> pairs)
     {
-        return new RecordTerm(loc, mapFromPairs(pairs != null ? pairs :
-            Collections.<Pair<Term, Term>>emptyList()));
+        return new RecordTerm(loc,
+            mapFromPairs(
+                pairs != null ? pairs : Collections.<Pair<Term, Term>>emptyList(),
+                true));
     }
 
     /**
@@ -747,6 +761,14 @@ public class ASTBuilder
     }
 
     /**
+     * build finished arg expr out of arglist
+     */
+    public static Type typeArgExpr(final Loc loc, final List<Type> args)
+    {
+        return args.size() == 1 ? args.get(0) : new TypeTuple(loc, args);
+    }
+
+    /**
      *
      */
     public static Type typeIdRef(final Loc loc, final String name)
@@ -793,29 +815,7 @@ public class ASTBuilder
     public static Type recType(final Loc loc, final List<Pair<Term, Type>> pairs)
     {
         return Types.rec(loc, pairs != null ?
-            mapFromPairs(pairs) : Collections.<Term, Type>emptyMap());
-    }
-
-    /**
-     *
-     */
-    public static Type extentType(final Loc loc, final String ntext)
-    {
-        final Term numLit = numLiteral(loc, ntext, 10);
-
-        final int n;
-
-        if (numLit instanceof LongLiteral)
-        {
-            Session.error(loc, "extent {0} not supported", numLit.dump());
-            n = (int)((LongLiteral)numLit).getValue();
-        }
-        else
-        {
-            n = ((IntLiteral)numLit).getValue();
-        }
-
-        return new ExtentType(loc, Types.INT, n);
+            mapFromPairs(pairs, true) : Collections.<Term, Type>emptyMap());
     }
 
     /**
@@ -824,19 +824,16 @@ public class ASTBuilder
     public static Type enumType(final Loc loc, final List<Term> items)
     {
         final LinkedHashSet<Term> values = new LinkedHashSet<Term>(items);
-
-        return new ChoiceType(loc, values);
+        return new EnumType(loc, new WildcardType(loc), values);
     }
 
     /**
      *
      */
-    public static TypeParam typeParam(final Loc loc, final String name, Kind kind)
+    public static TypeParam typeParam(final Loc loc, final String name, final Kind kind)
     {
-        if (kind == null)
-            kind = Kinds.STAR;
-
-        return new TypeParam(loc, name, kind);
+        return new TypeParam(loc, name,
+            kind == null ? Kinds.STAR : kind, Constraint.ANY);
     }
 
     //
@@ -874,20 +871,34 @@ public class ASTBuilder
      * but since a PEG parser may get here speculatively,
      * we must defer some semantic checks until later.
      */
-    private static <T> LinkedHashMap<Term, T> mapFromPairs(final List<Pair<Term, T>> pairs)
+    private static <T> LinkedHashMap<Term, T>
+        mapFromPairs(final List<Pair<Term, T>> pairs,
+        final boolean keySymSugar)
     {
         final LinkedHashMap<Term, T> accum = new LinkedHashMap<Term, T>();
 
         for (final Pair<Term, T> pair : pairs)
         {
-            if (accum.containsKey(pair.left))
+            final Term key;
+            if (keySymSugar)
             {
-                Session.error(pair.left.getLoc(), "duplicate key: {0}",
-                    pair.left.dump());
+                final Term rawKey = pair.left;
+                key = rawKey instanceof RefTerm ?
+                    symLiteral(rawKey.getLoc(), ((RefTerm)rawKey).getName()) :
+                    rawKey;
             }
             else
             {
-                accum.put(pair.left, pair.right);
+                key = pair.left;
+            }
+
+            if (accum.containsKey(key))
+            {
+                Session.error(key.getLoc(), "duplicate key: {0}", key.dump());
+            }
+            else
+            {
+                accum.put(key, pair.right);
             }
         }
 
@@ -923,7 +934,7 @@ public class ASTBuilder
      */
     public static <K, V> Pair<K, V> assoc(final K k, final V v)
     {
-        return new Pair<K, V>(k, v);
+        return Pair.create(k, v);
     }
 
     /**

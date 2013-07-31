@@ -12,10 +12,13 @@ package compile.type.visit;
 
 import com.google.common.collect.Sets;
 import compile.Loc;
+import compile.Pair;
 import compile.Session;
 import compile.StringUtils;
 import compile.type.Type;
+import compile.type.TypeEnv;
 import compile.type.TypeVar;
+import compile.type.constraint.Constraint;
 
 import java.util.*;
 
@@ -35,13 +38,13 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
     /**
      * return a substitution map binding a var to a type.
      */
-    public static SubstMap bindVar(final Loc loc, final TypeVar var, final Type type)
+    public static SubstMap bindVar(final Loc loc, final TypeVar var,
+        final Type type, final TypeEnv env)
     {
         if (var.equals(type))
-        {
             return EMPTY;
-        }
-        else if (!var.getKind().equals(type.getKind()))
+
+        if (!var.getKind().equals(type.getKind()))
         {
             Session.error(loc,
                 "attempting to bind type variable {0} with kind {1} to type {2} with kind {3}",
@@ -50,7 +53,8 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
 
             return null;
         }
-        else if (type.getVars().contains(var))
+
+        if (type.getVars().contains(var))
         {
             Session.error(loc,
                 "type variable {0} occurs in type {1} - recursive types are not supported",
@@ -58,21 +62,57 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
 
             return null;
         }
-        else
+
+        if (type instanceof TypeVar)
         {
-            // if bound type is also a var, and lhs var has param info, transfer it.
-            // this doesn't affect inference, but helps preserves declared param names.
-            if (type instanceof TypeVar)
+            // TODO this case should happen as a natural result of calling
+            // TODO var.constraint.satisfy with a TypeVar argument
+
+            // for var -> var, we need to check and possibly manipulate constraints
+            final TypeVar rhsVar = (TypeVar)type;
+
+            final Pair<? extends Constraint, SubstMap> merged =
+                var.getConstraint().merge(rhsVar.getConstraint(), env);
+
+            if (merged == null)
             {
-                final TypeVar rhsVar = (TypeVar)type;
+                Session.error(loc,
+                    "type constraints {0} and {1} are incompatible",
+                    var.getConstraint().dump(), rhsVar.getConstraint().dump());
 
-                if (var.hasSourceParam())
-                    rhsVar.addUnifiedParam(var.getSourceParam());
-
-                rhsVar.addUnifiedParams(var.getUnifiedParams());
+                return null;
             }
 
-            return new SubstMap(var, type);
+            final Constraint mergedConstraint = merged.left;
+            final SubstMap mergeSubst = merged.right;
+
+            if (mergedConstraint != rhsVar.getConstraint())
+                rhsVar.setConstraint(mergedConstraint.subst(mergeSubst));
+
+            // if lhs var has param info, transfer it.
+            // this doesn't affect inference, but helps preserves declared param names.
+            if (var.hasSourceParam())
+                rhsVar.addUnifiedParam(var.getSourceParam());
+
+            rhsVar.addUnifiedParams(var.getUnifiedParams());
+
+            return mergeSubst.compose(loc, new SubstMap(var, rhsVar));
+        }
+        else
+        {
+            final SubstMap sat = var.getConstraint().satisfy(loc, type, env);
+
+            if (sat == null)
+            {
+                // TODO need to get this back out to TypeChecker to error-format types
+                Session.error(loc,
+                    "type {0} does not satisfy constraint {1}",
+                    type.dump(), var.getConstraint().dump());
+
+                return null;
+            }
+
+            return sat.compose(loc, new SubstMap(var, type));
         }
     }
 
@@ -133,6 +173,12 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
      */
     public SubstMap compose(final Loc loc, final SubstMap newSubs)
     {
+        if (isEmpty())
+            return newSubs;
+
+        if (newSubs.isEmpty())
+            return this;
+
         final SubstMap result = new SubstMap();
 
         for (final Map.Entry<Type, Type> entry : entrySet())
@@ -152,25 +198,29 @@ public final class SubstMap extends LinkedHashMap<Type, Type>
      * Check map for closure: no types in check set can mention any LHS vars.
      *
      */
-    public boolean checkClosure(final Loc loc, final Set<Type> check)
+    public boolean checkClosure(final Loc loc, final Set<Type> newRhses)
     {
         final Set<Type> lhsVars = keySet();
 
         final Set<Type> cycles = Sets.newLinkedHashSet();
 
-        for (final Type type : check)
+        for (final Type rhs : newRhses)
         {
-            for (final TypeVar typeVar : type.getVars())
-                if (lhsVars.contains(typeVar))
-                    cycles.add(type);
+            for (final TypeVar rhsVar : rhs.getVars())
+            {
+                if (lhsVars.contains(rhsVar))
+                {
+                    cycles.add(rhs);
+
+                    Session.error(loc,
+                        "internal error: substitution map is not closed. RHS type {0} mentions LHS var {1}, map = {2}",
+                        rhs.dump(), rhsVar.dump(), dump());
+                }
+            }
         }
 
         if (!cycles.isEmpty())
         {
-            Session.error(loc,
-                "internal error: substitution map is not closed. Cycles in type(s) {0}",
-                TypeDumper.dumpList(cycles));
-
             return false;
         }
 

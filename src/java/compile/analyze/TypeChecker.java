@@ -10,7 +10,10 @@
  */
 package compile.analyze;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import compile.*;
 import compile.gen.IntrinsicsResolver;
 import compile.module.Module;
@@ -18,6 +21,10 @@ import compile.module.Scope;
 import compile.parse.ApplyFlavor;
 import compile.term.*;
 import compile.type.*;
+import compile.type.constraint.Constraint;
+import compile.type.constraint.RecordConstraint;
+import compile.type.constraint.TupleConstraint;
+import compile.type.constraint.VariantConstraint;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
 import compile.type.visit.*;
@@ -211,11 +218,15 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
     }
 
     /**
-     * overriden for debug messages
+     * overriden for filtering and debug messages
      */
     @Override
     protected void processStatement(final Statement statement)
     {
+        if (statement instanceof ImportStatement ||
+            statement instanceof ExportStatement)
+            return;
+
         if (Session.isDebug())
             Session.debug("{0}*** statement", indent());
 
@@ -466,8 +477,8 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
             if (groupStateStack.size() == 1)
             {
                 Session.error(item.getLoc(),
-                    "internal error on item {0}: unquantified type vars at top level",
-                    item.dump());
+                    "internal error on item {0}: unquantified type vars at top level: {1}",
+                    item.dump(), quantItemType.dump());
             }
             else
             {
@@ -563,7 +574,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
      * to quantify this type. Avoid quantifying ambient vars, or
      * requantifying already-quantified vars.
      */
-    private static SubstMap buildTypeParams(
+    private SubstMap buildTypeParams(
         final Type type,
         final Set<TypeVar> ambientVars,
         final SubstMap ambientParams)
@@ -576,7 +587,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
 
         // create type params for all vars that don't appear in outer scopes,
         // and have not yet been quantified
-        return type.buildParamMap(newVars, ambientVars.size());
+        return type.buildParamMap(newVars, ambientVars.size(), this);
     }
 
     /**
@@ -702,25 +713,25 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
 
     public TypeVar freshVar(final Loc loc)
     {
-        return new TypeVar(loc, "t" + (nextTypeVar++), Kinds.STAR);
+        return new TypeVar(loc, "t" + (nextTypeVar++), Kinds.STAR, Constraint.ANY);
     }
 
     public TypeVar freshVar(final Loc loc, final Kind kind)
     {
-        return new TypeVar(loc, "t" + (nextTypeVar++), kind);
+        return new TypeVar(loc, "t" + (nextTypeVar++), kind, Constraint.ANY);
     }
 
-    public TypeVar freshVar(final TypeParam typeParam)
+    public TypeVar freshVar(final Loc loc, final Kind kind, final Constraint constraint)
     {
-        return new TypeVar("t" + (nextTypeVar++), typeParam);
+        return new TypeVar(loc, "t" + (nextTypeVar++), kind, constraint);
     }
 
-    public boolean unify(final Type t1, final Type t2)
+    public TypeVar freshVar(final TypeParam param)
     {
-        return unify(t1.getLoc(), t1, t2);
+        return new TypeVar("t" + (nextTypeVar++), param);
     }
 
-    public boolean unify(final Located located, final Type t1, final Type t2)
+    private boolean unify(final Located located, final Type t1, final Type t2)
     {
         return unify(located.getLoc(), t1, t2);
     }
@@ -776,7 +787,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
      */
     public boolean checkVisited(final Type left, final Type right)
     {
-        final Pair<Type, Type> pair = new Pair<Type, Type>(left, right);
+        final Pair<Type, Type> pair = Pair.create(left, right);
         if (visited.contains(pair))
         {
             return true;
@@ -803,7 +814,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
         // NOTE: don't filter out ambients
         //final Set<TypeVar> qvars = Sets.difference(subsType.getVars(), getAmbientVars());
 
-        final SubstMap paramMap = subsType.buildParamMap(subsType.getVars(), 0);
+        final SubstMap paramMap = subsType.buildParamMap(subsType.getVars(), 0, this);
 
         return subsType.quantify(paramMap, SubstMap.EMPTY);
     }
@@ -1062,8 +1073,7 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                     errorFormat(seedKeyType).dump());
         }
 
-        final ChoiceType
-            keyEnum = new ChoiceType(loc, seedKeyType.subst(subs), keySet);
+        final EnumType keyEnum = new EnumType(loc, seedKeyType.subst(subs), keySet);
 
         // values
 
@@ -1083,6 +1093,70 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
         addPendingItem(rec);
 
         return type;
+    }
+
+    @Override
+    public Type visit(final VariantTerm var)
+    {
+        final Loc loc = var.getLoc();
+
+        final Term key = var.getKey();
+        final Type keyType = visitTerm(key);
+        final Term keyDeref = (key instanceof RefTerm) ?
+            ((RefTerm)key).deref() : key;
+
+        final Term value = var.getValue();
+        final Type valueType = visitTerm(value);
+
+        final Type type;
+
+        if (!keyDeref.isConstant())
+        {
+            Session.error(loc,
+                "variant key {0} is not constant",
+                key.dump());
+
+            type = Types.UNIT;
+        }
+        else
+        {
+            final Type keyTypeDeref = keyType.subst(subs).deref().eval();
+            final Type valueTypeDeref = valueType.subst(subs).deref().eval();
+
+            final Map<Term, Type> targetMembers = Maps.newHashMap();
+            targetMembers.put(keyDeref, valueTypeDeref);
+
+            final EnumType keyEnum =
+                new EnumType(keyDeref.getLoc(), keyTypeDeref, keyDeref);
+
+            final TypeMap targetMap =
+                new TypeMap(loc, keyEnum, targetMembers);
+
+            type = freshVar(loc, Kinds.STAR, new VariantConstraint(targetMap));
+        }
+
+        // done
+
+        var.setType(type);
+
+        addPendingItem(var);
+
+        return type;
+    }
+
+    /**
+     * here's why cond(sel, cases) isn't a function--
+     * this type isn't yet expressible in the type language.
+     * Specifically, we don't yet have type-level zip,
+     * nor a type-level list singleton maker (here "List").
+     *
+     *  <Key, Vals:[*], R>
+     *      select(sel:Var(Assoc(K, Vs)), cases:Rec(Assoc(K, Zip(Vs, List(R)) | Fun));
+     */
+    @Override
+    public Type visit(final CondTerm cond)
+    {
+        return Types.UNIT;
     }
 
     @Override
@@ -1203,6 +1277,9 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                             errorFormat(targetBaseType).dump());
                     }
                 }
+
+                // TODO same strategy as with structs--if known non-int key type, do map
+
                 else
                 {
                     // not known, assume list
@@ -1248,13 +1325,9 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                 {
                     // base type is known to be a record
                     final Type fields = Types.recFields(baseType).deref();
-
                     assert fields instanceof TypeMap;
                     final TypeMap fieldMap = (TypeMap)fields;
-
-                    final Type keyType = fieldMap.getKeyType();
-                    final Type keyBaseType = keyType instanceof ChoiceType ?
-                        ((EnumType)keyType).getBaseType() : keyType;
+                    final Type keyBaseType = fieldMap.getKeyType().getBaseType();
 
                     if (unify(loc, keyBaseType, argType))
                     {
@@ -1322,7 +1395,39 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                 }
                 else
                 {
-                    if (!unify(loc, Types.INT, argType))
+                    // base type not yet known.
+                    // default case is tuple, but if we have a constant arg
+                    // with known type, we can avoid dumb errors on obvious
+                    // record accesses. Again, this is all temporary.
+
+                    final Type argTypeDeref = argType.subst(subs).deref().eval();
+
+                    if (argTypeDeref instanceof TypeCons && argTypeDeref != Types.INT)
+                    {
+                        // we have a definite arg type, not Int: infer record base
+                        resultType = freshVar(loc, Kinds.STAR);
+
+                        final Map<Term, Type> targetMembers = Maps.newHashMap();
+                        targetMembers.put(argDeref, resultType);
+
+                        final EnumType keyEnum =
+                            new EnumType(argDeref.getLoc(), argTypeDeref, argDeref);
+
+                        final TypeMap targetMap =
+                            new TypeMap(loc, keyEnum, targetMembers);
+
+                        final Type targetBaseType =
+                            freshVar(loc, Kinds.STAR, new RecordConstraint(targetMap));
+
+                        if (!unify(loc, targetBaseType, baseType))
+                        {
+                            Session.error(loc,
+                                "cannot unify actual base type {0} with target type {1}",
+                                errorFormat(baseType).dump(),
+                                errorFormat(targetBaseType).dump());
+                        }
+                    }
+                    else if (!unify(loc, Types.INT, argType))
                     {
                         Session.error(argLoc,
                             "address argument is of type {0}, must be of type Int",
@@ -1333,18 +1438,20 @@ public final class TypeChecker extends ModuleVisitor<Type> implements TypeEnv
                     else
                     {
                         // otherwise infer tuple base
-                        resultType = freshVar(loc, Kinds.STAR);
-
                         final int pos = ((IntLiteral)argDeref).getValue();
 
                         final List<Type> targetMembers = Lists.newArrayList();
-
                         for (int i = 0; i < pos; i++)
                             targetMembers.add(freshVar(loc, Kinds.STAR));
 
+                        resultType = freshVar(loc, Kinds.STAR);
                         targetMembers.add(resultType);
 
-                        final Type targetBaseType = Types.tup(loc, targetMembers);
+                        final TypeList targetList =
+                            new TypeList(loc, targetMembers);
+
+                        final Type targetBaseType =
+                            freshVar(loc, Kinds.STAR, new TupleConstraint(targetList));
 
                         if (!unify(loc, targetBaseType, baseType))
                         {

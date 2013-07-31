@@ -2,7 +2,7 @@
 import unittest;
 
 // encode list of T into sequence of (#occs, T) pairs
-encode(list) { runs(list) | { l => (size(l), first(l)) } };
+encode(list) { runs(list) | { l => (size(l), head(l)) } };
 
 // decode (#occs, T) pairs into list
 decode(runs) { reduce({ l, r => l + rep(r) }, [], runs) };

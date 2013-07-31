@@ -43,6 +43,10 @@ public interface TermVisitor<T>
 
     T visit(RecordTerm record);
 
+    T visit(VariantTerm variant);
+
+    T visit(CondTerm select);
+
     T visit(LambdaTerm lambda);
 
     T visit(ApplyTerm apply);

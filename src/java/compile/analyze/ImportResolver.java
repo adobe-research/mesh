@@ -20,7 +20,7 @@ import java.util.*;
 import java.io.*;
 
 /**
- * Find load statements and load the module, placing all symbols defined into
+ * Process import statements, loading imported symbols into
  * a module namespace.
  *
  * @author Keith McGuigan
@@ -56,7 +56,7 @@ public final class ImportResolver extends ImportExportResolverBase
     {
         final Loc loc = stmt.getLoc();
 
-        if (importsDone) 
+        if (importsDone)
         {
             Session.error(loc,
                 "Import statement occurs after executable statements");
@@ -105,7 +105,7 @@ public final class ImportResolver extends ImportExportResolverBase
     {
         final Loc loc = stmt.getLoc();
 
-        if (importsDone) 
+        if (importsDone)
         {
             Session.error(loc,
                 "Export statement occurs after executable statements");

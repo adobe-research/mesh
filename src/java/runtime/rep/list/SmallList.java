@@ -63,6 +63,11 @@ final class SmallList extends PersistentList
         return size;
     }
 
+    public Object head()
+    {
+        return data[0];
+    }
+
     public Object get(final int index)
     {
         return data[index];
@@ -120,6 +125,11 @@ final class SmallList extends PersistentList
     public ListValue subList(final int from, final int to)
     {
         return Sublist.create(this, from, to);
+    }
+
+    public ListValue subList(final int from)
+    {
+        return Sublist.create(this, from, size);
     }
 
     public PersistentList apply(final Lambda f)

@@ -10,7 +10,7 @@ import processing;
 //
 
 // uses predefined XML node type:
-// type XNode = (#name:String, #attrs:[Symbol : String], #elems:[XNode]);
+// type XNode = (name:String, attrs:[Symbol : String], elems:[XNode]);
 
 APIKEY = "3ca11f62d7c50c6527d0b4fc87916d36";
 RESTAPI = "http://api.flickr.com/services/rest";
@@ -35,7 +35,7 @@ search(tag, quant, page) -> [XNode]
 };
 
 // size modifier for flickr image filenames
-SIZEPARAM = (#thumb: "t", #small: "m", #med: "", #big: "b");
+SIZEPARAM = (thumb: "t", small: "m", med: "", big: "b");
 
 //
 // builds url from an XNode of picture info and a size param
@@ -81,7 +81,7 @@ bestsizeurl(info:XNode, w, h)
                 iif(cur.0 * cur.1 >= next.0 * next.1, i, j)
             };
 
-            bestix = evolve(first(fitixs), maxarea, rest(fitixs));
+            bestix = evolve(head(fitixs), maxarea, tail(fitixs));
             sizeinfos[bestix].attrs[#source]
         })
     })

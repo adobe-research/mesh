@@ -209,6 +209,46 @@ public abstract class TermTransformerBase extends TermVisitorBase<Term>
     }
 
     @Override
+    public Term visit(final VariantTerm variant)
+    {
+        final Term key = variant.getKey();
+        final Term newKey = visitTerm(key);
+
+        final Term value = variant.getValue();
+        final Term newValue = visitTerm(value);
+
+        if (newKey == key && newValue == value)
+            return variant;
+
+        final VariantTerm newVariant =
+            new VariantTerm(variant.getLoc(), newKey, newValue);
+
+        newVariant.setType(variant.getType());
+
+        return newVariant;
+    }
+
+    @Override
+    public Term visit(final CondTerm cond)
+    {
+        final Term sel = cond.getSel();
+        final Term newSel = visitTerm(sel);
+
+        final Term cases = cond.getCases();
+        final Term newCases = visitTerm(cases);
+
+        if (newSel == sel && newCases == cases)
+            return cond;
+
+        final CondTerm newCond =
+            new CondTerm(cond.getLoc(), newSel, newCases);
+
+        newCond.setType(cond.getType());
+
+        return newCond;
+    }
+
+    @Override
     public Term visit(final LambdaTerm lambda)
     {
         return lambda;

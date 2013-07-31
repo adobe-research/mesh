@@ -122,8 +122,13 @@ public abstract class ScopeType extends AbstractType
      * Spacing is not perfect, there are gaps. It would give a prettier result to
      * do a consolidation pass at the end, but the important thing for round-
      * tripping (not that we do it currently) is that there is no overlap.
+     *
+     * NOTE: the relationship between a var's constraint and that of its
+     * corresponding param is tricky--see comment in code body, and also
+     * {@link TypeVarSubstitutor#visit(TypeVar)}.
      */
-    public SubstMap buildParamMap(final Set<TypeVar> vars, final int nameGenOffset)
+    public SubstMap buildParamMap(final Set<TypeVar> vars, final int nameGenOffset,
+        final TypeEnv env)
     {
         final Set<TypeVar> qvars = Sets.intersection(vars, getVars());
 
@@ -164,25 +169,15 @@ public abstract class ScopeType extends AbstractType
 
             usedNames.add(name);
 
-            substMap.put(v, new TypeParam(v.getLoc(), name, v.getKind()));
+            // NOTE: v's constraint is ignored here, because it needs to be
+            // not just transferred to the corresponding param, but also run
+            // through this same substitution map at quantification time.
+            // Users of this map are responsible for doing this.
+            //
+            substMap.put(v, new TypeParam(v.getLoc(), name, v.getKind(), null));
         }
 
         return substMap;
-    }
-
-    /**
-     *
-     */
-    private static String nameGen(int i)
-    {
-        String name = "";
-        while (i >= 0)
-        {
-            final int ci = i % 26;
-            i = i / 26 - 1;
-            name = (char)(((int)'A') + ci) + name;
-        }
-        return name;
     }
 
     /**

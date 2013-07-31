@@ -21,14 +21,14 @@ num_flops(N) {
 factor_recursive(M:Int, N:Int, A:[[Double]]) -> ([[Double]], [Int]) {
     guard(M == 1 || { N == 1 }, (A, [0] ), { 
         // Find the row with the largest abs max value in the first column.  
-        col0 = A | first;
+        col0 = A | head;
         pivot_pos = reduce(
             { iif(fabs(col0[$1]) >. fabs(col0[$0]), $1, $0) }, 
             0, fromto(1, M-1));
 
         // extract pivot row 
-        pivot_value = first(A[pivot_pos]);
-        pivot_row = rest(A[pivot_pos]);
+        pivot_value = head(A[pivot_pos]);
+        pivot_row = tail(A[pivot_pos]);
         A_nopivtorow = if(pivot_pos == M-1, { drop(-1, A) }, 
             { mapll(count(pivot_pos) + fromto(pivot_pos + 1, M-1), A) });
 
@@ -38,7 +38,7 @@ factor_recursive(M:Int, N:Int, A:[[Double]]) -> ([[Double]], [Int]) {
         // extract first column, scaling by the reciprical of the pivot value
         // to normalize diagonal to 1
         reciprical = 1.0 /. pivot_value;
-        pivot_col = A_nopivtorow | { first($0) *. reciprical };
+        pivot_col = A_nopivtorow | { head($0) *. reciprical };
         A_nopivot = A_nopivtorow | { drop(1, $0) };
 
         // Reduce submatrix values by the product of corresponding pivot

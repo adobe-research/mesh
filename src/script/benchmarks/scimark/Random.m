@@ -38,7 +38,7 @@ randomgen =
         seeds = tracen((jseed, jseed % M2, jseed / M2), 17, initseeds) |
                 { _, j0, j1 => j0 + M2 * j1 };
 
-        m = rest(seeds); // tracen includes the initial value as first element
+        m = tail(seeds); // tracen includes the initial value as first element
 
         state = box(4, 16, m);
 

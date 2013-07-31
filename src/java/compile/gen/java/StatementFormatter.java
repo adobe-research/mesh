@@ -22,10 +22,12 @@ import compile.term.*;
 import compile.term.visit.BindingVisitorBase;
 import compile.type.*;
 import compile.type.visit.TypeDumper;
+import runtime.intrinsic._cond;
 import runtime.rep.Record;
 import runtime.rep.Tuple;
 import runtime.rep.Lambda;
 import runtime.intrinsic.IntrinsicLambda;
+import runtime.rep.Variant;
 import runtime.rep.list.ListValue;
 import runtime.rep.list.PersistentList;
 import runtime.rep.map.MapValue;
@@ -864,7 +866,7 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         // get keyset field name
         final String keyListField = keyListConstants.get(keyList);
         if (keyListField == null)
-            assert false;
+            assert false : "missing key list field for " + DumpUtils.dumpList(keyList);
 
         // generate value exprs
         final List<String> valueExprs = new ArrayList<String>();
@@ -909,6 +911,36 @@ public final class StatementFormatter extends BindingVisitorBase<String>
         }
 
         return buf.toString();
+    }
+
+    /**
+     * Generate Java source expression denoting a Variant as specified by a literal term
+     */
+    @Override
+    public String visit(final VariantTerm var)
+    {
+        final String keyExpr = formatTermAs(var.getKey(), Object.class);
+        final String valExpr = formatTermAs(var.getValue(), Object.class);
+
+        final String expr = "(new " + Variant.class.getName() +
+            "(" + keyExpr + ", " + valExpr + "))";
+
+        return fixup(var.getLoc(), expr, var.getType());
+    }
+
+    /**
+     * Generate Java source expression denoting a Variant as specified by a literal term
+     */
+    @Override
+    public String visit(final CondTerm cond)
+    {
+        final String selExpr = formatTermAs(cond.getSel(), Variant.class);
+        final String casesExpr = formatTermAs(cond.getCases(), Record.class);
+
+        final String expr = _cond.class.getName() + "." + Constants.INVOKE +
+            "(" + selExpr + ", " + casesExpr + ")";
+
+        return fixup(cond.getLoc(), expr, cond.getType());
     }
 
     /**
@@ -987,27 +1019,38 @@ public final class StatementFormatter extends BindingVisitorBase<String>
                 if (Types.isMap(baseType))
                     return formatMapApplyTerm(apply);
 
+                Session.error(apply.getLoc(),
+                    "internal error: invalid base term {0} : {1} in collection index expression {2}",
+                    baseTerm.dump(), baseType.dump(), apply.dump());
+
                 break;
             }
 
             case StructAddr:
             {
-                if (Types.isTup(baseType))
+                if (Types.isTup(baseType) || Types.isPolyTup(baseType))
                     return formatTupleApplyTerm(apply);
 
                 if (Types.isRec(baseType))
                     return formatRecordApplyTerm(apply);
 
+                if (Types.isPolyRec(baseType))
+                    return formatPolyRecordApplyTerm(apply);
+
+                Session.error(apply.getLoc(),
+                    "internal error: invalid base term {0} : {1} in structure address expression {2}",
+                    baseTerm.dump(), baseType.dump(), apply.dump());
+
                 break;
             }
 
             default:
+                Session.error(apply.getLoc(),
+                    "internal error: unknown application flavor in expression {0}",
+                    apply.dump());
+
                 break;
         }
-
-        Session.error(apply.getLoc(),
-            "internal error: invalid base term {0} : {1} in application {2}",
-            baseTerm.dump(), baseType.dump(), apply.dump());
 
         return null;
     }
@@ -1049,11 +1092,6 @@ public final class StatementFormatter extends BindingVisitorBase<String>
     {
         final Term arg = apply.getArg();
         final Term base = apply.getBase();
-        final Type applyType = apply.getType();
-
-        if (Types.isSum(applyType))
-            Session.error(apply.getLoc(),
-                "internal error: dynamic tuple access not currently supported");
 
         assert arg.getType() == Types.INT;
 
@@ -1070,17 +1108,53 @@ public final class StatementFormatter extends BindingVisitorBase<String>
 
     /**
      * application on a record is keyed member access.
-     * TODO when poly recs/vars are in, can do more efficient lookup
      */
     private String formatRecordApplyTerm(final ApplyTerm apply)
     {
         final Term base = apply.getBase();
         final Term arg = apply.getArg();
 
-        //final Type baseType = base.getType();
+        {
+            final Term argDeref = arg instanceof RefTerm ? ((RefTerm)arg).deref() : arg;
+            assert argDeref.isConstant();
+        }
+
+        final String expr;
+
+        final Type baseType = base.getType().deref();
+        final List<SimpleLiteralTerm> keyList = Types.recKeyList(baseType);
+        final int pos = keyList.indexOf(arg);
+
+        if (pos >= keyList.size())
+        {
+            Session.error(apply.getLoc(),
+                "internal error: arg {0} not found in key list {1}",
+                arg.dump(), DumpUtils.dumpList(keyList));
+
+            // name lookup as error fallback
+            expr = formatTermAs(base, Record.class) +
+                ".get(" + formatTermAs(arg, Object.class) + ")";
+        }
+        else
+        {
+            // positional lookup
+            expr = formatTermAs(base, Record.class) + ".getValue(" + pos + ")";
+        }
+
+        return fixup(apply.getLoc(), expr, Object.class);
+    }
+
+    /**
+     * TODO move to ohori hidden params for poly rec access
+     */
+    private String formatPolyRecordApplyTerm(final ApplyTerm apply)
+    {
+        final Term base = apply.getBase();
+        final Term arg = apply.getArg();
+
         final Type applyType = apply.getType();
 
-        if (Types.isSum(applyType))
+        if (Types.isVar(applyType))
             Session.error(apply.getLoc(),
                 "internal error: dynamic record access not currently supported");
 

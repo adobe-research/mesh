@@ -13,6 +13,8 @@ package compile.type;
 import compile.Loc;
 import compile.gen.java.Constants;
 import compile.term.*;
+import compile.type.constraint.RecordConstraint;
+import compile.type.constraint.TupleConstraint;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -56,44 +58,21 @@ public final class Types
     public static final TypeCons TUP = findIntrinsicCons("Tup");
     public static final TypeCons REC = findIntrinsicCons("Rec");
 
-    public static final TypeCons SUM = findIntrinsicCons("Sum");
+    public static final TypeCons VAR = findIntrinsicCons("Var");
 
     //
-    // built-in type functions
+    // built-in type transformers
     //
     public static final TypeCons TMAP = findIntrinsicCons("TMap");
 
-    public static final TypeCons INDEX = findIntrinsicCons("Index");
-
     public static final TypeCons ASSOC = findIntrinsicCons("Assoc");
+
+    public static final TypeCons CONE = findIntrinsicCons("Cone");
 
     /**
      * Unit is the 0-tuple, an application of the Tup type constructor
      */
     public static final Type UNIT = findIntrinsic("Unit");
-
-    /**
-     * build TypeDef over given TypeCons
-     * used to add builtin type constructors to intrinsics module
-     */
-    public static TypeDef def(final TypeCons cons)
-    {
-        return new TypeDef(Loc.INTRINSIC, cons.getName(), cons);
-    }
-
-    /**
-     * build TypeDef with given name, rvalue
-     * used to add builtin types to intrinsics module
-     */
-    public static TypeDef def(final String name, final Type type)
-    {
-        return new TypeDef(Loc.INTRINSIC, name, type);
-    }
-
-    //
-    // helpers - convenience wrappers to build and query
-    // common type terms
-    //
 
     //
     // type application terms
@@ -102,11 +81,6 @@ public final class Types
     public static TypeApp app(final Loc loc, final Type base, final Type arg)
     {
         return new TypeApp(loc, base, arg);
-    }
-
-    public static TypeApp app(final Type base, final Type arg)
-    {
-        return new TypeApp(Loc.INTRINSIC, base, arg);
     }
 
     public static boolean isApp(final Type type)
@@ -167,11 +141,6 @@ public final class Types
         return app(loc, BOX, arg);
     }
 
-    public static TypeApp box(final Type arg)
-    {
-        return box(Loc.INTRINSIC, arg);
-    }
-
     public static boolean isBox(final Type type)
     {
         return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == BOX;
@@ -193,11 +162,6 @@ public final class Types
     public static TypeApp newType(final Loc loc, final Type arg)
     {
         return app(loc, NEW, arg);
-    }
-
-    public static TypeApp newType(final Type arg)
-    {
-        return newType(Loc.INTRINSIC, arg);
     }
 
     public static boolean isNew(final Type type)
@@ -223,11 +187,6 @@ public final class Types
         return app(loc, LIST, elem);
     }
 
-    public static TypeApp list(final Type elem)
-    {
-        return list(Loc.INTRINSIC, elem);
-    }
-
     public static boolean isList(Type type)
     {
         type = type.deref();
@@ -251,11 +210,6 @@ public final class Types
     public static TypeApp map(final Loc loc, final Type key, final Type val)
     {
         return binapp(loc, MAP, key, val);
-    }
-
-    public static TypeApp map(final Type key, final Type val)
-    {
-        return map(Loc.INTRINSIC, key, val);
     }
 
     public static boolean isMap(Type type)
@@ -290,11 +244,6 @@ public final class Types
     public static TypeApp fun(final Loc loc, final Type param, final Type result)
     {
         return binapp(loc, FUN, param, result);
-    }
-
-    public static TypeApp fun(final Type key, final Type val)
-    {
-        return fun(Loc.INTRINSIC, key, val);
     }
 
     public static boolean isFun(Type type)
@@ -332,14 +281,9 @@ public final class Types
         return app(loc, TUP, new TypeList(loc, items));
     }
 
-    public static TypeApp tup(final Type... items)
+    public static TypeApp tup(final Loc loc, final Type items)
     {
-        return tup(Loc.INTRINSIC, Arrays.asList(items));
-    }
-
-    public static TypeApp tup(final Loc loc, final Type list)
-    {
-        return app(loc, TUP, list);
+        return app(loc, TUP, items);
     }
 
     public static boolean isTup(Type type)
@@ -349,6 +293,13 @@ public final class Types
 
         type = type.deref();
         return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == TUP;
+    }
+
+    public static boolean isPolyTup(Type type)
+    {
+        type = type.deref();
+        return type instanceof TypeParam &&
+            ((TypeParam)type).getConstraint() instanceof TupleConstraint;
     }
 
     public static Type tupMembers(Type type)
@@ -371,11 +322,6 @@ public final class Types
         return rec(loc, new TypeMap(loc, items));
     }
 
-    public static TypeApp rec(final Type fields)
-    {
-        return rec(Loc.INTRINSIC, fields);
-    }
-
     public static TypeApp rec(final Loc loc, final Type fields)
     {
         return app(loc, REC, fields);
@@ -385,6 +331,13 @@ public final class Types
     {
         type = type.deref();
         return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == REC;
+    }
+
+    public static boolean isPolyRec(Type type)
+    {
+        type = type.deref();
+        return type instanceof TypeParam &&
+            ((TypeParam)type).getConstraint() instanceof RecordConstraint;
     }
 
     public static Type recFields(Type type)
@@ -407,12 +360,7 @@ public final class Types
         if (!(fieldTypes instanceof TypeMap))
             return null;
 
-        final Type keyType = ((TypeMap)fieldTypes).getKeyType();
-
-        if (!(keyType instanceof EnumType))
-            return null;
-
-        final EnumType keyEnum = (EnumType)keyType;
+        final EnumType keyEnum = ((TypeMap)fieldTypes).getKeyType();
 
         final List<SimpleLiteralTerm> list = new ArrayList<SimpleLiteralTerm>();
 
@@ -428,31 +376,26 @@ public final class Types
     // arg kind is checked for compatibility later
     //
 
-    public static TypeApp sum(final Loc loc, final Map<Term, Type> items)
+    public static TypeApp var(final Loc loc, final Map<Term, Type> items)
     {
-        return sum(loc, new TypeMap(loc, items));
+        return var(loc, new TypeMap(loc, items));
     }
 
-    public static TypeApp sum(final Loc loc, final Type opts)
+    public static TypeApp var(final Loc loc, final Type opts)
     {
-        return app(loc, SUM, opts);
+        return app(loc, VAR, opts);
     }
 
-    public static TypeApp sum(final Type opts)
-    {
-        return sum(Loc.INTRINSIC, opts);
-    }
-
-    public static boolean isSum(Type type)
+    public static boolean isVar(Type type)
     {
         type = type.deref();
-        return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == SUM;
+        return type instanceof TypeApp && ((TypeApp)type).getBase().deref() == VAR;
     }
 
-    public static Type sumOpts(Type type)
+    public static Type varOpts(Type type)
     {
         type = type.deref();
-        if (!Types.isSum(type))
+        if (!Types.isVar(type))
             throw new IllegalArgumentException();
 
         return ((TypeApp)type).getArg();
@@ -466,11 +409,6 @@ public final class Types
     public static TypeApp tmap(final Loc loc, final Type lhs, final Type rhs)
     {
         return binapp(loc, TMAP, lhs, rhs);
-    }
-
-    public static TypeApp tmap(final Type lhs, final Type rhs)
-    {
-        return tmap(Loc.INTRINSIC, lhs, rhs);
     }
 
     public static boolean isTMap(Type type)
@@ -495,31 +433,6 @@ public final class Types
             throw new IllegalArgumentException();
 
         return appArg(type, 1);
-    }
-
-    //
-    // index exprs are app(INDEX, <type list>)
-    //
-
-    public static TypeApp index(final Loc loc, final Type list)
-    {
-        return app(loc, INDEX, list);
-    }
-
-    public static TypeApp index(final Type list)
-    {
-        return index(Loc.INTRINSIC, list);
-    }
-
-    public static boolean isIndex(final Type type)
-    {
-        return isAppOf(type, INDEX);
-    }
-
-    public static Type indexList(final Type type)
-    {
-        assert Types.isIndex(type);
-        return appArg(type);
     }
 
     //
@@ -554,6 +467,32 @@ public final class Types
     }
 
     //
+    // cone exprs are app(CONE, (<key type>, <value types>))
+    //
+
+    public static TypeApp cone(final Loc loc, final Type domains, final Type codomain)
+    {
+        return binapp(loc, CONE, domains, codomain);
+    }
+
+    public static boolean isCone(final Type type)
+    {
+        return isAppOf(type, CONE);
+    }
+
+    public static Type coneDomains(final Type type)
+    {
+        assert Types.isCone(type);
+        return appArg(type, 0);
+    }
+
+    public static Type coneCodomain(final Type type)
+    {
+        assert Types.isCone(type);
+        return appArg(type, 1);
+    }
+
+    //
     // binary applications are app(<TCON>, (<arg 0>, <arg 1))
     // builders take scattered arg pair
     //
@@ -565,42 +504,8 @@ public final class Types
     }
 
     //
-    // coercions
+    // intrinsic def utils
     //
-
-    /**
-     *
-     */
-    public static Type applyArgCoercions(final TypeCons cons, final Type arg)
-    {
-        if (cons == SUM)
-            return applySumArgCoercions(arg);
-
-        return arg;
-    }
-
-    /**
-     *
-     */
-    private static Type applySumArgCoercions(final Type arg)
-    {
-        if (isRec(arg))
-        {
-            return recFields(arg);
-        }
-        else if (isTup(arg))
-        {
-            final Type members = tupMembers(arg);
-            return assoc(index(members), members);
-        }
-        else if (arg instanceof TypeList)
-        {
-            return assoc(index(arg), arg);
-        }
-
-        return arg;
-    }
-
 
     public static Type findIntrinsic(final String name)
     {

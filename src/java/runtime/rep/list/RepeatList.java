@@ -38,6 +38,11 @@ public final class RepeatList implements ListValue
         return size;
     }
 
+    public Object head()
+    {
+        return value;
+    }
+
     public Object get(final int index)
     {
         if (index < 0 || index >= size)
@@ -65,6 +70,12 @@ public final class RepeatList implements ListValue
     {
         checkRange(from, to);
         return new RepeatList(to - from, value);
+    }
+
+    public ListValue subList(final int from)
+    {
+        checkRange(from, size);
+        return new RepeatList(size - from, value);
     }
 
     public ListValue apply(final Lambda f)

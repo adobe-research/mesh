@@ -41,7 +41,7 @@ SECNANOS = 1000000000.0;
 
 (W,H) = (1024, 1024);                                   // width and height of processing window
 
-BOX = (#x: 0.0, #y: 0.0, #w: i2f(W), #h: i2f(H));       // convenience - play box as float rect
+BOX = (x: 0.0, y: 0.0, w: i2f(W), h: i2f(H));       // convenience - play box as float rect
 SMALLEXT = i2f(min(W,H));                               // convenience - smaller of width and height, as float
 
 (MINR, MAXR) = (SMALLEXT /. 500.0, SMALLEXT /. 100.0);  // min and max radii, based on smaller of box dims
@@ -51,6 +51,18 @@ CELLEXT = f2i(3.0 *. MAXR);                             // cells are squares 1.5
 CELLCOLS = W / CELLEXT + sign(W % CELLEXT);             // number of cell columns
 CELLROWS = H / CELLEXT + sign(H % CELLEXT);             // number of cell rows
 CELLIXS = cross(count(CELLCOLS), count(CELLROWS));      // precalculated list of cell index (x, y) pairs
+
+// neighborhood matrix: for each cell at a given (x, y),
+// NABE[y][x] is a list oc (x, y) coordinates of adjacent cells.
+// e.g. NABE[1][1] = [(0, 0), (0, 1), (0, 2), ..., (2, 2)]
+//
+NABE = count(CELLROWS) | { r =>
+    count(CELLCOLS) | { c =>
+        adjx = fromto(max(0, c - 1), min(CELLCOLS - 1, c + 1));
+        adjy = fromto(max(0, r - 1), min(CELLROWS - 1, r + 1));
+        cross(adjx, adjy)
+    }
+};
 
 WALLSQUEEZE = 0.1;                                      // wall squeeze force, per unit position
 BALLSQUEEZE = 0.01 *. circarea(MINR);                   // ball squeeze force, based on min radius
@@ -66,7 +78,7 @@ BATCH = 500;
 
 // a Player is a record containing a unique id, position and velocity vectors,
 // a radius, health (0.0 to 1.0) and a color.
-type Player = (#id:Int, #pos:V2, #vel:V2, #rad:Double, #health:Double, #color:Int);
+type Player = (id:Int, pos:V2, vel:V2, rad:Double, health:Double, color:Int);
 
 players : Box( [ Box(Player) ] ) = box([]);                                           // global list of boxed players
 cells : [[ Box([ Box(Player) ]) ]] = repeat(CELLROWS, {repeat(CELLCOLS, {box([])})});     // grid of boxed player lists
@@ -95,12 +107,12 @@ jitter(f, r) { f + r *. (frand() -. 0.5)  };
 //
 newborn(pos:V2)
 {
-    (#id: postinc(idgen),
-     #pos: (jitter(pos.0, BOX.w *. 0.2), jitter(pos.1, BOX.h *. 0.2)),
-     #vel: (frand() *. MAXV -. MAXV /. 2.0, frand() *. MAXV -. MAXV /. 2.0),
-     #rad: MINR + frand() *. (MAXR -. MINR),
-     #health: 1.0,
-     #color: hsb2rgb(frand(), frand(), 1.0))
+    (id: postinc(idgen),
+     pos: (jitter(pos.0, BOX.w *. 0.2), jitter(pos.1, BOX.h *. 0.2)),
+     vel: (frand() *. MAXV -. MAXV /. 2.0, frand() *. MAXV -. MAXV /. 2.0),
+     rad: MINR + frand() *. (MAXR -. MINR),
+     health: 1.0,
+     color: hsb2rgb(frand(), frand(), 1.0))
 };
 
 // util - mass of player is area of ball
@@ -109,19 +121,19 @@ mass(p:Player) { circarea(p.rad) };
 // helper - update velocity
 setvel(p:Player, vel)
 {
-    (#id:p.id, #pos:p.pos, #vel:vel, #rad:p.rad, #health:p.health, #color:p.color)
+    (id:p.id, pos:p.pos, vel:vel, rad:p.rad, health:p.health, color:p.color)
 };
 
 // helper - update velocity and health
 setvelhealth(p:Player, vel, health)
 {
-    (#id:p.id, #pos:p.pos, #vel:vel, #rad:p.rad, #health:health, #color:p.color)
+    (id:p.id, pos:p.pos, vel:vel, rad:p.rad, health:health, color:p.color)
 };
 
 // helper - update position and health
 setposhealth(p:Player, pos, health)
 {
-    (#id:p.id, #pos:pos, #vel:p.vel, #rad:p.rad, #health:health, #color:p.color)
+    (id:p.id, pos:pos, vel:p.vel, rad:p.rad, health:health, color:p.color)
 };
 
 // ---------
@@ -210,8 +222,8 @@ squeeze(lo, hi, pos)
 //
 BAND_XGAP = BOX.w /. 50.0;
 BAND_YGAP = BOX.h /. 50.0;
-BAND = (#x: BOX.x -. BAND_XGAP, #y: BOX.y -. BAND_YGAP,
-    #w: BOX.w + 2.0 *. BAND_XGAP, #h: BOX.h + 2.0 *. BAND_YGAP);
+BAND = (x: BOX.x -. BAND_XGAP, y: BOX.y -. BAND_YGAP,
+    w: BOX.w + 2.0 *. BAND_XGAP, h: BOX.h + 2.0 *. BAND_YGAP);
 
 // reflect and/or squeeze when player interacts with wall.
 // also, a wall can occasionally make a player very sick.
@@ -333,12 +345,10 @@ cellcollisions(cx, cy)
     cellplayers = *(cells[cy][cx]);
 
     // collect players to test against - this cell and adjacent cells
-    adjx = fromto(max(0, cx - 1), min(CELLCOLS - 1, cx + 1));
-    adjy = fromto(max(0, cy - 1), min(CELLROWS - 1, cy + 1));
-    testplayers = flatten(cross(adjx, adjy) | { *(cells[$1][$0]) });
+    testplayers = flatten(NABE[cy][cx] | { *(cells[$1][$0]) });
 
     // test each player in our cell against players
-    // from our cell and adjacent cells
+    // in our neighborhood
     for(cellplayers, { collisions($0, testplayers) });
 };
 
@@ -374,12 +384,12 @@ age(pbox:*Player, millis:Double)
 
     // new player record
     newp = (
-        #id: p.id,
-        #pos: newpos,
-        #vel: newvel,
-        #rad: newrad,
-        #health: newhealth,
-        #color: p.color
+        id: p.id,
+        pos: newpos,
+        vel: newvel,
+        rad: newrad,
+        health: newhealth,
+        color: p.color
     );
 
     // update player
@@ -475,8 +485,8 @@ startplay()
 // sliding window of (mouse position, sample time)
 HISTMAX = 50;
 
-type DragHist = [(#pos:V2, #time:Long)];
-draghist:*DragHist = box([(#pos: VZERO, #time: 0L)]);
+type DragHist = [(pos:V2, time:Long)];
+draghist:*DragHist = box([(pos: VZERO, time: 0L)]);
 dragstartpos = box(VZERO);
 
 // map from players currently being dragged, to their offsets
@@ -503,7 +513,7 @@ dragstate() { last(*draghist) };
 dragvel()
 {
     hist = *draghist;
-    (s0, s1) = (first(hist), last(hist));
+    (s0, s1) = (head(hist), last(hist));
     dist = diff(s1.pos, s0.pos);
     elap = lminus(s1.time, s0.time);
     scale(dist, fdivz(1000000.0, l2f(elap)));
@@ -516,7 +526,7 @@ dragdist() { diff(dragstate().pos, *dragstartpos) };
 initdrag()
 {
     pos = tov2(prmouse());
-    draghist := [(#pos: pos, #time: nanotime())];
+    draghist := [(pos: pos, time: nanotime())];
     dragstartpos := pos;
     draginfo := hittest(pos)
 };
@@ -524,7 +534,7 @@ initdrag()
 // update drag history, return current state
 updatedraghist()
 {
-    state = (#pos: tov2(prmouse()), #time: nanotime());
+    state = (pos: tov2(prmouse()), time: nanotime());
     draghist <- { hist => append(take(-min(size(hist), HISTMAX - 1), hist), state) };
     state
 };
@@ -943,7 +953,7 @@ spawn
         {
             when(!*splashing, release)
         },
-        #keyTyped:
+$        #keyTyped:
         {
             if(*splashing, togglesplash,
             {

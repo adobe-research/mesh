@@ -38,7 +38,7 @@ public final class ModuleAnalyzer
             return false;
         
         // setup export list
-        if (!new ExportResolver(module).resolve())
+        if (!new ExportProcessor(module).resolve())
             return false;
 
         // resolve names
