@@ -15,6 +15,7 @@ import compile.term.*;
 import compile.term.visit.TermDumper;
 import compile.term.visit.TermVisitor;
 import compile.type.*;
+import compile.type.constraint.Constraint;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
 
@@ -120,12 +121,40 @@ public final class TypeDumper extends StackedTypeVisitor<String>
      * Helper - visit a map of values terms to type terms, return an array of
      * "(value): (type)" dump strings.
      */
-    private List<String> visitEntrySet(final Set<Map.Entry<Term, Type>> entrySet)
+    private List<String> visitEntrySet(final Set<Map.Entry<Term, Type>> entrySet,
+        final boolean keySymSugar)
+    {
+        return visitEntrySet(entrySet, ": ", keySymSugar);
+    }
+
+    /**
+     * Helper - visit a map of values terms to type terms, return an array of
+     * "(value): (type)" dump strings.
+     */
+    private List<String> visitEntrySet(
+        final Set<Map.Entry<Term, Type>> entrySet,
+        final String sep,
+        final boolean keySymSugar)
     {
         final List<String> visitedList = new ArrayList<String>();
 
         for (final Map.Entry<Term, Type> entry : entrySet)
-            visitedList.add(entry.getKey().dump() + ": " + visitType(entry.getValue()));
+        {
+            final String keyDump;
+            if (keySymSugar)
+            {
+                final Term key = entry.getKey();
+                keyDump = key instanceof SymbolLiteral ?
+                    ((SymbolLiteral)key).getValue() :
+                    key.dump();
+            }
+            else
+            {
+                keyDump = entry.getKey().dump();
+            }
+
+            visitedList.add(keyDump + sep + visitType(entry.getValue()));
+        }
 
         return visitedList;
     }
@@ -187,30 +216,50 @@ public final class TypeDumper extends StackedTypeVisitor<String>
     {
         // TODO enum syntax
         // return "Enum([" + TermDumper.dumpList(enumType.getValues()) + "])";
-        final Type baseType = enumType.getBaseType();
+        // final Type baseType = enumType.getBaseType();
 
         return
-            baseType.dump() + ":{" + TermDumper.dumpList(enumType.getValues()) + "}";
+        //    baseType.dump() + ":{" + TermDumper.dumpList(enumType.getValues()) + "}";
+            "{" + TermDumper.dumpList(enumType.getValues()) + "}";
     }
 
     @Override
     public String visit(final TypeVar var)
     {
+        final Kind kind = var.getKind();
+        final Constraint constraint = var.getConstraint();
+
+        if (kind != Kinds.STAR)
+        {
+            if (constraint != Constraint.ANY)
+                return var.getName() + ":" + kind.dump() + "|" + constraint.dump();
+
+            return var.getName() + ":" + kind.dump();
+        }
+
+        if (constraint != Constraint.ANY)
+            return var.getName() + ":" + constraint.dump();
+
         return var.getName();
     }
 
     public String visit(final TypeParam param)
     {
-        final Kind k = param.getKind();
+        final Kind kind = param.getKind();
+        final Constraint constraint = param.getConstraint();
 
-        final String suffix = k == Kinds.STAR ? "" :
-            //k == Kinds.STAR_LIST ? "..." :
-            k == Kinds.STAR_LIST ? ":[*]" :
-                null;
+        if (kind != Kinds.STAR)
+        {
+            if (constraint != null && constraint != Constraint.ANY)
+                return param.getName() + ":" + kind.dump() + "|" + constraint.dump();
 
-        assert suffix != null : "unsupported type param kind";
+            return param.getName() + ":" + kind.dump();
+        }
 
-        return param.getName() + suffix;
+        if (constraint != null && constraint != Constraint.ANY)
+            return param.getName() + ":" + constraint.dump();
+
+        return param.getName();
     }
 
     @Override
@@ -302,17 +351,17 @@ public final class TypeDumper extends StackedTypeVisitor<String>
 
                 return fields.isEmpty() ?
                     "(:)" :
-                    "(" + StringUtils.join(visitEntrySet(fields.entrySet()), ", ") + ")";
+                    "(" + StringUtils.join(visitEntrySet(fields.entrySet(), true), ", ") + ")";
             }
         }
-        else if (base == Types.SUM)
+        else if (base == Types.VAR)
         {
             if (arg instanceof TypeMap)
             {
                 final Map<Term, Type> fields = ((TypeMap)arg).getMembers();
 
-                return "?(" +
-                    StringUtils.join(visitEntrySet(fields.entrySet()), ", ") +
+                return "(" +
+                        StringUtils.join(visitEntrySet(fields.entrySet(), " ! ", true), ", ") +
                     ")";
             }
         }
@@ -351,6 +400,6 @@ public final class TypeDumper extends StackedTypeVisitor<String>
     public String visit(final TypeMap map)
     {
         final Map<Term, Type> members = map.getMembers();
-        return "[" + StringUtils.join(visitEntrySet(members.entrySet()), ", ") + "]";
+        return "[" + StringUtils.join(visitEntrySet(members.entrySet(), false), ", ") + "]";
     }
 }

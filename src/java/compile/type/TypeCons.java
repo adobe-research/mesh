@@ -78,8 +78,20 @@ public final class TypeCons extends NonScopeType
     public SubstMap unify(final Loc loc, final Type other, final TypeEnv env)
     {
         return
-            other instanceof TypeVar ? SubstMap.bindVar(loc, (TypeVar)other, this) :
-                other.deref().equals(this) ? SubstMap.EMPTY :
+            other instanceof TypeVar ?
+                SubstMap.bindVar(loc, (TypeVar)other, this, env) :
+            other.deref().equals(this) ?
+                SubstMap.EMPTY :
+            null;
+    }
+
+    public SubstMap subsume(final Loc loc, final Type type, final TypeEnv env)
+    {
+        return
+            type instanceof TypeVar ?
+                ((TypeVar)type).getConstraint().satisfy(loc, this, env) :
+                type.deref().equals(this) ?
+                    SubstMap.EMPTY :
                     null;
     }
 

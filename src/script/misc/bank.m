@@ -2,7 +2,7 @@
 // bank balance integrity with transactions
 //
 
-type Account = (#id:Int, #owner:String, #balance:*Int);
+type Account = (id:Int, owner:String, balance:*Int);
 
 type AccountMap = [Int : Account];
 
@@ -20,7 +20,7 @@ openAccount(owner, balance)
 {
     do {
         id = newId();
-        account = (#id: id, #owner: owner, #balance: box(balance));
+        account = (id: id, owner: owner, balance: box(balance));
         accounts <- { m => mapset(m, id, account) };
         account
     }

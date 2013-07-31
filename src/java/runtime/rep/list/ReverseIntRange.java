@@ -42,6 +42,11 @@ public final class ReverseIntRange implements ListValue
         return size;
     }
 
+    public Object head()
+    {
+        return start;
+    }
+
     public Object get(final int index)
     {
         if (index < 0 || index >= size)
@@ -70,6 +75,12 @@ public final class ReverseIntRange implements ListValue
     {
         checkRange(from, to);
         return new ReverseIntRange(start - from, start - to);
+    }
+
+    public ListValue subList(final int from)
+    {
+        checkRange(from, size);
+        return new ReverseIntRange(start - from, start - size);
     }
 
     public ListValue apply(final Lambda f)

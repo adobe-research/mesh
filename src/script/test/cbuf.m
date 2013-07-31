@@ -39,7 +39,7 @@ cbuf(n, v)
         do { own(lock); f() }
     };
 
-    (#read: read, #write: write, #do: _do)
+    (read: read, write: write, do: _do)
 };
 
 LEN = 10;

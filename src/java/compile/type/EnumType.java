@@ -11,6 +11,7 @@
 package compile.type;
 
 import compile.Loc;
+import compile.Pair;
 import compile.term.Term;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
@@ -18,21 +19,36 @@ import compile.type.visit.EquivState;
 import compile.type.visit.SubstMap;
 import compile.type.visit.TypeVisitor;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 /**
  * An enum type is an enumerated subset of a base type.
- * Subs {@link ChoiceType} and {@link ExtentType} exploit
- * differences in how the subset is specified.
- *
+® *
  * @author Basil Hosmer
  */
-public abstract class EnumType extends ScopeType
+public final class EnumType extends ScopeType
 {
     private Type baseType;
+    private final LinkedHashSet<Term> values;
 
-    public EnumType(final Loc loc, final Type baseType)
+    public EnumType(final Loc loc, final Type baseType, final Set<Term> values)
     {
         super(loc);
         this.baseType = baseType;
+
+        this.values = (values instanceof LinkedHashSet) ?
+            (LinkedHashSet<Term>)values :
+            new LinkedHashSet<Term>(values);
+    }
+
+    /**
+     * singleton choice set
+     */
+    public EnumType(final Loc loc, final Type baseType, final Term value)
+    {
+        this(loc, baseType, Collections.singleton(value));
     }
 
     public Type getBaseType()
@@ -45,11 +61,62 @@ public abstract class EnumType extends ScopeType
         this.baseType = baseType;
     }
 
-    public abstract boolean isExplicit();
+    public int getSize()
+    {
+        return values.size();
+    }
 
-    public abstract int getSize();
+    public LinkedHashSet<Term> getValues()
+    {
+        return values;
+    }
 
-    public abstract Iterable<Term> getValues();
+    public int indexOf(final Term term)
+    {
+        int i = 0;
+        for (final Term value : values)
+        {
+            if (value.equals(term))
+                return i;
+            i++;
+        }
+
+        return -1;
+    }
+
+    public Pair<EnumType, SubstMap>
+        merge(final EnumType otherEnum, final TypeEnv env)
+    {
+        final SubstMap subst =
+            baseType.unify(loc, otherEnum.getBaseType(), env);
+
+        if (subst == null)
+            return null;
+
+        final Set<Term> mergedValues = new LinkedHashSet<Term>(values);
+        mergedValues.addAll(otherEnum.values);
+
+        final EnumType merged = new EnumType(loc, baseType, mergedValues);
+
+        return Pair.create(merged, subst);
+    }
+
+    public SubstMap subsume(final Loc loc, final Type type, final TypeEnv env)
+    {
+        if (!(type instanceof EnumType))
+            return null;
+
+        final EnumType otherEnum = (EnumType)type;
+
+        final SubstMap subst =
+            baseType.unify(loc, otherEnum.getBaseType(), env);
+
+        if (subst == null)
+            return null;
+
+        return values.containsAll(otherEnum.values) ?
+            subst : null;
+    }
 
     // Type
 
@@ -77,7 +144,7 @@ public abstract class EnumType extends ScopeType
         }
         else if (other instanceof TypeVar)
         {
-            return SubstMap.bindVar(loc, (TypeVar)other, this);
+            return SubstMap.bindVar(loc, (TypeVar)other, this, env);
         }
         else
         {

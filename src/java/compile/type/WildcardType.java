@@ -48,6 +48,12 @@ public final class WildcardType extends NonScopeType
         return null;
     }
 
+    public SubstMap subsume(final Loc loc, final Type other, final TypeEnv env)
+    {
+        assert false : "WildcardType.subsume()";
+        return null;
+    }
+
     public <T> T accept(final TypeVisitor<T> visitor)
     {
         return visitor.visit(this);

@@ -43,10 +43,6 @@ public final class ChainedListPair implements ListValue
 
     private ChainedListPair(final ListValue llist, final ListValue rlist)
     {
-//        System.out.println("ChainedListPair(" +
-//            llist.getClass().getSimpleName() + ":" + llist.size() + ", " +
-//            rlist.getClass().getSimpleName() + ":" + rlist.size() + ")");
-
         this.llist = llist;
         this.rlist = rlist;
         this.lsize = llist.size();
@@ -57,6 +53,11 @@ public final class ChainedListPair implements ListValue
     public int size()
     {
         return size;
+    }
+
+    public Object head()
+    {
+        return llist.head();
     }
 
     public Object get(final int index)
@@ -93,6 +94,13 @@ public final class ChainedListPair implements ListValue
         return to <= lsize ? Sublist.create(llist, from, to) :
             from >= lsize ? Sublist.create(rlist, from - lsize, to - lsize) :
             Sublist.create(this, from, to);
+    }
+
+    public ListValue subList(final int from)
+    {
+        return from >= lsize ?
+            Sublist.create(rlist, from - lsize) :
+            Sublist.create(this, from);
     }
 
     public ListValue apply(final Lambda f)

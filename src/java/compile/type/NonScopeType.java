@@ -97,7 +97,8 @@ public abstract class NonScopeType extends AbstractType
         return this;
     }
     
-    public SubstMap buildParamMap(final Set<TypeVar> vars, final int nameGenOffset)
+    public SubstMap buildParamMap(final Set<TypeVar> vars, final int nameGenOffset,
+        final TypeEnv env)
     {
         return SubstMap.EMPTY;
     }

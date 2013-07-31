@@ -399,7 +399,7 @@ assert_true({ apply(not, false) });
 //eq : (T => (T, T) -> Bool) = <intrinsic>
 assert_true({ eq(2, 2) });
 assert_false({ eq(2, 1) });
-assert_true({ r = (#a:1); eq(r, r) }); // record
+assert_true({ r = (a:1); eq(r, r) }); // record
 assert_true({ apply(eq, (2, 2)) });
 // eq for lists
 assert_true({ l = fromto(1, 4); eq(l, l) });
@@ -432,7 +432,7 @@ assert_equals({ false }, { empty([1,2]) });
 assert_equals({ false }, { empty([1:1]) });
 assert_equals({ false }, { empty((1,1)) });
 assert_equals({ false }, { empty("string") });
-assert_equals({ false }, { empty((#a:1)) });
+assert_equals({ false }, { empty((a:1)) });
 assert_equals({ false }, { empty(1) });
 assert_equals({ true }, { apply(empty, []) });
 
@@ -933,7 +933,7 @@ assert_equals({ "[:]" }, { tostr([:]) });                   // empty map
 assert_equals({ "(1, \"b\", 3)" }, { tostr((1, "b", 3)) }); // tuple
 assert_equals({ "()" }, { tup=(); tostr(tup) }); // tuple
 assert_equals({ "(1,)" }, { tup=(1,); tostr(tup) }); // tuple
-assert_equals({ "(#a: 2)" }, { tostr((#a:2)) });            // record
+assert_equals({ "(a: 2)" }, { tostr((a:2)) });            // record
 assert_equals({ "(:)" }, { tostr((:)) });            // record
 // variant
 assert_equals({ "box(3)" }, { tostr(box(3)) });             // box
@@ -1048,9 +1048,9 @@ assert_equals({ 6 }, { find(flatten([[0,1] ,[2,4], [3,5]]), 6) }); // MatrixList
 
 
 
-// first : (T => [T] -> T) = <intrinsic>
-assert_equals({ "cat" }, { first(["cat", "dog", "bird", "dog", "snake"]) });
-assert_equals({ "cat" }, { apply(first, ["cat", "dog", "bird", "dog", "snake"]) });
+// head : (T => [T] -> T) = <intrinsic>
+assert_equals({ "cat" }, { head(["cat", "dog", "bird", "dog", "snake"]) });
+assert_equals({ "cat" }, { apply(head, ["cat", "dog", "bird", "dog", "snake"]) });
 
 
 // first_where = { pred, vals => n = list:size(vals); cycle(0, { i => and(lt(i, n), { not(pred(vals[i])) }) }, inc) }
@@ -1144,9 +1144,9 @@ assert_equals({ ["a", "c"] }, { apply(remove, (["a", "b", "c"], "b")) });
 assert_equals({ ["cat", "cat", "cat"] }, { rep(3, "cat") });
 assert_equals({ ["cat", "cat", "cat"] }, { apply(rep, (3, "cat")) });
 
-// rest : (T => [T] -> [T]) = <intrinsic>
-assert_equals({ ["dog", "fish"] }, { rest(["cat", "dog", "fish"]) });
-assert_equals({ ["dog", "fish"] }, { apply(rest, ["cat", "dog", "fish"]) });
+// tail : (T => [T] -> [T]) = <intrinsic>
+assert_equals({ ["dog", "fish"] }, { tail(["cat", "dog", "fish"]) });
+assert_equals({ ["dog", "fish"] }, { apply(tail, ["cat", "dog", "fish"]) });
 
 
 // reverse = { list => n = size(list); mapll(range(minus(n, 1), neg(n)), list) }

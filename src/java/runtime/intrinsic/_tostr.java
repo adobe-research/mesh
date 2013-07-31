@@ -132,7 +132,13 @@ public final class _tostr extends IntrinsicLambda
 
         final ArrayList<String> prints = new ArrayList<String>(n);
         for (int i = 0; i < record.size(); i++)
-            prints.add(invoke(record.getKey(i)) + ": " + invoke(record.getValue(i)));
+        {
+            final Object key = record.getKey(i);
+            final String keyDump = key instanceof Symbol ?
+                ((Symbol)key).getValue() : invoke(key);
+
+            prints.add(keyDump + ": " + invoke(record.getValue(i)));
+        }
 
         return "(" + StringUtils.join(prints, ", ") + ")";
     }

@@ -10,7 +10,10 @@
  */
 package compile.type;
 
+import com.google.common.collect.Maps;
 import compile.Loc;
+import compile.Pair;
+import compile.Session;
 import compile.term.Term;
 import compile.type.kind.Kind;
 import compile.type.kind.Kinds;
@@ -19,19 +22,22 @@ import compile.type.visit.SubstMap;
 import compile.type.visit.TypeVisitor;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * Type map term.
+ * TODO should not inherit from NonScopeTYpe, nor should TypeList, TypeTuple
  *
  * @author Basil Hosmer
  */
 public final class TypeMap extends NonScopeType
 {
-    private Type keyType;
+    private EnumType keyType;
     private final Map<Term, Type> members;
 
-    public TypeMap(final Loc loc, final Type keyType, final Map<Term, Type> members)
+    public TypeMap(final Loc loc, final EnumType keyType, final Map<Term, Type> members)
     {
         super(loc);
         this.keyType = keyType;
@@ -40,14 +46,9 @@ public final class TypeMap extends NonScopeType
         // verifyKeyAgreement();
     }
 
-    public TypeMap(final Type keyType, final Map<Term, Type> members)
-    {
-        this(Loc.INTRINSIC, keyType, members);
-    }
-
     public TypeMap(final Loc loc, final Map<Term, Type> members)
     {
-        this(loc, new ChoiceType(loc, members.keySet()), members);
+        this(loc, new EnumType(loc, new WildcardType(loc), members.keySet()), members);
     }
 
     public Map<Term, Type> getMembers()
@@ -55,16 +56,21 @@ public final class TypeMap extends NonScopeType
         return members;
     }
 
-    public Type getKeyType()
+    public EnumType getKeyType()
     {
         assert keyType != null;
         return keyType;
     }
 
-    public void setKeyType(final Type keyType)
+    public void setKeyType(final EnumType keyType)
     {
         assert keyType == null;
         this.keyType = keyType;
+    }
+
+    public Collection<Type> getValueTypes()
+    {
+        return members.values();
     }
 
     // Type
@@ -80,7 +86,7 @@ public final class TypeMap extends NonScopeType
     public SubstMap unify(final Loc loc, final Type other, final TypeEnv env)
     {
         if (other instanceof TypeVar)
-            return SubstMap.bindVar(loc, (TypeVar)other, this);
+            return SubstMap.bindVar(loc, (TypeVar)other, this, env);
 
         final Type otherEval = other.deref().eval();
 
@@ -151,6 +157,93 @@ public final class TypeMap extends NonScopeType
         }
 
         return null;
+    }
+
+    /**
+     * return substitution if we have a unifiable key type and
+     * contain unifiable entries for all entries in another type map,
+     * otherwise null
+     */
+    public SubstMap subsume(final Loc loc, final Type type, final TypeEnv env)
+    {
+        if (!(type instanceof TypeMap))
+        {
+            Session.error("TypeMap.subsume(): non-TypeMap arg: {0}", type.dump());
+            return null;
+        }
+
+        final TypeMap map = (TypeMap)type;
+
+        if (members.size() < map.getMembers().size())
+            return null;
+
+        SubstMap subst =
+            keyType.getBaseType().unify(loc, map.getKeyType().getBaseType(), env);
+
+        if (subst == null)
+            return null;
+
+        for (final Map.Entry<Term, Type> entry : map.getMembers().entrySet())
+        {
+            final Term key = entry.getKey();
+            final Type mapMember = entry.getValue();
+            final Type member = members.get(key);
+
+            if (member == null)
+                return null;
+
+            final SubstMap memberSubst =
+                member.subst(subst).unify(loc, mapMember.subst(subst), env);
+
+            if (memberSubst == null)
+                return null;
+
+            subst = subst.compose(loc, memberSubst);
+        }
+
+        return subst;
+    }
+
+    /**
+     * return pair of merged type map and substitution map, if
+     * we can be merged successfully with another type map,
+     * otherwise null
+     */
+    public Pair<TypeMap, SubstMap> merge(final TypeMap map, final TypeEnv env)
+    {
+        // NOTE: these should always be enums over ground types
+        SubstMap subst =
+            keyType.getBaseType().unify(loc, map.getKeyType().getBaseType(), env);
+
+        if (subst == null)
+            return null;
+
+        final LinkedHashMap<Term, Type> resultMembers = Maps.newLinkedHashMap();
+        resultMembers.putAll(members);
+
+        for (final Map.Entry<Term, Type> entry : map.getMembers().entrySet())
+        {
+            final Term key = entry.getKey();
+            final Type mapMember = entry.getValue();
+            final Type resultMember = resultMembers.get(key);
+
+            if (resultMember != null)
+            {
+                final SubstMap memberSubst =
+                    resultMember.subst(subst).unify(loc, mapMember.subst(subst), env);
+
+                if (memberSubst == null)
+                    return null;
+
+                subst = subst.compose(loc, memberSubst);
+            }
+            else
+            {
+                resultMembers.put(key, mapMember);
+            }
+        }
+
+        return Pair.create(new TypeMap(loc, keyType, resultMembers), subst);
     }
 
     public <T> T accept(final TypeVisitor<T> visitor)

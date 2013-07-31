@@ -6,9 +6,9 @@ import M into N;
 import P;
 import Q;
 
-type LocalType = (#field : Int, #next : (Double,Double));
+type LocalType = (field : Int, next : (Double,Double));
 
-a:LocalType = (#field : 0, #next : (0.0, 1.0));
+a:LocalType = (field : 0, next : (0.0, 1.0));
 b:M.MyType = (1,10);
 
 c:N.MyType = b;

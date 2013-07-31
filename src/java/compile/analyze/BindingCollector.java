@@ -52,7 +52,7 @@ public final class BindingCollector extends ModuleVisitor<Object>
     // ModuleVisitor
 
     /**
-     * overriden to remove type bindings from statement list after scope traveral
+     * overriden to remove type bindings from statement list after scope traversal
      * has added them to type bindings map
      */
     @Override

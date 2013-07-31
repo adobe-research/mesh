@@ -35,6 +35,8 @@ public abstract class KeyedTerm extends AbstractTypedTerm
         return items;
     }
 
+    // Term
+
     public boolean isConstant()
     {
         for (final Term item : items.values())
@@ -43,6 +45,8 @@ public abstract class KeyedTerm extends AbstractTypedTerm
 
         return true;
     }
+
+    // Object
 
     @Override
     public boolean equals(final Object o)

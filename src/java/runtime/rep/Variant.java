@@ -18,20 +18,6 @@ package runtime.rep;
  */
 public final class Variant
 {
-    public static Variant fromRec(final Record rec, final Object key)
-    {
-        return new Variant(key, rec.get(key));
-    }
-    
-    public static Variant fromTup(final Object[] tup, final int pos)
-    {
-        return new Variant(pos, tup[pos]);
-    }
-    
-    //
-    // instance
-    //
-    
     private final Object key, value;
 
     public Variant(final Object key, final Object value)

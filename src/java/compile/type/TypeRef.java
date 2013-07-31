@@ -111,6 +111,17 @@ public final class TypeRef extends ScopeType
             SubstMap.EMPTY : getBinding().unify(loc, other, env);
     }
 
+    public SubstMap subsume(final Loc loc, final Type type, final TypeEnv env)
+    {
+        assert isResolved();
+
+        if (env.checkVisited(this, type))
+            return SubstMap.EMPTY;
+
+        return equals(type) ?
+            SubstMap.EMPTY : getBinding().subsume(loc, type, env);
+    }
+
     public boolean equiv(final Type other, final EquivState state)
     {
         assert isResolved();

@@ -12,6 +12,7 @@ package compile.type.visit;
 
 import compile.Session;
 import compile.type.*;
+import compile.type.constraint.Constraint;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -89,26 +90,40 @@ public final class TypeInstantiator extends TypeTransformerBase
         {
             // we'll be replacing local params with copies
 
+            paramVars = null;
+
             paramCopies = new IdentityHashMap<TypeParam, TypeParam>();
 
             for (final TypeParam param : type.getParams().values())
                 paramCopies.put(param, new TypeParam(param));
-
-            paramVars = null;
         }
         else
         {
-            // will be replacing local params with vars
+            // will be replacing local params with vars.
+            // must first create typevar instance for each param,
+            // then go back and instantiate constraints.
+
+            paramCopies = null;
 
             paramVars = new IdentityHashMap<TypeParam, TypeVar>();
 
             for (final TypeParam param : type.getParams().values())
+            {
                 paramVars.put(param,
                     useParamNames ?
                         env.freshVar(param) :
-                        env.freshVar(param.getLoc(), param.getKind()));
+                        env.freshVar(param.getLoc(), param.getKind(),
+                            param.getConstraint()));
+            }
 
-            paramCopies = null;
+            for (final TypeVar var : paramVars.values())
+            {
+                final Constraint constraint = var.getConstraint();
+                final Constraint constraintInstance = constraint.instance(this);
+
+                if (constraint != constraintInstance)
+                    var.setConstraint(constraintInstance);
+            }
         }
 
         instance = transform(type);
@@ -181,6 +196,7 @@ public final class TypeInstantiator extends TypeTransformerBase
 
                     final TypeVar var = paramVars.get(param);
                     assert var != null : "missing type var";
+
                     return var;
                 }
             }

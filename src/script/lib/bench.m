@@ -13,7 +13,7 @@ bench(b)
 {
     t0 = millitime();
     result = b();
-    (#time: l2i(lminus(millitime(), t0)), #result: result)
+    (time: l2i(lminus(millitime(), t0)), result: result)
 };
 
 /**

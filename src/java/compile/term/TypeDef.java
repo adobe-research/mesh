@@ -33,8 +33,11 @@ public final class TypeDef extends TypeBinding
      */
     public static TypeDef opaque(final String name)
     {
-        final TypeDef def = new TypeDef(Loc.INTRINSIC, name, Types.newType(Types.OPAQUE));
+        final TypeDef def = new TypeDef(Loc.INTRINSIC, name,
+            Types.newType(Loc.INTRINSIC, Types.OPAQUE));
+
         ((TypeApp)def.getValue()).setKind(Kinds.STAR);
+
         return def;
     }
 
@@ -228,10 +231,28 @@ public final class TypeDef extends TypeBinding
     {
         final Type otherDeref = other.deref();
 
-        return equals(otherDeref) ? SubstMap.EMPTY :
-            !nominal ? value.unify(loc, otherDeref, env) :
-            other instanceof TypeVar ? SubstMap.bindVar(loc, (TypeVar)otherDeref, this) :
+        return
+            equals(otherDeref) ?
+                SubstMap.EMPTY :
+            !nominal ?
+                value.unify(loc, otherDeref, env) :
+            other instanceof TypeVar ?
+                SubstMap.bindVar(loc, (TypeVar)otherDeref, this, env) :
             null;
+    }
+
+    public SubstMap subsume(final Loc loc, final Type other, final TypeEnv env)
+    {
+        final Type otherDeref = other.deref();
+
+        return
+            equals(otherDeref) ?
+                SubstMap.EMPTY :
+                !nominal ?
+                    value.subsume(loc, otherDeref, env) :
+                    otherDeref instanceof TypeVar ?
+                        ((TypeVar)otherDeref).getConstraint().satisfy(loc, this, env) :
+                        null;
     }
 
     public boolean equiv(final Type other, final EquivState state)

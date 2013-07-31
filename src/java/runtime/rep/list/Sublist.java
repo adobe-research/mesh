@@ -50,6 +50,20 @@ final class Sublist implements ListValue
             new Sublist(list, from, to);
     }
 
+    /**
+     * factory, diverts some degenerate cases.
+     * TODO should make the same decision as {@link #subList}
+     */
+    public static ListValue create(final ListValue list, final int from)
+    {
+        final int size = list.size();
+
+        assert from >= 0 && from <= size;
+
+        return from == size ? PersistentList.EMPTY :
+            from == 0 ? list : new Sublist(list, from, size);
+    }
+
     //
     // instance
     //
@@ -68,6 +82,11 @@ final class Sublist implements ListValue
     public int size()
     {
         return to - from;
+    }
+
+    public Object head()
+    {
+        return list.get(from);
     }
 
     public Object get(final int index)
@@ -131,6 +150,11 @@ final class Sublist implements ListValue
         {
             return sub;
         }
+    }
+
+    public ListValue subList(final int from)
+    {
+        return subList(from, size());
     }
 
     public ListValue apply(final Lambda f)

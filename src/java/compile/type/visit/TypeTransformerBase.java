@@ -25,7 +25,7 @@ import java.util.Map;
  * subterrms are shared between original and new types.
  * Base implementation only implements traversal, with
  * identity transformations at the leaves.
- *
+ * <p/>
  * NOTE: this base class does *not* install type params
  * on a transformed result. This is because our hard param
  * refs combined with the structure sharing that happens
@@ -79,11 +79,8 @@ public abstract class TypeTransformerBase extends TypeVisitorBase<Type>
 
         final Type newBaseType = visitType(baseType);
 
-        // TODO clean up this relationship
         return baseType == newBaseType ? enumType :
-            enumType.isExplicit() ?
-                new ChoiceType(enumType.getLoc(), newBaseType, ((ChoiceType)enumType).getValueSet()) :
-                new ExtentType(enumType.getLoc(), newBaseType, enumType.getSize());
+            new EnumType(enumType.getLoc(), newBaseType, enumType.getValues());
     }
 
     @Override
@@ -196,8 +193,8 @@ public abstract class TypeTransformerBase extends TypeVisitorBase<Type>
     @Override
     public Type visit(final TypeMap map)
     {
-        final Type keyType = map.getKeyType();
-        final Type newKeyType = visitType(keyType);
+        final EnumType keyType = map.getKeyType();
+        final EnumType newKeyType = (EnumType)visitType(keyType);
 
         final Map<Term, Type> members = map.getMembers();
         final Map<Term, Type> newMembers = transformTypeMap(members);

@@ -9,13 +9,13 @@ import processing;
 
 // a Bump is triple of floats representing height, x-displacement and rate (slope)
 //
-type Bump = (#height: Double, #xoff: Double, #rate: Double);
+type Bump = (height: Double, xoff: Double, rate: Double);
 
 // generate a bump in the range [x, x + wid).
 bump(x, wid) { (
-    #height: ln(1.0 /. frand()),           // log keeps things fairly sober
-    #xoff: x + frand() *. wid,              // location of bump event in [x, x + wid)
-    #rate: fmax(25.0, frand() *. 200.0)     // smaller = narrower/steeper (note: not scaled by wid)
+    height: ln(1.0 /. frand()),           // log keeps things fairly sober
+    xoff: x + frand() *. wid,              // location of bump event in [x, x + wid)
+    rate: fmax(25.0, frand() *. 200.0)     // smaller = narrower/steeper (note: not scaled by wid)
 ) };
 
 // generate the average quantity of bumps for [x, wid)
@@ -26,7 +26,7 @@ bumpgen(x, wid) {
 
 // shift bumps a given x-distance
 shiftbumps(dx, bumps:[Bump]) {
-    bumps | {b:Bump => (#height: b.height, #xoff: b.xoff + dx, #rate: b.rate)}
+    bumps | {b:Bump => (height: b.height, xoff: b.xoff + dx, rate: b.rate)}
 };
 
 // compute the value at a given x-position, given a list of bumps
@@ -52,8 +52,8 @@ bumpedvalue(xpos, bumps:[Bump]) {
 (HBORDER, VBORDER) = (0, 100);
 
 VIEWPORT = (
-    #left: i2f(HBORDER), #top: i2f(VBORDER),
-    #width: i2f(W - 2 * HBORDER), #height: i2f(H - 2 * VBORDER));
+    left: i2f(HBORDER), top: i2f(VBORDER),
+    width: i2f(W - 2 * HBORDER), height: i2f(H - 2 * VBORDER));
 
 BORDERBG = 0x0D1F28;
 
@@ -79,7 +79,7 @@ letterbox() {
 
 // sum a matrix of floats by column
 sumcols(mat:[[Double]]) {
-    (nrows, ncols) = (size(mat), size(first(mat)));
+    (nrows, ncols) = (size(mat), size(head(mat)));
     count(ncols) | { c => fsum(count(nrows) | { mat[$0][c] }) }
 };
 
@@ -88,14 +88,14 @@ drawlayers(keys:[String], layermap:[String : [Double]], basefunc:[[Double]]->[Do
 
     layers = maplm(keys, layermap);             // data layers
     base = basefunc(layers);                    // compute baseline
-    n = size(first(layers));                    // number of data points
+    n = size(head(layers));                    // number of data points
     ixs = count(n);                             // indexes
 
     iw = fmin(1.0, i2f(W) /. i2f(n));                       // item width
     maxh = reduce(fmax, 0.0, sumcols([base] + layers));     // max total height
     ih = (VIEWPORT.height -. 1.0) /. maxh;                  // item height
 
-    (#left: vl, #top: vt, #width: vw, #height: vh) = VIEWPORT;
+    (left: vl, top: vt, width: vw, height: vh) = VIEWPORT;
     vb = vt + vh;
 
     // worker - draws the shape for a given layer
@@ -145,21 +145,21 @@ drawlayers(keys:[String], layermap:[String : [Double]], basefunc:[[Double]]->[Do
 
 // flat baseline is just zero all the way across
 flatbase(layers:[[Double]]) {
-    rep(size(first(layers)), 0.0)
+    rep(size(head(layers)), 0.0)
 };
 
 // centered baseline is, for a given x, the centerline minus half the stack height at that x
 centeredbase(layers:[[Double]]) {
     heights = sumcols(layers);
     maxh = reduce(fmax, 0.0, heights);
-    index(first(layers)) | { (maxh -. heights[$0]) /. 2.0 }
+    index(head(layers)) | { (maxh -. heights[$0]) /. 2.0 }
 };
 
 // min-wiggle baseline
 // http://github.com/leebyron/streamgraph_generator/blob/master/MinimizedWiggleLayout.java
 minwigglebase(layers:[[Double]]) {
     nlayers = size(layers);
-    nitems = size(first(layers));
+    nitems = size(head(layers));
     calc(x) {
         contrib(y) { (i2f(nlayers - y) -. 0.5) *. layers[y][x] };
         fsum(count(nlayers) | contrib) /. i2f(nlayers)
@@ -190,7 +190,7 @@ paused = box(false);
 nsamples = box(3);
 
 datasize(map) {
-    size(first(values(map)))
+    size(head(values(map)))
 };
 
 // add a new set of samples to global data map.

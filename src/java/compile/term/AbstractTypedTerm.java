@@ -23,12 +23,12 @@ public abstract class AbstractTypedTerm extends AbstractTerm
 {
     protected Type type;
 
-    public AbstractTypedTerm(final Loc loc)
+    protected AbstractTypedTerm(final Loc loc)
     {
         super(loc);
     }
-    
-    public AbstractTypedTerm(final Loc loc, final Type type)
+
+    protected AbstractTypedTerm(final Loc loc, final Type type)
     {
         super(loc);
         this.type = type;

@@ -12,9 +12,9 @@ check(list, diff)
 {
     sorted = sort(list, diff);
 
-    (#sorted: !any(count(size(list) - 1), { diff(sorted[$0 + 1], sorted[$0]) < 0 }),
-     #isperm: isperm(list, sorted),
-     #first10: take(10, sorted))
+    (sorted: !any(count(size(list) - 1), { diff(sorted[$0 + 1], sorted[$0]) < 0 }),
+     isperm: isperm(list, sorted),
+     first10: take(10, sorted))
 };
 
 //
@@ -28,7 +28,7 @@ randnums(n) { draw(n, n / 3) };
 nlist = randnums(512000);
 
 // print some info
-print(#size: size(nlist), #first10: take(10, nlist));
+print(size: size(nlist), first10: take(10, nlist));
 
 asc = check(nlist, (-));
 assert_equals({true}, {asc.sorted});
@@ -55,7 +55,7 @@ randwords(n) { mapll(draw(n, size(wordlist)), wordlist) };
 slist = randwords(512000);
 
 // print some info
-print(#size: size(slist), #first10: take(10, slist));
+print(size: size(slist), first10: take(10, slist));
 
 asc_str = check(slist, strcmp);
 assert_equals({true}, {asc_str.sorted});

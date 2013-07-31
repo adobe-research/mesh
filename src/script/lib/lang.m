@@ -44,12 +44,12 @@ intrinsic type Tup;         // Tup(<type list>), sugar (T1, T2, ...)
 
 // kind: (*, [*]) -> *
 intrinsic type Rec;         // Rec(<key type>, <type list>), sugar (k1:T1, k2:T2, ...)
-intrinsic type Sum;         // Sum(<key type>, <type list>), sugar TBD
+intrinsic type Var;         // Var(<key type>, <type list>), sugar (k1!T1, k2!T2, ...)
 
 // type transformers
 intrinsic type TMap;        // type-level map: TMap(<type list>, <type constructor>)
-intrinsic type Index;       // experimental
 intrinsic type Assoc;       // experimental
+intrinsic type Cone;        // experimental
 
 type Pred(T) = T -> Bool;
 
@@ -59,14 +59,6 @@ type Pred(T) = T -> Bool;
 //
 // conditional execution
 //
-
-/**
- * Return the value of an evironment variable.
- * @param name the name of the environment variable to query
- * @return the value of the environment varaible, or an empty string
- * if the named value does not exist
- */
-intrinsic getenv(name:String) -> String;
 
 /**
  * Guarded execution. If the given condition is true, return the
@@ -120,9 +112,21 @@ intrinsic <T> if(c : Bool, y : () -> T, z : () -> T) -> T;
 intrinsic <T> iif(c : Bool, t : T, f : T) -> T;
 
 /**
+ * Conditional execution of a block of code iff predicate is true.
+ * @param c predicate boolean condition
+ * @param b block to execute
+ */
+intrinsic <T> when(c : Bool, b : () -> T) -> ();
+
+/**
+ * generalized conditional. sugared to infix ?
+ */
+intrinsic <K, V:[*], R>
+    cond(sel : Var(Assoc(K, V)), cases : Rec(Assoc(K, Cone(V, R)))) -> R;
+
+/**
  * runs the function in the map indicated by the selector,
  * and return the result.
- * TODO retype using keyset selector and rectype for cases
  *
  * @param selector key indicating a selector.
  * @param cases map of selectors to lambdas.
@@ -132,13 +136,6 @@ intrinsic <T> iif(c : Bool, t : T, f : T) -> T;
  * @endcode
  */
 <K, V> switch(sel : K, cases : [ K : () -> V ]) { cases[sel]() };
-
-/**
- * Conditional execution of a block of code iff predicate is true.
- * @param c predicate boolean condition
- * @param b block to execute
- */
-intrinsic <T> when(c : Bool, b : () -> T) -> ();
 
 // ------------------------------------------------------------------
 
@@ -587,6 +584,52 @@ run(b) { b() };
  * @return returns the value v
  */
 id(v) { v };
+
+/**
+ * Simple function memoizer. Results are stored in a simple
+ * argument-indexed map, which grows unrestrictedly.
+ * @param f a function
+ * @return a function with the same signature as f, which saves
+ * and reuses results.
+ * TODO require f be a pure function once constraint is available
+ */
+memo(f)
+{
+    m = box([:]);
+
+    { a =>
+        if(iskey(*m, a), { (*m)[a] }, {
+            v = f(a);
+            m <- { mapset($0, a, v) };
+            v
+        })
+    }
+};
+
+/**
+ * TODO memoizer using variant-returning map lookup function
+ *
+
+// map get with variant result
+// intrinsify
+look(m, k) {
+    if(iskey(m,k), {true ! m[k]}, {false ! ()})
+};
+
+memoize(f) {
+    m = box([:]);
+    { a =>
+        look(*m, a) ? (true: id, false: {
+            v = f(a);
+            m <- { mapset($0, a, v) };
+            v
+        })
+    }
+};
+
+ *
+ */
+
 
 // ------------------------------------------------------------------
 
@@ -1550,7 +1593,7 @@ intrinsic <T> drop(x:Int, y:[T]) -> [T];
 /**
  * evaluate f at each position of a list, using the value at that position
  * as the left argument, and the next value as the right argument. Begin with
- * f(init, first(list)).
+ * f(init, head(list)).
  * @param init initial value for left argument to f
  * @param f function to be evaluated
  * @param args list of values
@@ -1615,12 +1658,6 @@ intrinsic <T> filter(x:[T], y:(T -> Bool)) -> [T];
 intrinsic <T> find(x:[T], y:T) -> Int;
 
 /**
- * @param x List
- * @return First element of non-empty list.
- */
-intrinsic <T> first(x:[T]) -> T;
-
-/**
  * given a predicate and a list of values, return the position of the
  * first item that satisfies the predicate. If none does, return the
  * size of the list
@@ -1660,6 +1697,12 @@ intrinsic fromto(x:Int, y:Int) -> [Int];
  * @return A map from keys to collections of values.
  */
 intrinsic <K, V> group(keys : [K], vals : [V]) -> [K : [V]];
+
+/**
+ * @param x List
+ * @return head element of non-empty list.
+ */
+intrinsic <T> head(x:[T]) -> T;
 
 /**
  * Create a list of indexes: index(list) == count(size(list)).
@@ -1778,13 +1821,6 @@ intrinsic <T> remove(x:[T], y:T) -> [T];
 intrinsic <T> rep(x:Int, y:T) -> [T];
 
 /**
- * TODO: empty list throws
- * @param x list of items
- * @return A new list of items x, minus the first value.
- */
-intrinsic <T> rest(x:[T]) -> [T];
-
-/**
  * list reverse
  * @param list list of items
  * @return a new list with the items in reverse order
@@ -1851,6 +1887,13 @@ starts(sizes : [Int]) -> [Int]
 {
     drop(-1, scan((+), 0, sizes))
 };
+
+/**
+ * Note: empty list throws, currently
+ * @param x list of items
+ * @return A new list of items x, minus the first value.
+ */
+intrinsic <T> tail(x:[T]) -> [T];
 
 /**
  * Takes first x items from list if x > 0, last -x if x < 0.
@@ -2198,8 +2241,7 @@ mapgetd(map, key, default)
 cross(xs, ys)
 {
     xn = size(xs);
-    ixs = count(xn * size(ys));
-    zip(mapll(ixs | { $0 % xn }, xs), mapll(ixs | { $0 / xn }, ys))
+    flatten(ys | { zip(xs, rep(xn, $0)) })
 };
 
 /**
@@ -2531,7 +2573,7 @@ postdec(b)
 //
 // CAS and variations.
 // In all cases, boxes are owned up front, making the
-// rest of the transaction inevitable, mod (a) outer
+// tail of the transaction inevitable, mod (a) outer
 // transactions and (b) box acquisition in passed
 // functions.
 //
@@ -2806,6 +2848,14 @@ intrinsic assert(c : Bool, m : String) -> ();
  * @return float value greater than or equal to 0.0 and less than 1.0.
  */
 intrinsic frand() -> Double;
+
+/**
+ * Return the value of an evironment variable.
+ * @param name the name of the environment variable to query
+ * @return the value of the environment varaible, or an empty string
+ * if the named value does not exist
+ */
+intrinsic getenv(name:String) -> String;
 
 /**
  * @return current time in millis.

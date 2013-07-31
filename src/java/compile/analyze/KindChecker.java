@@ -58,27 +58,15 @@ public final class KindChecker extends TypeVisitorBase<Object>
 
             visitType(app.getArg());
 
-            // NOTE
-            if (base instanceof TypeCons)
-            {
-                final Type origArg = app.getArg();
-                final Type newArg = Types.applyArgCoercions((TypeCons)base, origArg);
-                if (newArg != origArg)
-                {
-                    visitType(newArg);
-                    app.setArg(newArg);
-                }
-            }
-
             final Type arg = app.getArg();
             final Kind argKind = arg.getKind();
 
-            if (arg instanceof TypeRef && ((TypeRef)arg).getBinding() == null) 
+            // TODO fix
+            if (arg instanceof TypeRef && ((TypeRef)arg).getBinding() == null)
             {
                 // Unresolved reference.  Don't know the kind yet so we can't check it
                 return null;
             }
-
 
             if (!argKind.equals(paramKind))
             {

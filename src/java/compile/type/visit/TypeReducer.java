@@ -12,11 +12,13 @@ package compile.type.visit;
 
 import compile.Loc;
 import compile.Session;
-import compile.term.IntLiteral;
 import compile.term.Term;
 import compile.type.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * Performs reduction on type terms.
@@ -76,28 +78,10 @@ public final class TypeReducer extends TypeTransformerBase
                     final List<Type> results = new ArrayList<Type>();
 
                     for (final Type item : list.getItems())
-                        results.add(Types.app(tcon, item));
+                        results.add(Types.app(loc, tcon, item));
 
                     return new TypeList(loc, results);
                 }
-            }
-        }
-        else if (base == Types.INDEX)
-        {
-            if (arg instanceof TypeList)
-            {
-                final TypeList items = (TypeList)arg;
-                final LinkedHashSet<Term> vals = new LinkedHashSet<Term>();
-
-                int i = 0;
-                for (final Type item : items.getItems())
-                {
-                    final IntLiteral val = new IntLiteral(item.getLoc(), i);
-                    i++;
-                    vals.add(val);
-                }
-
-                return new ChoiceType(loc, Types.INT, vals);
             }
         }
         else if (base == Types.ASSOC)
@@ -108,7 +92,7 @@ public final class TypeReducer extends TypeTransformerBase
                 final Type keyType = args.get(0);
                 final Type valTypes = args.get(1);
 
-                if (keyType instanceof ChoiceType && valTypes instanceof TypeList)
+                if (keyType instanceof EnumType && valTypes instanceof TypeList)
                 {
                     final EnumType keyEnum = (EnumType)keyType;
 
@@ -133,7 +117,28 @@ public final class TypeReducer extends TypeTransformerBase
                         members.put(keyTerm, valType);
                     }
 
-                    return new TypeMap(loc, keyType, members);
+                    return new TypeMap(loc, keyEnum, members);
+                }
+            }
+        }
+        else if (base == Types.CONE)
+        {
+            if (arg instanceof TypeTuple)
+            {
+                final List<Type> args = ((TypeTuple)arg).getMembers();
+                final Type domTypes = args.get(0);
+                final Type codType = args.get(1);
+
+                if (domTypes instanceof TypeList)
+                {
+                    final List<Type> domTypeList = ((TypeList)domTypes).getItems();
+
+                    final ArrayList<Type> items = new ArrayList<Type>();
+
+                    for (final Type domType : domTypeList)
+                        items.add(Types.fun(domType.getLoc(), domType, codType));
+
+                    return new TypeList(loc, items);
                 }
             }
         }

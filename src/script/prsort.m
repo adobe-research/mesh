@@ -84,10 +84,10 @@ again()
 // used by mouse click handler, below
 STATETRANS =
 [
-    READY: (#state: WORKING, #action: startwork),
-    WORKING: (#state: SKIPPING, #action: {()}),
-    SKIPPING: (#state: SKIPPING, #action: {()}),
-    DONE: (#state: WORKING, #action: again)
+    READY: (state: WORKING, action: startwork),
+    WORKING: (state: SKIPPING, action: {()}),
+    SKIPPING: (state: SKIPPING, action: {()}),
+    DONE: (state: WORKING, action: again)
 ];
 
 //

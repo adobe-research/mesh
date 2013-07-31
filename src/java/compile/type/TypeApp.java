@@ -109,6 +109,8 @@ public final class TypeApp extends ScopeType
         if (inEval)
             return this;
 
+        inEval = true;
+
         final Type baseEval = base.deref().eval();
         final Type argEval = arg.deref().eval();
 
@@ -159,8 +161,8 @@ public final class TypeApp extends ScopeType
         final Type bodySubst = new TypeApplier(body, argMap).apply();
 
         // evaluate body with args substituted for params
-        inEval = true;
         reduced = bodySubst.eval();
+
         inEval = false;
 
         if (Session.isDebug())
@@ -229,7 +231,7 @@ public final class TypeApp extends ScopeType
             return SubstMap.EMPTY;
 
         if (other instanceof TypeVar)
-            return SubstMap.bindVar(loc, (TypeVar)other, this);
+            return SubstMap.bindVar(loc, (TypeVar)other, this, env);
 
         // if our application expression can be evaluated, unify against that.
         if (isAbsApply())
@@ -255,13 +257,44 @@ public final class TypeApp extends ScopeType
         {
             // other is not an application expression, but kinds match.
             // other type classes do opportunistic matching of type apps
-            // implementations of unify. This approach is really ad-hoc,
-            // needs to be rationalized.
+            // This approach is really ad-hoc, needs to be rationalized.
 
             return otherEval.unify(loc, this, env);
         }
 
         return null;
+    }
+
+    public SubstMap subsume(final Loc loc, final Type other, final TypeEnv env)
+    {
+        if (env.checkVisited(this, other))
+            return SubstMap.EMPTY;
+
+        if (other instanceof TypeVar)
+            return ((TypeVar)other).getConstraint().satisfy(loc, this, env);
+
+        // if our application expression can be evaluated, unify against that.
+        if (isAbsApply())
+            return eval().unify(loc, other, env);
+
+        final Type otherEval = other.deref().eval();
+
+        if (!(otherEval instanceof TypeApp))
+        {
+            Session.error("TypeApp.subsume(): non-TypeApp/TypeVar arg: {0} (this = {1})",
+                otherEval.dump(), dump());
+
+            return null;
+        }
+
+        final TypeApp app = (TypeApp)otherEval;
+
+        final SubstMap subst = base.subsume(loc, app.base, env);
+
+        if (subst == null)
+            return null;
+
+        return subst.compose(loc, arg.subsume(loc, app.arg, env));
     }
 
     public boolean equiv(final Type other, final EquivState state)

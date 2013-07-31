@@ -35,6 +35,11 @@ final class SingletonList extends PersistentList
         return 1;
     }
 
+    public Object head()
+    {
+        return value;
+    }
+
     public Object get(final int index)
     {
         if (index > 0)
@@ -78,6 +83,11 @@ final class SingletonList extends PersistentList
     public ListValue subList(final int from, final int to)
     {
         return Sublist.create(this, from, to);
+    }
+
+    public ListValue subList(final int from)
+    {
+        return Sublist.create(this, from, 1);
     }
 
     public Iterator<Object> iterator(final int from, final int to)

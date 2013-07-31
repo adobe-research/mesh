@@ -11,6 +11,7 @@
 package compile.type;
 
 import compile.Loc;
+import compile.type.constraint.Constraint;
 import compile.type.kind.Kind;
 
 import java.util.Map;
@@ -48,13 +49,22 @@ public interface TypeEnv
 
     /**
      * create new implicit type var, guaranteed unique within this type check.
+     * Kind is given, constraint is ANY
      */
     TypeVar freshVar(final Loc loc, final Kind kind);
 
     /**
-     * var carries param name and kind
+     * create new implicit type var, guaranteed unique within this type check.
+     * Kind and constraint are given
      */
-    TypeVar freshVar(final TypeParam typeParam);
+    TypeVar freshVar(final Loc loc, final Kind kind, final Constraint constraint);
+
+    /**
+     * create new implicit type var, guaranteed unique within this type check.
+     * particulars are taken from param (which is also stored) except for
+     * constraint, which must be a prebuild instance of param constraint
+     */
+    TypeVar freshVar(final TypeParam param);
 
     /**
      * attempt to unify two types, maybe adding substitutions in the process

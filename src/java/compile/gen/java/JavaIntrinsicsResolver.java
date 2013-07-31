@@ -135,7 +135,7 @@ public final class JavaIntrinsicsResolver implements IntrinsicsResolver.Impl
             {
                 final List<Type> tuple = ((TypeTuple)arg).getMembers();
                 if (tuple.size() == 2)
-                    return new Pair<Type,Type>(tuple.get(0), tuple.get(1));
+                    return Pair.create(tuple.get(0), tuple.get(1));
             }
         }
         return null;
