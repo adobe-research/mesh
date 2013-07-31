@@ -1,6 +1,7 @@
 # The Mesh Programming Language
 
 This is the repo for the Mesh language project.
+Mesh was created by Basil Hosmer.
 
 **NOTE: Mesh is pre-Alpha at present, pretty much undocumented,
 and in general not that much fun to explore, yet.** For more information
