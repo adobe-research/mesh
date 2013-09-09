@@ -29,20 +29,19 @@ final class EmptyList extends PersistentList
     {
     }
 
-    public int size()
+    // PersistentList
+
+    public PersistentList appendUnsafe(final Object value)
     {
-        return 0;
+        return append(value);
     }
 
-    public Object head()
+    public PersistentList updateUnsafe(final int index, final Object value)
     {
-        throw new IndexOutOfBoundsException();
+        return update(index, value);
     }
 
-    public Object get(final int index)
-    {
-        throw new IndexOutOfBoundsException();
-    }
+    // ListValue
 
     public int find(final Object value)
     {
@@ -54,29 +53,9 @@ final class EmptyList extends PersistentList
         return single(value);
     }
 
-    public PersistentList appendUnsafe(final Object value)
-    {
-        return append(value);
-    }
-
     public PersistentList update(final int index, final Object value)
     {
         throw new IndexOutOfBoundsException();
-    }
-
-    public PersistentList updateUnsafe(final int index, final Object value)
-    {
-        return update(index, value);
-    }
-
-    public ListValue subList(final int from, final int to)
-    {
-        return Sublist.create(this, from, to);
-    }
-
-    public ListValue subList(final int from)
-    {
-        return Sublist.create(this, from);
     }
 
     public Iterator<Object> iterator(final int from, final int to)
@@ -102,5 +81,22 @@ final class EmptyList extends PersistentList
     public ListValue select(final MapValue map)
     {
         return EMPTY;
+    }
+
+    // List<Object>
+
+    public int size()
+    {
+        return 0;
+    }
+
+    public Object get(final int index)
+    {
+        throw new IndexOutOfBoundsException();
+    }
+
+    public ListValue subList(final int from, final int to)
+    {
+        return Sublist.create(this, from, to);
     }
 }

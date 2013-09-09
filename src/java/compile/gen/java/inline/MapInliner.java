@@ -26,6 +26,8 @@ import java.util.List;
  * Try inlining calls to {@link runtime.intrinsic._map}.
  * In particular, translate map(zip(...), f) into mapz((...), f).
  *
+ * TODO: not a late-stage inline. Move to *Reducer stage
+ *
  * @author Basil Hosmer
  */
 public class MapInliner implements Inliner

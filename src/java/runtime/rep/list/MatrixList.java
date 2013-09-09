@@ -21,7 +21,7 @@ import java.util.NoSuchElementException;
  *
  * @author Basil Hosmer
  */
-public final class MatrixList implements ListValue
+public final class MatrixList extends AbstractListValue
 {
     //
     // instance
@@ -40,23 +40,7 @@ public final class MatrixList implements ListValue
         assert stride > 0;
     }
 
-    public int size()
-    {
-        return size;
-    }
-
-    public Object head()
-    {
-        return ((ListValue)lists.head()).head();
-    }
-
-    public Object get(final int index)
-    {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException();
-
-        return ((ListValue)lists.get(index / stride)).get(index % stride);
-    }
+    // ListValue
 
     public int find(final Object value)
     {
@@ -87,65 +71,6 @@ public final class MatrixList implements ListValue
 
         return new MatrixList(
             lists.update(li, list.update(index % stride, value)), stride);
-    }
-
-    public ListValue subList(final int from, final int to)
-    {
-        return Sublist.create(this, from, to);
-    }
-
-    public ListValue subList(final int from)
-    {
-        return Sublist.create(this, from);
-    }
-
-    public ListValue apply(final Lambda f)
-    {
-        final PersistentList result = PersistentList.alloc(size);
-
-        int i = 0;
-        for (final Object list : lists)
-            for (final Object item : (ListValue)list)
-                result.updateUnsafe(i++, f.apply(item));
-
-        return result;
-    }
-
-    public void run(final Lambda f)
-    {
-        for (final Object list : lists)
-            ((ListValue)list).run(f);
-    }
-
-    public ListValue select(final ListValue base)
-    {
-        final PersistentList result = PersistentList.alloc(size);
-
-        int i = 0;
-        for (final Object list : lists)
-            for (final Object item : (ListValue)list)
-                result.updateUnsafe(i++, base.get((Integer)item));
-
-        return result;
-    }
-
-    public ListValue select(final MapValue map)
-    {
-        final PersistentList result = PersistentList.alloc(size);
-
-        int i = 0;
-        for (final Object list : lists)
-            for (final Object item : (ListValue)list)
-                result.updateUnsafe(i++, map.get(item));
-
-        return result;
-    }
-
-    // Iterable
-
-    public Iterator<Object> iterator()
-    {
-        return iterator(0, size);
     }
 
     public Iterator<Object> iterator(final int from, final int to)
@@ -191,43 +116,65 @@ public final class MatrixList implements ListValue
         };
     }
 
-    @Override
-    public final boolean equals(final Object obj)
+    public ListValue apply(final Lambda f)
     {
-        if (obj == this)
-        {
-            return true;
-        }
-        else if (obj instanceof ListValue)
-        {
-            final ListValue other = (ListValue)obj;
+        final PersistentList result = PersistentList.alloc(size);
 
-            if (size() != other.size())
-                return false;
+        int i = 0;
+        for (final Object list : lists)
+            for (final Object item : (ListValue)list)
+                result.updateUnsafe(i++, f.apply(item));
 
-            final Iterator<?> e1 = iterator();
-            final Iterator<?> e2 = other.iterator();
-
-            while (e1.hasNext() && e2.hasNext())
-                if (!e1.next().equals(e2.next()))
-                    return false;
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return result;
     }
 
-    @Override
-    public final int hashCode()
+    public void run(final Lambda f)
     {
-        int hash = 1;
+        for (final Object list : lists)
+            ((ListValue)list).run(f);
+    }
 
-        for (final Object obj : this)
-            hash = 31 * hash + obj.hashCode();
+    public ListValue select(final ListValue base)
+    {
+        final PersistentList result = PersistentList.alloc(size);
 
-        return hash;
+        int i = 0;
+        for (final Object list : lists)
+            for (final Object item : (ListValue)list)
+                result.updateUnsafe(i++, base.get((Integer)item));
+
+        return result;
+    }
+
+    public ListValue select(final MapValue map)
+    {
+        final PersistentList result = PersistentList.alloc(size);
+
+        int i = 0;
+        for (final Object list : lists)
+            for (final Object item : (ListValue)list)
+                result.updateUnsafe(i++, map.get(item));
+
+        return result;
+    }
+
+    // List<Object>
+
+    public int size()
+    {
+        return size;
+    }
+
+    public Object get(final int index)
+    {
+        if (index < 0 || index >= size)
+            throw new IndexOutOfBoundsException();
+
+        return ((ListValue)lists.get(index / stride)).get(index % stride);
+    }
+
+    public ListValue subList(final int from, final int to)
+    {
+        return Sublist.create(this, from, to);
     }
 }

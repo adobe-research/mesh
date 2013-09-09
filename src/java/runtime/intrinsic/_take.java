@@ -56,7 +56,9 @@ public final class _take extends IntrinsicLambda
             else if (extent < size)
             {
                 // sublist cases
-                return n >= 0 ? list.subList(0, n) : list.subList(size + n, size);
+                return n >= 0 ?
+                    (ListValue)list.subList(0, n) :
+                    (ListValue)list.subList(size + n, size);
             }
             else
             {

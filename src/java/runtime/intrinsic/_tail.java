@@ -35,6 +35,6 @@ public final class _tail extends IntrinsicLambda
 
     public static ListValue invoke(final ListValue list)
     {
-        return list.subList(1);
+        return (ListValue)list.subList(1, list.size());
     }
 }

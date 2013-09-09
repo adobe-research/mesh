@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
  *
  * @author Basil Hosmer
  */
-public final class ChainedLists implements ListValue
+public final class ChainedLists extends AbstractListValue
 {
     /**
      * Max list size to actually create new flat list--
@@ -218,47 +218,7 @@ public final class ChainedLists implements ListValue
         this.size = bases[lists.size()];
     }
 
-    public int size()
-    {
-        return size;
-    }
-
-    public Object head()
-    {
-        return ((ListValue)lists.head()).head();
-    }
-
-    public Object get(final int index)
-    {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException();
-
-        final int li = listIndexForItemIndex(index);
-        return ((ListValue)lists.get(li)).get(index - bases[li]);
-    }
-
-    /**
-     * Return position of list in {@link #lists} containing
-     * the given item index.
-     */
-    private int listIndexForItemIndex(final int index)
-    {
-        int n = bases.length / 2;
-        int i = n;
-        do
-        {
-            n = Math.max(n / 2, 1);
-            final boolean too_low = bases[i + 1] <= index;
-            final boolean too_high = bases[i] > index;
-            if (too_low)
-                i += n;
-            else if (too_high)
-                i -= n;
-            else
-                return i;
-        }
-        while (true);
-    }
+    // ListValue
 
     public int find(final Object value)
     {
@@ -300,14 +260,48 @@ public final class ChainedLists implements ListValue
             lists.update(li, list.update(index - bases[li], value)), bases);
     }
 
+    public Iterator<Object> iterator(final int from, final int to)
+    {
+        final int li = from == 0 ? 0 : listIndexForItemIndex(from);
+
+        return new Iterator<Object>()
+        {
+            final int base = bases[li];
+            final Iterator<?> listIter = lists.iterator(li, lists.size());
+
+            Iterator<?> itemIter = ((ListValue)listIter.next()).
+                iterator(from - base, bases[li + 1] - base);
+
+            int i = from;
+
+            public final boolean hasNext()
+            {
+                return i < to;
+            }
+
+            public final Object next()
+            {
+                if (i == to)
+                    throw new NoSuchElementException();
+
+                if (!itemIter.hasNext())
+                    itemIter = ((ListValue)listIter.next()).iterator();
+
+                i++;
+
+                return itemIter.next();
+            }
+
+            public final void remove()
+            {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
     public ListValue subList(final int from, final int to)
     {
         return Sublist.create(this, from, to);
-    }
-
-    public ListValue subList(final int from)
-    {
-        return Sublist.create(this, from);
     }
 
     public ListValue apply(final Lambda f)
@@ -352,89 +346,42 @@ public final class ChainedLists implements ListValue
         return result;
     }
 
-    // Iterable
+    // List<Object>
 
-    public Iterator<Object> iterator()
+    public int size()
     {
-        return iterator(0, size);
+        return size;
     }
 
-    public Iterator<Object> iterator(final int from, final int to)
+    public Object get(final int index)
     {
-        final int li = from == 0 ? 0 : listIndexForItemIndex(from);
+        if (index < 0 || index >= size)
+            throw new IndexOutOfBoundsException();
 
-        return new Iterator<Object>()
-        {
-            final int base = bases[li];
-            final Iterator<?> listIter = lists.iterator(li, lists.size());
-
-            Iterator<?> itemIter = ((ListValue)listIter.next()).
-                iterator(from - base, bases[li + 1] - base);
-
-            int i = from;
-
-            public final boolean hasNext()
-            {
-                return i < to;
-            }
-
-            public final Object next()
-            {
-                if (i == to)
-                    throw new NoSuchElementException();
-
-                if (!itemIter.hasNext())
-                    itemIter = ((ListValue)listIter.next()).iterator();
-
-                i++;
-
-                return itemIter.next();
-            }
-
-            public final void remove()
-            {
-                throw new UnsupportedOperationException();
-            }
-        };
+        final int li = listIndexForItemIndex(index);
+        return ((ListValue)lists.get(li)).get(index - bases[li]);
     }
 
-    @Override
-    public final boolean equals(final Object obj)
+    /**
+     * Return position of list in {@link #lists} containing
+     * the given item index.
+     */
+    private int listIndexForItemIndex(final int index)
     {
-        if (obj == this)
+        int n = bases.length / 2;
+        int i = n;
+        do
         {
-            return true;
+            n = Math.max(n / 2, 1);
+            final boolean too_low = bases[i + 1] <= index;
+            final boolean too_high = bases[i] > index;
+            if (too_low)
+                i += n;
+            else if (too_high)
+                i -= n;
+            else
+                return i;
         }
-        else if (obj instanceof ListValue)
-        {
-            final ListValue other = (ListValue)obj;
-
-            if (size() != other.size())
-                return false;
-
-            final Iterator<?> e1 = iterator();
-            final Iterator<?> e2 = other.iterator();
-
-            while (e1.hasNext() && e2.hasNext())
-                if (!e1.next().equals(e2.next()))
-                    return false;
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    @Override
-    public final int hashCode()
-    {
-        int hash = 1;
-
-        for (final Object obj : this)
-            hash = 31 * hash + obj.hashCode();
-
-        return hash;
+        while (true);
     }
 }

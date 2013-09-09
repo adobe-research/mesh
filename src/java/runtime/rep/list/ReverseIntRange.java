@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
  *
  * @author Basil Hosmer
  */
-public final class ReverseIntRange implements ListValue
+public final class ReverseIntRange extends AbstractListValue
 {
     private final int start;
     private final int end;
@@ -37,23 +37,7 @@ public final class ReverseIntRange implements ListValue
         this.size = start - end;
     }
 
-    public final int size()
-    {
-        return size;
-    }
-
-    public Object head()
-    {
-        return start;
-    }
-
-    public Object get(final int index)
-    {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException();
-
-        return start - index;
-    }
+    // ListValue
 
     public int find(final Object value)
     {
@@ -71,16 +55,33 @@ public final class ReverseIntRange implements ListValue
         return PersistentList.init(iterator(), size()).updateUnsafe(index, value);
     }
 
-    public ListValue subList(final int from, final int to)
+    public Iterator<Object> iterator(final int from, final int to)
     {
-        checkRange(from, to);
-        return new ReverseIntRange(start - from, start - to);
-    }
+        assert from >= 0 && to <= size;
 
-    public ListValue subList(final int from)
-    {
-        checkRange(from, size);
-        return new ReverseIntRange(start - from, start - size);
+        return new Iterator<Object>()
+        {
+            int i = start - from;
+            final int stop = start - to;
+
+            public boolean hasNext()
+            {
+                return i > stop;
+            }
+
+            public Object next()
+            {
+                if (!hasNext())
+                    throw new NoSuchElementException();
+
+                return i--;
+            }
+
+            public void remove()
+            {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     public ListValue apply(final Lambda f)
@@ -121,40 +122,25 @@ public final class ReverseIntRange implements ListValue
         return result;
     }
 
-    // Iterable
+    // List<Object>
 
-    public Iterator<Object> iterator()
+    public final int size()
     {
-        return iterator(0, size);
+        return size;
     }
 
-    public Iterator<Object> iterator(final int from, final int to)
+    public Object get(final int index)
     {
-        assert from >= 0 && to <= size;
+        if (index < 0 || index >= size)
+            throw new IndexOutOfBoundsException();
 
-        return new Iterator<Object>()
-        {
-            int i = start - from;
-            final int stop = start - to;
+        return start - index;
+    }
 
-            public boolean hasNext()
-            {
-                return i > stop;
-            }
-
-            public Object next()
-            {
-                if (!hasNext())
-                    throw new NoSuchElementException();
-
-                return i--;
-            }
-
-            public void remove()
-            {
-                throw new UnsupportedOperationException();
-            }
-        };
+    public ListValue subList(final int from, final int to)
+    {
+        checkRange(from, to);
+        return new ReverseIntRange(start - from, start - to);
     }
 
     private boolean checkRange(final int from, final int to)
@@ -167,55 +153,5 @@ public final class ReverseIntRange implements ListValue
             throw new IndexOutOfBoundsException("(to = " + to + ") > (size = " + size() + ")");
 
         return true;
-    }
-
-    @Override
-    public final boolean equals(final Object obj)
-    {
-        if (obj == this)
-        {
-            return true;
-        }
-        else if (obj instanceof ReverseIntRange)
-        {
-            final ReverseIntRange other = (ReverseIntRange)obj;
-            return start == other.start && end == other.end;
-        }
-        else if (obj instanceof ListValue)
-        {
-            final ListValue other = (ListValue)obj;
-
-            if (size() != other.size())
-                return false;
-
-            final Iterator<?> e1 = iterator();
-            final Iterator<?> e2 = other.iterator();
-
-            while (e1.hasNext() && e2.hasNext())
-            {
-                final Object o1 = e1.next();
-                final Object o2 = e2.next();
-
-                if (!o1.equals(o2))
-                    return false;
-            }
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    @Override
-    public final int hashCode()
-    {
-        int hash = 1;
-
-        for (final Object obj : this)
-            hash = 31 * hash + obj.hashCode();
-
-        return hash;
     }
 }

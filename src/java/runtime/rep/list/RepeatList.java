@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
  *
  * @author Basil Hosmer
  */
-public final class RepeatList implements ListValue
+public final class RepeatList extends AbstractListValue
 {
     private final int size;
     private final Object value;
@@ -33,23 +33,7 @@ public final class RepeatList implements ListValue
         this.value = value;
     }
 
-    public int size()
-    {
-        return size;
-    }
-
-    public Object head()
-    {
-        return value;
-    }
-
-    public Object get(final int index)
-    {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException();
-
-        return value;
-    }
+    // ListValue
 
     public int find(final Object val)
     {
@@ -64,49 +48,6 @@ public final class RepeatList implements ListValue
     public PersistentList update(final int index, final Object value)
     {
         return PersistentList.init(iterator(), size).updateUnsafe(index, value);
-    }
-
-    public ListValue subList(final int from, final int to)
-    {
-        checkRange(from, to);
-        return new RepeatList(to - from, value);
-    }
-
-    public ListValue subList(final int from)
-    {
-        checkRange(from, size);
-        return new RepeatList(size - from, value);
-    }
-
-    public ListValue apply(final Lambda f)
-    {
-        final PersistentList result = PersistentList.alloc(size);
-
-        for (int i = 0; i < size; i++)
-            result.updateUnsafe(i, f.apply(value));
-
-        return result;
-    }
-
-    public void run(final Lambda f)
-    {
-        for (int i = 0; i < size; i++)
-            f.apply(value);
-    }
-
-    public ListValue select(final ListValue base)
-    {
-        return new RepeatList(size(),  base.get((Integer)value));
-    }
-
-    public ListValue select(final MapValue base)
-    {
-        return new RepeatList(size(),  base.get(value));
-    }
-
-    public Iterator<Object> iterator()
-    {
-        return iterator(0, size);
     }
 
     public Iterator<Object> iterator(final int from, final int to)
@@ -138,6 +79,53 @@ public final class RepeatList implements ListValue
         };
     }
 
+    public ListValue apply(final Lambda f)
+    {
+        final PersistentList result = PersistentList.alloc(size);
+
+        for (int i = 0; i < size; i++)
+            result.updateUnsafe(i, f.apply(value));
+
+        return result;
+    }
+
+    public void run(final Lambda f)
+    {
+        for (int i = 0; i < size; i++)
+            f.apply(value);
+    }
+
+    public ListValue select(final ListValue base)
+    {
+        return new RepeatList(size(),  base.get((Integer)value));
+    }
+
+    public ListValue select(final MapValue base)
+    {
+        return new RepeatList(size(),  base.get(value));
+    }
+
+    // List<Object>
+
+    public int size()
+    {
+        return size;
+    }
+
+    public Object get(final int index)
+    {
+        if (index < 0 || index >= size)
+            throw new IndexOutOfBoundsException();
+
+        return value;
+    }
+
+    public ListValue subList(final int from, final int to)
+    {
+        checkRange(from, to);
+        return new RepeatList(to - from, value);
+    }
+
     private boolean checkRange(final int from, final int to)
     {
         if (from < 0)
@@ -148,45 +136,5 @@ public final class RepeatList implements ListValue
             throw new IndexOutOfBoundsException("(to = " + to + ") > (size = " + size() + ")");
 
         return true;
-    }
-
-    @Override
-    public final boolean equals(final Object o)
-    {
-        if (o == this)
-        {
-            return true;
-        }
-        else if (o instanceof ListValue)
-        {
-            final ListValue other = (ListValue)o;
-
-            if (size() != other.size())
-                return false;
-
-            final Iterator<?> e1 = iterator();
-            final Iterator<?> e2 = other.iterator();
-
-            while (e1.hasNext() && e2.hasNext())
-                if (!e1.next().equals(e2.next()))
-                    return false;
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    @Override
-    public final int hashCode()
-    {
-        int hash = 1;
-
-        for (final Object obj : this)
-            hash = 31 * hash + obj.hashCode();
-
-        return hash;
     }
 }
