@@ -17,23 +17,24 @@ import java.util.Iterator;
 /**
  * Persistent list base class. Our subclasses are the "real"
  * lists, others are wrappers.
- *
+ * <p/>
  * Persistent lists are immutable, but facilitate copy-on-write
  * semantics by sharing internal structure with copies returned
  * by normally-mutating methods like {@link #append} and
  * {@link #update}.
- *
+ * <p/>
  * NOTE: the use of persistent data structures to support
  * copy-on-write semantics, and the use of Phil Bagwell's
  * mapped tries for their implementation, is inspired by
  * Rich Hickey's prioneering work in Clojure.
- *
+ * <p/>
  * {@link BigList} is the general implementation, others
  * take advantage of smaller data size to degenerate.
  *
  * @author Basil Hosmer
  */
-public abstract class PersistentList implements PersistentConstants, ListValue
+public abstract class PersistentList extends AbstractListValue
+    implements PersistentConstants
 {
     /**
      * Empty list singleton.
@@ -109,43 +110,7 @@ public abstract class PersistentList implements PersistentConstants, ListValue
      */
     abstract public PersistentList updateUnsafe(int index, Object value);
 
-    // ListValue
-
-    public final Iterator<Object> iterator()
-    {
-        return iterator(0, size());
-    }
-
     // Object
-
-    @Override
-    public final boolean equals(final Object obj)
-    {
-        if (obj == this)
-        {
-            return true;
-        }
-        else if (obj instanceof ListValue)
-        {
-            final ListValue other = (ListValue)obj;
-
-            if (size() != other.size())
-                return false;
-
-            final Iterator<?> e1 = iterator();
-            final Iterator<?> e2 = other.iterator();
-
-            while (e1.hasNext() && e2.hasNext())
-                if (!e1.next().equals(e2.next()))
-                    return false;
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
 
     @Override
     public final int hashCode()

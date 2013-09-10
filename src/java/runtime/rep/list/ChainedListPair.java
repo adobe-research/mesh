@@ -21,7 +21,7 @@ import java.util.NoSuchElementException;
  *
  * @author Basil Hosmer
  */
-public final class ChainedListPair implements ListValue
+public final class ChainedListPair extends AbstractListValue
 {
     /**
      * flattened list from list pair
@@ -50,23 +50,7 @@ public final class ChainedListPair implements ListValue
         this.size = this.lsize + this.rsize;
     }
 
-    public int size()
-    {
-        return size;
-    }
-
-    public Object head()
-    {
-        return llist.head();
-    }
-
-    public Object get(final int index)
-    {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException();
-
-        return index < lsize ? llist.get(index) : rlist.get(index - lsize);
-    }
+    // ListValue
 
     public int find(final Object value)
     {
@@ -87,48 +71,6 @@ public final class ChainedListPair implements ListValue
         return index < lsize ?
             new ChainedListPair(llist.update(index, value), rlist) :
             new ChainedListPair(llist, rlist.update(index - lsize, value));
-    }
-
-    public ListValue subList(final int from, final int to)
-    {
-        return to <= lsize ? Sublist.create(llist, from, to) :
-            from >= lsize ? Sublist.create(rlist, from - lsize, to - lsize) :
-            Sublist.create(this, from, to);
-    }
-
-    public ListValue subList(final int from)
-    {
-        return from >= lsize ?
-            Sublist.create(rlist, from - lsize) :
-            Sublist.create(this, from);
-    }
-
-    public ListValue apply(final Lambda f)
-    {
-        return new ChainedListPair(llist.apply(f), rlist.apply(f));
-    }
-
-    public void run(final Lambda f)
-    {
-        llist.run(f);
-        rlist.run(f);
-    }
-
-    public ListValue select(final ListValue base)
-    {
-        return new ChainedListPair(llist.select(base), rlist.select(base));
-    }
-
-    public ListValue select(final MapValue map)
-    {
-        return new ChainedListPair(llist.select(map), rlist.select(map));
-    }
-
-    // Iterable
-
-    public Iterator<Object> iterator()
-    {
-        return iterator(0, size);
     }
 
     public Iterator<Object> iterator(final int from, final int to)
@@ -167,43 +109,46 @@ public final class ChainedListPair implements ListValue
         };
     }
 
-    @Override
-    public final boolean equals(final Object obj)
+    public ListValue apply(final Lambda f)
     {
-        if (obj == this)
-        {
-            return true;
-        }
-        else if (obj instanceof ListValue)
-        {
-            final ListValue other = (ListValue)obj;
-
-            if (size() != other.size())
-                return false;
-
-            final Iterator<?> e1 = iterator();
-            final Iterator<?> e2 = other.iterator();
-
-            while (e1.hasNext() && e2.hasNext())
-                if (!e1.next().equals(e2.next()))
-                    return false;
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return new ChainedListPair(llist.apply(f), rlist.apply(f));
     }
 
-    @Override
-    public final int hashCode()
+    public void run(final Lambda f)
     {
-        int hash = 1;
+        llist.run(f);
+        rlist.run(f);
+    }
 
-        for (final Object obj : this)
-            hash = 31 * hash + obj.hashCode();
+    public ListValue select(final ListValue base)
+    {
+        return new ChainedListPair(llist.select(base), rlist.select(base));
+    }
 
-        return hash;
+    public ListValue select(final MapValue map)
+    {
+        return new ChainedListPair(llist.select(map), rlist.select(map));
+    }
+
+    // List<Object>
+
+    public int size()
+    {
+        return size;
+    }
+
+    public Object get(final int index)
+    {
+        if (index < 0 || index >= size)
+            throw new IndexOutOfBoundsException();
+
+        return index < lsize ? llist.get(index) : rlist.get(index - lsize);
+    }
+
+    public ListValue subList(final int from, final int to)
+    {
+        return to <= lsize ? Sublist.create(llist, from, to) :
+            from >= lsize ? Sublist.create(rlist, from - lsize, to - lsize) :
+                Sublist.create(this, from, to);
     }
 }

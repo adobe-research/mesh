@@ -73,7 +73,7 @@ public final class _tostr extends IntrinsicLambda
         else if (value instanceof Variant)
         {
             final Variant variant = (Variant)value;
-            return invoke(variant.getKey()) + " ! " + invoke(variant.getValue());
+            return dumpKey(variant.getKey()) + " ! " + invoke(variant.getValue());
         }
         else if (value instanceof Box)
         {
@@ -133,13 +133,16 @@ public final class _tostr extends IntrinsicLambda
         final ArrayList<String> prints = new ArrayList<String>(n);
         for (int i = 0; i < record.size(); i++)
         {
-            final Object key = record.getKey(i);
-            final String keyDump = key instanceof Symbol ?
-                ((Symbol)key).getValue() : invoke(key);
-
-            prints.add(keyDump + ": " + invoke(record.getValue(i)));
+            prints.add(dumpKey(record.getKey(i)) + ": " +
+                invoke(record.getValue(i)));
         }
 
         return "(" + StringUtils.join(prints, ", ") + ")";
+    }
+
+    private static String dumpKey(final Object key)
+    {
+        return key instanceof Symbol ?
+            ((Symbol)key).getValue() : invoke(key);
     }
 }

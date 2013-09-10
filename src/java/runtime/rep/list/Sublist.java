@@ -21,7 +21,7 @@ import java.util.Iterator;
  *
  * @author Basil Hosmer
  */
-final class Sublist implements ListValue
+final class Sublist extends AbstractListValue
 {
     /**
      * Percentage of backing list viewed by sublist.
@@ -50,20 +50,6 @@ final class Sublist implements ListValue
             new Sublist(list, from, to);
     }
 
-    /**
-     * factory, diverts some degenerate cases.
-     * TODO should make the same decision as {@link #subList}
-     */
-    public static ListValue create(final ListValue list, final int from)
-    {
-        final int size = list.size();
-
-        assert from >= 0 && from <= size;
-
-        return from == size ? PersistentList.EMPTY :
-            from == 0 ? list : new Sublist(list, from, size);
-    }
-
     //
     // instance
     //
@@ -79,23 +65,7 @@ final class Sublist implements ListValue
         this.to = to;
     }
 
-    public int size()
-    {
-        return to - from;
-    }
-
-    public Object head()
-    {
-        return list.get(from);
-    }
-
-    public Object get(final int index)
-    {
-        if (from + index >= to)
-            throw new IndexOutOfBoundsException();
-
-        return list.get(from + index);
-    }
+    // ListValue
 
     public int find(final Object value)
     {
@@ -122,39 +92,9 @@ final class Sublist implements ListValue
         return new Sublist(list.update(from + index, value), from, to);
     }
 
-    /**
-     * note the copy when we're using too little of a big backing list
-     * TODO move logic to {@link BigList#subList}
-     */
-    public ListValue subList(final int from, final int to)
+    public Iterator<Object> iterator(final int from, final int to)
     {
-        checkRange(from, to);
-
-        if (to == from)
-            return PersistentList.EMPTY;
-
-        final ListValue sub = list.subList(this.from + from, this.from + to);
-        final int subsize = sub.size();
-        final int listsize = list.size();
-
-        if (listsize / subsize > SUBLIST_PCT_COPY_THRESHOLD &&
-            listsize >= LIST_SIZE_COPY_THRESHOLD)
-        {
-            Logging.debug(
-                "SubList.subList, copy threshold exceeded, copying (size = {0}, subsize = {1})",
-                listsize, subsize);
-
-            return PersistentList.init(sub.iterator(), subsize);
-        }
-        else
-        {
-            return sub;
-        }
-    }
-
-    public ListValue subList(final int from)
-    {
-        return subList(from, size());
+        return list.iterator(this.from + from, this.from + to);
     }
 
     public ListValue apply(final Lambda f)
@@ -196,16 +136,49 @@ final class Sublist implements ListValue
         return result;
     }
 
-    // Iterable
+    // List<Object>
 
-    public Iterator<Object> iterator()
+    public int size()
     {
-        return iterator(0, size());
+        return to - from;
     }
 
-    public Iterator<Object> iterator(final int from, final int to)
+    public Object get(final int index)
     {
-        return list.iterator(this.from + from, this.from + to);
+        if (index < 0 || index >= to - from)
+            throw new IndexOutOfBoundsException();
+
+        return list.get(from + index);
+    }
+
+    /**
+     * note the copy when we're using too little of a big backing list
+     * TODO move logic to {@link BigList#subList}
+     */
+    public ListValue subList(final int from, final int to)
+    {
+        checkRange(from, to);
+
+        if (to == from)
+            return PersistentList.EMPTY;
+
+        final ListValue sub = (ListValue)list.subList(this.from + from, this.from + to);
+        final int subsize = sub.size();
+        final int listsize = list.size();
+
+        if (listsize / subsize > SUBLIST_PCT_COPY_THRESHOLD &&
+            listsize >= LIST_SIZE_COPY_THRESHOLD)
+        {
+            Logging.debug(
+                "SubList.subList, copy threshold exceeded, copying (size = {0}, subsize = {1})",
+                listsize, subsize);
+
+            return PersistentList.init(sub.iterator(), subsize);
+        }
+        else
+        {
+            return sub;
+        }
     }
 
     private boolean checkRange(final int from, final int to)
@@ -218,45 +191,5 @@ final class Sublist implements ListValue
             throw new IndexOutOfBoundsException("(to = " + to + ") > (size = " + size() + ")");
 
         return true;
-    }
-
-    @Override
-    public final boolean equals(final Object obj)
-    {
-        if (obj == this)
-        {
-            return true;
-        }
-        else if (obj instanceof ListValue)
-        {
-            final ListValue other = (ListValue)obj;
-
-            if (size() != other.size())
-                return false;
-
-            final Iterator<?> e1 = iterator();
-            final Iterator<?> e2 = other.iterator();
-
-            while (e1.hasNext() && e2.hasNext())
-                if (!e1.next().equals(e2.next()))
-                    return false;
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    @Override
-    public final int hashCode()
-    {
-        int hash = 1;
-
-        for (final Object obj : this)
-            hash = 31 * hash + obj.hashCode();
-
-        return hash;
     }
 }

@@ -12,18 +12,19 @@ import processing;
 // type V2 is a synonym for (Double, Double) - any pair of floats is a V2
 type V2 = (Double, Double);
 
-tov2(x:Int, y:Int) { (i2f(x), i2f(y)) };                    // V2 from pair of ints
 VZERO = (0.0, 0.0);                                         // zero vector
 
-add(a:V2, b:V2) { (a.0 + b.0, a.1 + b.1) };                 // sum of two vectors
+v2(x, y) { (i2f(x), i2f(y)) };                              // V2 from pair of ints
+
+add(a, b) { (a.0 + b.0, a.1 + b.1) };                       // sum of two vectors
 vsum(vs) { reduce(add, VZERO, vs) };                        // sum of a list of vectors
 vavg(vs) { scale(vsum(vs), fdivz(1.0, i2f(size(vs)))) };    // average of a list of vectors
-diff(a:V2, b:V2) { (a.0 -. b.0, a.1 -. b.1) };              // difference of two vectors
-scale(v:V2, f:Double) { (v.0 *. f, v.1 *. f) };              // scale a vector by a magnitude
+diff(a, b) { (a.0 -. b.0, a.1 -. b.1) };                    // difference of two vectors
+scale(v, f) { (v.0 *. f, v.1 *. f) };                       // scale a vector by a magnitude
 mag(x, y) { sqrt(mag2(x, y)) };                             // vector magnitude
 mag2(x, y) { fsq(x) + fsq(y) };                             // square of vector magnitude
-dist(a:V2, b:V2) { mag(diff(a, b)) };                       // distance (vectors are x,y positions)
-dot(a:V2, b:V2) { a.0 *. b.0 + a.1 *. b.1 };                // dot product
+dist(a, b) { mag(diff(a, b)) };                             // distance (vectors are x,y positions)
+dot(a, b) { a.0 *. b.0 + a.1 *. b.1 };                      // dot product
 
 // rotate a vector (offset from origin) through the angle represented by sin/cos
 rot(x, y, sin, cos) { (cos *. x + sin *. y, cos *. y -. sin *. x) };
@@ -473,7 +474,7 @@ startturntask()
 // create a batch of players, loop on turn() while playing
 startplay()
 {
-    newbatch(tov2(W/2, H/2), BATCH);
+    newbatch(v2(W/2, H/2), BATCH);
     startturntask()
 };
 
@@ -525,7 +526,7 @@ dragdist() { diff(dragstate().pos, *dragstartpos) };
 // initialize drag history, return current state
 initdrag()
 {
-    pos = tov2(prmouse());
+    pos = v2(prmouse());
     draghist := [(pos: pos, time: nanotime())];
     dragstartpos := pos;
     draginfo := hittest(pos)
@@ -534,7 +535,7 @@ initdrag()
 // update drag history, return current state
 updatedraghist()
 {
-    state = (pos: tov2(prmouse()), time: nanotime());
+    state = (pos: v2(prmouse()), time: nanotime());
     draghist <- { hist => append(take(-min(size(hist), HISTMAX - 1), hist), state) };
     state
 };
@@ -892,7 +893,7 @@ click()
 {
     switch(find([#LEFT,#RIGHT], prmousebutton()),
     [
-        0: { newbatch(tov2(prmouse()), BATCH) },
+        0: { newbatch(v2(prmouse()), BATCH) },
         1: killplayers,
         2: { () }
     ])
@@ -900,7 +901,7 @@ click()
 
 killplayers()
 {
-    removeplayers(keys(hittest(tov2(prmouse()))))
+    removeplayers(keys(hittest(v2(prmouse()))))
 };
 
 // add a calc task
@@ -953,7 +954,7 @@ spawn
         {
             when(!*splashing, release)
         },
-$        #keyTyped:
+        #keyTyped:
         {
             if(*splashing, togglesplash,
             {

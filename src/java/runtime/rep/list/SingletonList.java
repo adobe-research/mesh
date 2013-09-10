@@ -30,45 +30,11 @@ final class SingletonList extends PersistentList
         this.value = value;
     }
 
-    public int size()
-    {
-        return 1;
-    }
-
-    public Object head()
-    {
-        return value;
-    }
-
-    public Object get(final int index)
-    {
-        if (index > 0)
-            throw new IndexOutOfBoundsException();
-
-        return value;
-    }
-
-    public int find(final Object value)
-    {
-        return value.equals(this.value) ? 0 : 1;
-    }
-
-    public PersistentList append(final Object value)
-    {
-        return new SmallList(this.value, value);
-    }
+    // PersistentList
 
     public PersistentList appendUnsafe(final Object value)
     {
         return append(value);
-    }
-
-    public PersistentList update(final int index, final Object value)
-    {
-        if (index > 0)
-            throw new IndexOutOfBoundsException();
-
-        return new SingletonList(value);
     }
 
     public PersistentList updateUnsafe(final int index, final Object value)
@@ -80,14 +46,24 @@ final class SingletonList extends PersistentList
         return this;
     }
 
-    public ListValue subList(final int from, final int to)
+    // ListValue
+
+    public int find(final Object value)
     {
-        return Sublist.create(this, from, to);
+        return value.equals(this.value) ? 0 : 1;
     }
 
-    public ListValue subList(final int from)
+    public PersistentList append(final Object value)
     {
-        return Sublist.create(this, from, 1);
+        return new SmallList(this.value, value);
+    }
+
+    public PersistentList update(final int index, final Object value)
+    {
+        if (index > 0)
+            throw new IndexOutOfBoundsException();
+
+        return new SingletonList(value);
     }
 
     public Iterator<Object> iterator(final int from, final int to)
@@ -114,5 +90,25 @@ final class SingletonList extends PersistentList
     public ListValue select(final MapValue map)
     {
         return single(map.get(value));
+    }
+
+    // List<Object>
+
+    public int size()
+    {
+        return 1;
+    }
+
+    public Object get(final int index)
+    {
+        if (index != 0)
+            throw new IndexOutOfBoundsException();
+
+        return value;
+    }
+
+    public ListValue subList(final int from, final int to)
+    {
+        return Sublist.create(this, from, to);
     }
 }

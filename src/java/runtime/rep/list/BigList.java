@@ -76,57 +76,65 @@ public final class BigList extends PersistentList
         this.data = data;
     }
 
-    public final int size()
+    /**
+     * build data tree for a list of a given size.
+     * height is passed along to avoid recalculation,
+     * must be equal to {@link #height height(size)}.
+     */
+    static Object[] allocData(final int size, final int height)
     {
-        return size;
+        if (height == 1)
+            return new Object[size];
+
+        final int childcap = capacity(height - 1);
+        final int div = size / childcap;
+        final int rem = size % childcap;
+        final boolean ragged = rem > 0;
+
+        final Object[] result = new Object[div + (ragged ? 1 : 0)];
+
+        for (int i = 0; i < div; i++)
+            result[i] = allocData(childcap, height - 1);
+
+        if (ragged)
+            result[div] = allocData(rem, height - 1);
+
+        return result;
     }
 
-    public Object head()
+    /**
+     *
+     */
+    static Object[] initData(final int size, final int height,
+        final Iterator<?> iter)
     {
-        Object[] node = data;
-
-        for (int shift = (height - 1) * PATH_BITS; shift > 0; shift -= PATH_BITS)
-            node = (Object[])node[0];
-
-        return node[0];
-    }
-
-    public Object get(final int index)
-    {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException("index = " + index + ", size = " + size);
-
-        Object[] node = data;
-
-        for (int shift = (height - 1) * PATH_BITS; shift > 0; shift -= PATH_BITS)
-            node = (Object[])node[(index >>> shift) & PATH_MASK];
-
-        return node[index & PATH_MASK];
-    }
-
-    public int find(final Object value)
-    {
-        int i = 0;
-
-        for (final Object item : this)
+        if (height == 1)
         {
-            if (item.equals(value))
-                break;
-            i++;
+            final Object[] result = new Object[size];
+
+            for (int i = 0; i < size; i++)
+                result[i] = iter.next();
+
+            return result;
         }
 
-        return i;
+        final int childcap = capacity(height - 1);
+        final int div = size / childcap;
+        final int rem = size % childcap;
+        final boolean ragged = rem > 0;
+
+        final Object[] result = new Object[div + (ragged ? 1 : 0)];
+
+        for (int i = 0; i < div; i++)
+            result[i] = initData(childcap, height - 1, iter);
+
+        if (ragged)
+            result[div] = initData(rem, height - 1, iter);
+
+        return result;
     }
 
-    public PersistentList append(final Object value)
-    {
-        if (size == capacity)
-            return new BigList(size + 1,
-                new Object[]{data, wrap(height, value)});
-
-        return new BigList(size + 1,
-            appendData(data, size, height, capacity, value, false));
-    }
+    // PersistentList
 
     public PersistentList appendUnsafe(final Object value)
     {
@@ -189,15 +197,6 @@ public final class BigList extends PersistentList
         }
     }
 
-    public BigList update(final int index, final Object value)
-    {
-        if (index < 0 || index >= size)
-            throw new IndexOutOfBoundsException("index = " + index + ", size = " + size);
-
-        return new BigList(size,
-            updateData(data, height, index, value, false));
-    }
-
     public PersistentList updateUnsafe(final int index, final Object value)
     {
         updateData(data, height, index, value, true);
@@ -240,72 +239,90 @@ public final class BigList extends PersistentList
         }
     }
 
-    public ListValue subList(final int from, final int to)
+    // ListValue
+
+    public int find(final Object value)
     {
-        return Sublist.create(this, from, to);
-    }
+        int i = 0;
 
-    public ListValue subList(final int from)
-    {
-        return Sublist.create(this, from);
-    }
-
-    /**
-     * build data tree for a list of a given size.
-     * height is passed along to avoid recalculation,
-     * must be equal to {@link #height height(size)}.
-     */
-    static Object[] allocData(final int size, final int height)
-    {
-        if (height == 1)
-            return new Object[size];
-
-        final int childcap = capacity(height - 1);
-        final int div = size / childcap;
-        final int rem = size % childcap;
-        final boolean ragged = rem > 0;
-
-        final Object[] result = new Object[div + (ragged ? 1 : 0)];
-
-        for (int i = 0; i < div; i++)
-            result[i] = allocData(childcap, height - 1);
-
-        if (ragged)
-            result[div] = allocData(rem, height - 1);
-
-        return result;
-    }
-
-    /**
-     *
-     */
-    static Object[] initData(final int size, final int height,
-        final Iterator<?> iter)
-    {
-        if (height == 1)
+        for (final Object item : this)
         {
-            final Object[] result = new Object[size];
-
-            for (int i = 0; i < size; i++)
-                result[i] = iter.next();
-
-            return result;
+            if (item.equals(value))
+                break;
+            i++;
         }
 
-        final int childcap = capacity(height - 1);
-        final int div = size / childcap;
-        final int rem = size % childcap;
-        final boolean ragged = rem > 0;
+        return i;
+    }
 
-        final Object[] result = new Object[div + (ragged ? 1 : 0)];
+    public PersistentList append(final Object value)
+    {
+        if (size == capacity)
+            return new BigList(size + 1,
+                new Object[]{data, wrap(height, value)});
 
-        for (int i = 0; i < div; i++)
-            result[i] = initData(childcap, height - 1, iter);
+        return new BigList(size + 1,
+            appendData(data, size, height, capacity, value, false));
+    }
 
-        if (ragged)
-            result[div] = initData(rem, height - 1, iter);
+    public BigList update(final int index, final Object value)
+    {
+        if (index < 0 || index >= size)
+            throw new IndexOutOfBoundsException("index = " + index + ", size = " + size);
 
-        return result;
+        return new BigList(size,
+            updateData(data, height, index, value, false));
+    }
+
+    public Iterator<Object> iterator(final int from, final int to)
+    {
+        assert from >= 0 && to <= size;
+
+        return new Iterator<Object>()
+        {
+            int i = from;
+            int off = i % NODE_SIZE;
+            Object[] node = nodeForIndex(i);
+
+            public boolean hasNext()
+            {
+                return i < to;
+            }
+
+            public Object next()
+            {
+                if (i == to)
+                    throw new NoSuchElementException();
+
+                if (off == NODE_SIZE)
+                {
+                    node = nodeForIndex(i);
+                    off = 0;
+                }
+
+                final Object value = node[off];
+
+                i++;
+                off++;
+
+                return value;
+            }
+
+            public void remove()
+            {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    private Object[] nodeForIndex(final int i)
+    {
+        Object[] node = data;
+
+        for (int shift = (height - 1) * PATH_BITS; shift > 0; shift -= PATH_BITS)
+            node = (Object[])node[(i >>> shift) & PATH_MASK];
+
+        return node;
     }
 
     public PersistentList apply(final Lambda f)
@@ -467,60 +484,29 @@ public final class BigList extends PersistentList
         return result;
     }
 
-    // Iterable
+    // List<Object>
 
-    public Iterator<Object> iterator(final int from, final int to)
+    public final int size()
     {
-        assert from >= 0 && to <= size;
-
-        return new Iterator<Object>()
-        {
-            int i = from;
-            int off = i % NODE_SIZE;
-            Object[] node = nodeForIndex(i);
-
-            public boolean hasNext()
-            {
-                return i < to;
-            }
-
-            public Object next()
-            {
-                if (i == to)
-                    throw new NoSuchElementException();
-
-                if (off == NODE_SIZE)
-                {
-                    node = nodeForIndex(i);
-                    off = 0;
-                }
-
-                final Object value = node[off];
-
-                i++;
-                off++;
-
-                return value;
-            }
-
-            public void remove()
-            {
-                throw new UnsupportedOperationException();
-            }
-        };
+        return size;
     }
 
-    /**
-     *
-     */
-    private Object[] nodeForIndex(final int i)
+    public Object get(final int index)
     {
+        if (index < 0 || index >= size)
+            throw new IndexOutOfBoundsException("index = " + index + ", size = " + size);
+
         Object[] node = data;
 
         for (int shift = (height - 1) * PATH_BITS; shift > 0; shift -= PATH_BITS)
-            node = (Object[])node[(i >>> shift) & PATH_MASK];
+            node = (Object[])node[(index >>> shift) & PATH_MASK];
 
-        return node;
+        return node[index & PATH_MASK];
+    }
+
+    public ListValue subList(final int from, final int to)
+    {
+        return Sublist.create(this, from, to);
     }
 
     //

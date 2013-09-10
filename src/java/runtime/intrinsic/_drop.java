@@ -43,7 +43,7 @@ public final class _drop extends IntrinsicLambda
         final int size = list.size();
 
         return n >= 0 ?
-            list.subList(Math.min(size, n), size) :
-            list.subList(0, Math.max(size + n, 0));
+            (ListValue)list.subList(Math.min(size, n), size) :
+            (ListValue)list.subList(0, Math.max(size + n, 0));
     }
 }

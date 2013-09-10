@@ -56,6 +56,7 @@ public class TermInliner
         INTRINSICS.put(_guard.class.getName(), new GuardInliner());
         INTRINSICS.put(_if.class.getName(), new IfInliner());
         INTRINSICS.put(_map.class.getName(), new MapInliner());
+        INTRINSICS.put(_reduce.class.getName(), new ReduceInliner());
         INTRINSICS.put(_when.class.getName(), new WhenInliner());
         INTRINSICS.put(_while.class.getName(), new WhileInliner());
 

@@ -1,4 +1,14 @@
 
+// cosine similarity over vectors represented by lists of floats.
+// no length agreement checking.
+
+mag(v) { sqrt(fsum(v | fsq)) };
+
+dot(v, w) { fsum(index(v) | { v[$0] *. w[$0] }) };
+
+cos(v, w) { dot(v, w) /. (mag(v) *. mag(w)) };
+
+
 // find max continuous subsequence of a nonempty list of ints.
 // interesting cases include negative numbers in the list.
 // for illustration, return value is triple of

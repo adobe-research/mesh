@@ -14,34 +14,19 @@ import runtime.rep.Lambda;
 import runtime.rep.map.MapValue;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Interface for runtime values of type List(T).
+ * Extends java.util.Collection with copy-on-write and
+ * utility methods, and requires implementors to
+ * implement mutating List methods by throwing
+ * {@link UnsupportedOperationException}.
  *
  * @author Basil Hosmer
  */
-public interface ListValue extends Iterable<Object>
+public interface ListValue extends List<Object>
 {
-    /**
-     * Number of items in list.
-     */
-    int size();
-
-    /**
-     * Returns item at index 0.
-     * Note: throws IndexOutOfBoundsException on empty list,
-     * currently
-     */
-    Object head();
-
-    /**
-     * Returns item at index. Valid values of index
-     * are 0..size() - 1.
-     * Note: throws IndexOutOfBoundsException on bad
-     * index, currently
-     */
-    Object get(int index);
-
     /**
      * Return first position containing an item for which
      * {@link Object#equals item.equals(value)} returns true,
@@ -65,32 +50,14 @@ public interface ListValue extends Iterable<Object>
     ListValue update(int index, Object value);
 
     /**
-     * Return new list with items from positions from..to - 1.
-     * Valid values of from and to are 0 .. size(), with
-     * from <= to.
-     * Note: throws IndexOutOfBoundsException on bad
-     * index, currently
-     */
-    ListValue subList(final int from, final int to);
-
-    /**
-     * Return new list with items from given position to end.
-     * Valid values of from and to are 0 .. size(), with
-     * from <= to.
-     * Note: throws IndexOutOfBoundsException on bad
-     * index, currently
-     */
-    ListValue subList(final int from);
-
-    /**
-     * Return iterator over the selected range. Makes
-     * implementation-specific iterators available
-     * to sublists.
+     * Return iterator over the selected range.
+     * Makes implementation-specific iterators
+     * available to sublists.
      */
     Iterator<Object> iterator(final int from, final int to);
 
     /**
-     * each(f, list) => list.apply(f)
+     * map(list, f) => list.apply(f)
      */
     ListValue apply(final Lambda f);
 
@@ -100,12 +67,12 @@ public interface ListValue extends Iterable<Object>
     void run(final Lambda f);
 
     /**
-     * lleach(ll, rl) => rl.select(ll)
+     * llmap(indexes, list) => indexes.select(list)
      */
     ListValue select(final ListValue list);
 
     /**
-     * mleach(map, list) => list.select(map)
+     * mlmap(keylist, map) => keylist.select(map)
      */
     ListValue select(final MapValue map);
 }

@@ -242,6 +242,21 @@ iter(p : () -> Bool) -> ()
 };
 
 /**
+ * Perform a functional reduction (foldl) using the given reducer,
+ * initial value, list of arguments and mapping function. I.e.,
+ * mapred(red, init, args, mapper) gives the same result as
+ * reduce(red, init, args | mapper).
+ *
+ * @param f reducing function
+ * @param v initial value
+ * @param l list of arguments
+ * @param m mapping function
+ * @return value produced by calling f repeatedly with previously
+ *         calculated value and mapped result of next item in the list
+ */
+intrinsic <A, B, C> mapred(f : (A, B) -> A, v : A, l : [C], m : C -> B) -> A;
+
+/**
  * Evaluate filter(list, pred) in parallel chunks of the given size.
  * so pfiltern(list, pred, size(list)) gives the same result as
  * filter(list, pred)

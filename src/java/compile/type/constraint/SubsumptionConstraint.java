@@ -65,8 +65,7 @@ public final class SubsumptionConstraint implements Constraint
 
             return Pair.create(new SubsumptionConstraint(merged.left), merged.right);
         }
-        else if (type instanceof TypeMap &&
-            otherType instanceof TypeMap)
+        else if (type instanceof TypeMap && otherType instanceof TypeMap)
         {
             final TypeMap map = (TypeMap)type;
             final TypeMap otherMap = (TypeMap)otherType;
@@ -80,8 +79,7 @@ public final class SubsumptionConstraint implements Constraint
 
             return Pair.create(new SubsumptionConstraint(merged.left), merged.right);
         }
-        else if (type instanceof TypeList &&
-            otherType instanceof TypeList)
+        else if (type instanceof TypeList && otherType instanceof TypeList)
         {
             final TypeList list = (TypeList)type;
             final TypeList otherList = (TypeList)otherType;
@@ -95,8 +93,7 @@ public final class SubsumptionConstraint implements Constraint
 
             return Pair.create(new SubsumptionConstraint(merged.left), merged.right);
         }
-        else if (type instanceof EnumType &&
-            otherType instanceof EnumType)
+        else if (type instanceof EnumType && otherType instanceof EnumType)
         {
             final EnumType enumType = (EnumType)type;
             final EnumType otherEnum = (EnumType)otherType;
